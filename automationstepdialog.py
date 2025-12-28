@@ -458,6 +458,8 @@ class AutomationStepDialog(QDialog):
 
 
     def form_app_variable (self):
+        if self.step != None:
+            print (f"In variable form {self.step}, row3 {self.current_row3}, row 4 {self.current_row4}")
         #print (f"Set Variable selected current row 3 {self.current_row3}")
         self.rows.set_field_type(3, "combo")
         self.rows.show_hide_row(3, True, "Variable name:")
@@ -466,12 +468,21 @@ class AutomationStepDialog(QDialog):
         if self.current_row3 == "New" or self.current_row3 == "default":
             variable_list = ["Select Variable"] + device_model.get_variable_names() + ["New Variable"]
             self.rows.combo_add_items(3, variable_list)
-            self.current_row3 = "Select Variable"
-            return
+            #self.current_row3 = "Select Variable"
+            #return
 
         # If loading existing then select variable
         if self.current_row3 == "New" and self.step != None:
+            print (f"Variable {self.step}")
             if "variable" in self.step['data']:
+                variable_name = self.step['data']['variable']
+                # If variable doesn't exist then add
+                if self.mainwindow.appvariables.is_variable(variable_name) != True:
+                    # Create the variable but do not give it a value - as that will only be when automation run
+                    self.mainwindow.add_variable(variable_name, "", False)    
+                    # Reload the combo list 
+                    variable_list = ["Select Variable"] + device_model.get_variable_names() + ["New Variable"]
+                    self.rows.combo_add_items(3, variable_list)
                 self.rows.set_combo_text (3, self.step['data']['variable'])
         
 
@@ -520,20 +531,16 @@ class AutomationStepDialog(QDialog):
         self.rows.show_hide_row(3, True, "Variable name:")
         # Show row4 - value entry - which is a lineedit
         self.rows.set_field_type(4, "lineedit")
+        # if loading existing
+        if self.current_row4 == "New" and self.step != None:
+            self.rows.set_lineedit_text (4, self.step['data'].get('value'))
+            self.current_row4 = "Value"
         # TODO: clear any existing unless this is loading from previous step 
+        if self.current_row4 != "Value":
+            self.rows.set_lineedit_text (4, "")
+            self.current_row4 = "Value"
         self.rows.show_hide_row(4, True, "Value:")
         self._hide_rows(5)
-
-    def OLD_clear_layout(self, layout):
-        """Helper to clear all widgets from a layout."""
-        while layout.count():
-            item = layout.takeAt(0)
-            widget = item.widget()
-            if widget is not None:
-                widget.deleteLater()
-            else:
-                self._clear_layout(item.layout()) # Handle nested layouts
-
 
     # Gets data if valid and returns as a dict
     def save_step(self):
@@ -587,6 +594,24 @@ class AutomationStepDialog(QDialog):
             # Return as a dict - let Automation Sequence convert into an Automation Step
             self.step = {"type": "Gui", "name": self.name, "data" : data_dict}
 
+        elif rule_type == "App":
+            data_dict = self._get_step_data_app()
+            # If error then prev would give a QMessage and return None
+            # just return to allow correct and try again
+            if data_dict is None:
+                return
+            # If no name given then can replace with a user friendly
+            if self.name == "":
+                self.name = f"{rule_type}, {data_dict['command']}"
+                if 'variable' in data_dict:
+                    self.name += f" - {data_dict['variable']}"
+                if 'value' in data_dict:
+                    self.name += f" - {data_dict['value']}"
+                if 'delay' in data_dict:
+                    self.name += f" - {data_dict['delay']}"
+            
+            # Return as a dict - let Automation Sequence convert into an Automation Step
+            self.step = {"type": "App", "name": self.name, "data" : data_dict}
             
         # Todo need to implement all rule types so this doesn't happen
         else:
@@ -689,7 +714,37 @@ class AutomationStepDialog(QDialog):
             data_dict['value'] = value
         return data_dict
 
+    def _get_step_data_app(self):
+        app_command = self.rows.get_combo_text(2)
+        if app_command == "Wait":
+            return self._get_step_data_app_wait()
+        elif app_command == "Set Variable":
+            return self._get_step_data_app_variable()
+        else:
+            print ("Unknown app command")
+            return None
 
+
+    def _get_step_data_app_wait(self):
+        """ Gets step data for app wait command - used in save_step """
+        # If fails uses QMessage and returns None
+        data_dict = {'command': "Wait"}
+        delay = self.rows.get_lineedit_text (3)
+        data_dict['delay'] = delay
+        return data_dict
+
+    def _get_step_data_app_variable (self):
+        """ Gets step data for app set variable command - used in save_step """
+        # If fails uses QMessage and returns None
+        data_dict = {'command': "Set Variable"}
+        variable = self.rows.get_combo_text (3)
+        if variable == "Select Variable" or variable == "New Variable":
+            QMessageBox.warning(self, "Invalid Variable", "Please select a valid variable.")
+            return None
+        data_dict['variable'] = variable
+        value = self.rows.get_lineedit_text (4)
+        data_dict['value'] = value
+        return data_dict
 
     # Swaps the widget specified (eg. combobox with lineedit or spinbox)
     # Uses label_widget to find the row
