@@ -1,12 +1,13 @@
 import os
 import shutil
 from PySide6.QtCore import QTimer, QCoreApplication, Signal, QThreadPool, Qt, QPoint, QSize
-from PySide6.QtWidgets import QApplication, QMainWindow, QAbstractItemView, QMenu, QLineEdit, QDialog, QColorDialog, QFileDialog
+from PySide6.QtWidgets import QApplication, QMainWindow, QAbstractItemView, QMenu, QLineEdit, QDialog, QColorDialog, QFileDialog, QMessageBox
 from PySide6.QtGui import QPixmap, QImage, QPalette, QColor, QFont, QResizeEvent
 from PySide6.QtUiTools import QUiLoader
 from settings import Settings
 from consolewindow import ConsoleWindowUI
 from layout import Layout
+from eventdialog import EventDialog
 from layoutdisplay import LayoutDisplay
 from stealdialog import StealDialog
 from controlloco import ControlLoco

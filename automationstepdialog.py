@@ -100,12 +100,14 @@ class AutomationStepDialog(QDialog):
     def _reset_row_currents (self, from_row, type="VLCB"): 
         # used to reset current row trackers if prev combo has changed  
         if from_row <= 2:
+            if type == "App":
+                self.current_row3 = "Select Command"
             self.current_row2 = "Select Node"
         if from_row <= 3:
             if type == "Loco":
                 self.current_row3 = "Select Loco"
             elif type == "App":
-                self.current_row3 = "Select Command"
+                self.current_row3 = "default"
             else:
                 self.current_row3 = "Select Event"
         if from_row <= 4:
@@ -414,6 +416,7 @@ class AutomationStepDialog(QDialog):
             else:
                 #  If App is just selected and it's not loading existing step then set all other items to default
                 self._reset_row_currents(2, type="App")    # Reset from node onwards
+                #print (f"Resetting row currents 3 = {self.current_row3}")
                 #self._hide_rows(3)    # Hide remaining rows (from event onwards)
                 self.current_type = "App"
                 return
@@ -421,45 +424,56 @@ class AutomationStepDialog(QDialog):
         self.current_type = "App"
         #print (f"Current type set to {self.current_type}")
 
-
         # Command selection is already populated - check for a value
         selected_command = self.rows.get_combo_text(2)
-
-        #print (f"Selected commnd {selected_command} row2 {self.current_row2}")
 
         # If this was new and not loaded or moved back to "Select Command" then return here - need to select node first
         if selected_command == None or selected_command == "Select Command":
             self.current_row2 = "Command"
-            self.current_row3 = "Select Command"
+            # self.current_row3 = "Select Command"
+            #print ("No command seletected row 3 = New")
+            self.current_row3 = "New"
             return
         # Set Argument to visible - diferent argument depending upon command
         #self.rows.show_hide_row(3, True, "Event:")
         if self.current_row2 == "New" or selected_command != self.current_row2:
             #print (f"New? {self.current_row2} - selected command {selected_command}")
             self.current_row2 = selected_command
-            # command is different to current - so update argument
-            if selected_command == "Wait":
-                self.rows.set_field_type(3, "lineedit")
-                self.rows.show_hide_row(3, True, "Delay:")
 
-                if self.current_row3 == "New" and self.step != None:
-                    if "delay" in self.step['data']:
-                        self.rows.set_lineedit_text (3, self.step['data']['delay'])
-                # set 3 to a string that is not New
-                self.current_row3 = "Wait"
-                self._hide_rows (4)
-            elif selected_command == "Set Variable":
-                #print (f"Set Variable selected current row 3 {self.current_row3}")
-                self.rows.set_field_type(3, "combo")
-                self.rows.show_hide_row(3, True, "Variable name:")
+        if selected_command == "Wait":
+            self.form_app_wait()
+        elif selected_command == "Set Variable":
+            self.form_app_variable()
 
-                variable_list = ["Select Variable"] + device_model.get_variable_names() + ["New Variable"]
-                self.rows.combo_add_items(3, variable_list)
+    def form_app_wait (self):
+        self.rows.set_field_type(3, "lineedit")
+        self.rows.show_hide_row(3, True, "Delay:")
 
-                # If loading existing then select variable
-                if self.current_row3 == "New" and self.step != None:
-                    if "variable" in self.step['data']:
-                        self.rows.set_combo_text (3, self.step['data']['variable'])
+        if self.current_row3 == "New" and self.step != None:
+            if "delay" in self.step['data']:
+                self.rows.set_lineedit_text (3, self.step['data']['delay'])
+        # set 3 to a string that is not New
+        self.current_row3 = "Wait"
+        self._hide_rows (4)
+
+
+    def form_app_variable (self):
+        #print (f"Set Variable selected current row 3 {self.current_row3}")
+        self.rows.set_field_type(3, "combo")
+        self.rows.show_hide_row(3, True, "Variable name:")
+
+        # row may be set to Select Command from defaults
+        if self.current_row3 == "New" or self.current_row3 == "default":
+            variable_list = ["Select Variable"] + device_model.get_variable_names() + ["New Variable"]
+            self.rows.combo_add_items(3, variable_list)
+            self.current_row3 = "Select Variable"
+            return
+
+        # If loading existing then select variable
+        if self.current_row3 == "New" and self.step != None:
+            if "variable" in self.step['data']:
+                self.rows.set_combo_text (3, self.step['data']['variable'])
+        
 
         # Read value back to check setting
         selected_variable = self.rows.get_combo_text (3)
@@ -468,7 +482,7 @@ class AutomationStepDialog(QDialog):
 
         if selected_variable == "Select Variable":
             # hide remaining - need to choose variable first
-            self.rows.show_hide_row(3, True, "Variable name:")
+            #self.rows.show_hide_row(3, True, "Variable name:")
             self.current_row3 = "Select Variable"
             self._hide_rows(4)
             return
@@ -479,7 +493,7 @@ class AutomationStepDialog(QDialog):
             self.rows.show_hide_row(3, True, "Variable name:")
             self._hide_rows(4)
             self.current_row3 = "New Variable"
-            #print ("Launching dialog")
+            #print ("Launching add variable dialog")
             new_variable = self.create_variable_dialog()
             if new_variable != None and new_variable != "" and self.mainwindow.appvariables.is_variable(new_variable) != True:
                 # Create new variable by setting value to ""
@@ -510,291 +524,7 @@ class AutomationStepDialog(QDialog):
         self.rows.show_hide_row(4, True, "Value:")
         self._hide_rows(5)
 
-
-        
-    def old (self):
-        form_type = self.rule_type_combo.currentText()
-        if form_type == "VLCB":
-            #self.node_combo.setVisible(True)
-            self.node_label.setText("Node:")
-            # Loco uses self.event_edit rather than combo - swap back here
-            self.swap_field_widget(self.event_label, self.event_combo)
-            self.event_label.setText("Event:")
-            self.value_label.setText("Value:")
-            self.value2_label.setText("")
-            # show / hide comes after updating fields
-            self.show_hide_row(2, True)     # Show node row
-            self.show_hide_row(3, False)    # Hide event row (show if node selected)
-            self.show_hide_row(4, False)    # Hide value row
-            self.show_hide_row(5, False)    # Hide value2 row
-            
-        elif form_type == "Loco":
-            # Loco No is the dynamic locos (eg. 1 to 3 and option for DCC ID)
-            self.node_combo.setVisible(True)
-            self.node_label.setText("Loco No.:")
-            # DCC ID is if tied to a specific loco (only if selected from above)
-            self.swap_field_widget(self.event_label, self.event_edit)
-            self.event_label.setText("DCC ID:")
-            # Loco uses self.event_edit rather than combo
-            # Action (uses value field)
-            self.value_combo.setVisible(True)
-            self.value_label.setText("Action:")
-            # Value (eg. speed)
-            self.value2_combo.setVisible(True)
-            self.value2_label.setText("Value:")
-        elif form_type == "User Interface": # GUI Event
-            self.node_combo.setVisible(True)
-            self.node_label.setText("Node:")
-            # Loco uses self.event_edit rather than combo - swap back here
-            self.swap_field_widget(self.event_label, self.event_combo)
-            self.event_label.setText("Action:")
-            # value only shown if action is not toggle
-            self.value_combo.setVisible(False)
-            #self.value_label.setText("Value:")
-            # Value (eg. speed)
-            self.value2_combo.setVisible(False)
-            #self.value2_label.setText("Value:")
-        elif form_type == "App": # App Event eg wait
-            self.node_combo.setVisible(True)
-            self.node_label.setText("Command:")
-            # Use self.event_edit rather than combo
-            self.swap_field_widget(self.event_label, self.event_edit)
-            self.event_label.setText("Arguments:")
-            # value / value 2 not required
-            self.value_combo.setVisible(False)
-            #self.value_label.setText("Value:")
-            # Value (eg. speed)
-            self.value2_combo.setVisible(False)
-        # If not recognised then set as non selected
-        # This is default for a new step
-        else:
-            #print ("Not a valid type")
-            self.node_label.setText("N/A")
-            self.show_hide_row(2, False)    # Hide node row
-            self.show_hide_row(3, False)    # Hide event row (show if node selected)
-            self.show_hide_row(4, False)    # Hide value row
-            self.show_hide_row(5, False)    # Hide value2 row
-        # Update each of the combo with their values
-        self.update_node_combo(update_form = False)
-        self.update_event_combo()
-        self.update_value_combo()
-        self.update_value2_combo()
-        # Reenable signals
-        self.node_combo.blockSignals(False)
-        self.event_combo.blockSignals(False)
-        self.value_combo.blockSignals(False)
-            
-
-    def update_node_combo(self, update_form = True):
-        #print ("Update node combo")
-        # First set appropriate form widgets / labels
-        # if update_form is set to false then don't call set_form_type
-        # this is required if called from set_form_type to avoid recursive calls
-        if update_form != False:
-            self.set_form_type ()
-
-        nodes = []
-        
-        self.node_combo.clear()
-        # Updates the event_combo based on the selected type
-        selected_type = self.rule_type_combo.currentText()
-        #print (f"Selected type {selected_type}")
-        if selected_type == None or selected_type == "Select Type":
-            nodes = ["NA"]
-            # Hide remaining rows - eg. if previously selected details but now node unselected
-            self.show_hide_row(2, False)    # Hide node row
-            self.show_hide_row(3, False)    # Hide event row (show if node selected)
-            self.show_hide_row(4, False)    # Hide value row
-            self.show_hide_row(5, False)    # Hide value2 row
-        #    return
-        else:
-            # If this type is one of the device_nodes then get from device_model
-            if selected_type == "VLCB":
-                nodes = device_model.get_nodes_names(selected_type, null_events=False)
-            elif selected_type == "User Interface":
-                nodes = device_model.get_nodes_names("Gui", null_events=False)
-                #print (f"GUI Nodes {nodes}")
-            elif selected_type == "Loco":
-                # Loco does ont use "node" reference so create list of loco numbers
-                # then add to GUI and return 
-                nodes = ["Select Loco"]
-                # Add available IDs if required
-                if self.num_locos_req > 0:
-                    nodes += [f"ID {i}" for i in range(1, self.num_locos_req + 1)]
-                # Always offer option to use a DCC ID directly
-                nodes.append("Use DCC ID")
-            elif selected_type == "App":
-                # For app then just hard code some options for now
-                nodes = ["Select Command", "Wait", "Set Variable"]
-                # Could add others in future
-                # Eg. Log Message
-                # Does not include label or jump (handled as separate types)
-
-            self.node_combo.addItems(nodes)
-            
-        # show the node row
-        self.show_hide_row(2, True, "Node:")    # Show node row
-
-
-    def update_event_combo(self):
-        #print ("Update event combo")
-        # First get the type (so we can lookup the node)
-        # The event combo sometimes gets swapped for a line edit
-        # Swap is done on set_form_type - but here need to use appropriate
-        selected_type = self.rule_type_combo.currentText()
-        events = []
-        # Should always have a type if this has an option, but check anyway
-        if selected_type == None or selected_type == "Select Type":
-            self.show_hide_row(2, False)
-            return
-        #print (f"Updating event combo {index}")
-        self.event_combo.clear()
-        # Updates the event_combo based on the selected node.
-        selected_node = self.node_combo.currentText()
-        if selected_node == None or selected_node == "Select Node" or selected_node == "NA":
-            events = ["NA"]
-            self.show_hide_row(3, False)
-            #print ("Hiding event row as no node selected")
-            return
-        elif selected_type == "VLCB":
-            # convert to node_key
-            node_key = device_model.name_to_key(selected_node, selected_type)
-            #print (f"Type {selected_type} Node {selected_node} key {node_key}")
-            events = device_model.get_events(node_key, selected_type)
-            #print (f"Events {events}")
-            if events == []:
-                events = ["NA"]
-            # Show the event field
-            self.show_hide_row(3, True, "Event:") 
-            # Also hide value 2 - not used for vlcb/gui
-            self.show_hide_row(5, False) 
-        elif selected_type == "User Interface":
-            # convert to node_key
-            node_key = device_model.name_to_key("Gui", selected_type)
-            events = device_model.get_events(node_key, selected_type)
-            # Shouldn't get a blank response - but check anyway
-            if events == []:
-                events = ["NA"]
-            # Show the event field
-            self.show_hide_row(3, True, "Action:") 
-            # Also hide value 2 - not used for vlcb/gui
-            self.show_hide_row(5, False) 
-        elif selected_type == "Loco":
-            # For Loco then the event_combo has been replaced with event_edit
-            # If the node is DCC ID then this is enabled (if not replace with label)
-            self.event_label.setText("DCC ID:")
-            if selected_node == "Use DCC ID":
-                #self.event_edit.setReadOnly(False)
-                #self.event_edit.show
-                self.swap_field_widget(self.event_label, self.event_edit)
-            else:
-                # Clear previous entry if applicable
-                self.event_edit.setText("")
-                #self.event_edit.setReadOnly(True)
-                # shows text that allocated on run
-                self.swap_field_widget(self.event_label, self.event_alt_label)
-            # Hide value 2 (next field is action)
-            self.show_hide_row(5, False)    # Hide value2 row
-        elif selected_type == "App":
-            # For App then event_edit is used for arguments
-            # Event field (and optional value) depends upon value of node
-            if selected_node == "Select Command":
-                events = ["NA"]
-                self.show_hide_row(3, False)    # Hide event row
-            else:
-                if selected_node == "Wait":
-                    self.event_label.setText("Delay:")
-                    # For wait then event is time in seconds (as text)
-                    self.swap_field_widget(self.event_label, self.event_edit)
-                elif selected_node == "Set Variable":
-                    self.event_label.setText("Variable name:")
-                    # For set variable then event is variable name from combo
-                    self.swap_field_widget(self.event_label, self.event_combo)
-                    variables = device_model.get_variable_names()
-                    variables.append("New Variable")
-                    self.event_combo.addItems(variables)
-                    
-            # Hide value 2 (not used)
-            self.show_hide_row(5, False)    # Hide value2 row
-        else:
-            events = ["NA"]
-            
-        if events != ["NA"]:
-            self.event_combo.addItem("Select Event")
-        self.event_combo.addItems(events)
-        
-    
-    def update_value_combo(self):
-        #print ("update value combo")
-        self.value_combo.clear()
-        selected_type = self.rule_type_combo.currentText()
-        if selected_type == None or selected_type == "Select Type":
-            self.show_hide_row(4, False) 
-            values = ["NA"]
-        elif selected_type == "VLCB" or selected_type == "User Interface":
-            # For this just check that there is an event
-            # If it's not "" or "NA" then it should have an on or off status
-            # Default to on events
-            selected_event = self.event_combo.currentText()
-            if selected_event == "NA" or selected_event == "" or selected_event == "Select Event" or selected_event== "Toggle":
-                self.show_hide_row(4, False) 
-                self.value_combo.addItem("NA")
-            else:
-                # May want to add other values for Gui type in future
-                # eg. Set with a specific value
-                self.show_hide_row(4, True, "Value:") 
-                self.value_combo.addItem("on")
-                self.value_combo.addItem("off")
-        elif selected_type == "Loco":
-            self.value_combo.addItem("Select Action")
-            self.value_combo.addItems(LocoEvent.event_types)
-            
-        # For loco then uses LocoEvent.event_types list to create actions
-
-    def update_value2_combo(self):
-        #print ("Update value2 combo")
-        selected_type = self.rule_type_combo.currentText()
-        if selected_type == None or selected_type == "Select Type":
-            self.show_hide_row(5, False) 
-            nodes = ["NA"]
-        else:
-            self.value2_combo.clear()
-            # If Loco then look at value1 (action) and set list here
-            if selected_type == "Loco":
-                # now look at action from value1
-                loco_action = self.value_combo.currentText()
-                #print (f"Loco action is {loco_action}")
-                if loco_action == None or loco_action == "NA" or loco_action == "Select Action":
-                    self.show_hide_row(5, False) 
-                    #return
-                elif loco_action == "Set Speed":
-                    self.show_hide_row(5, True, "Speed:") 
-                    #self.value2_label.setText ("Speed:")
-                    # change for spinbox
-                    self.swap_field_widget(self.value2_label, self.value2_spinbox)
-                elif loco_action == "Set Direction":
-                    self.show_hide_row(5, True, "Direction:") 
-                    self.swap_field_widget(self.value2_label, self.value2_combo)
-                    self.value2_combo.addItems(["Forward", "Reverse", "Toggle"])
-                    #self.value2_label.setText ("Direction:")
-                elif loco_action == "Function":
-                    self.show_hide_row(5, True, "Function setting:")
-                    # Function replaces value with both a spinbox and a combo
-                    self.swap_field_widget(self.value2_label, self.value2_inner_widget)
-                    #self.value2_label.setText("Function setting:")
-                # Others don't need another value - eg. Stop
-                # So hide value2 - hide both spinbox and combo
-                else:
-                    self.show_hide_row(5, False) 
-                    #self.value2_label.setText("")
-                    #self.value2_combo.hide()
-                    #self.value2_spinbox.hide()
-                    #self.value2_inner_widget.hide()
-            else:
-                self.show_hide_row(5, False) 
-
-
-    def _clear_layout(self, layout):
+    def OLD_clear_layout(self, layout):
         """Helper to clear all widgets from a layout."""
         while layout.count():
             item = layout.takeAt(0)
