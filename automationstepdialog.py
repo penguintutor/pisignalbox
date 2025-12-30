@@ -34,20 +34,6 @@ class AutomationStepDialog(QDialog):
         # Used to track current selections to avoid reloading combos unnecessarily
         self.current_row_value = [""] * 6
 
-        # TODO: remove these
-        # OLD method
-        # Used to track if loading a new dialog and whether type has changed
-        # If current type equals new selected type then no need to reload combos
-        self.current_type = "New"
-        # same for current node (row 2)
-        self.current_row2 = "New"
-        # current event (row 3)
-        self.current_row3 = "New"
-        # current value (row 4)
-        self.current_row4 = "New"
-        # current value2 (row 5)
-        self.current_row5 = "New"
-
         self.setLayout(QFormLayout())
 
         self.rows = AutomationDialogRows(self, self.layout())
@@ -79,26 +65,6 @@ class AutomationStepDialog(QDialog):
         # New method - reset to ""
         for i in range (from_row, 6):
             self.current_row_value[i] = ""
-
-        # used to reset current row trackers if prev combo has changed  
-        if from_row <= 2:
-            if type == "App":
-                self.current_row3 = "Select Command"
-            self.current_row2 = "Select Node"
-        if from_row <= 3:
-            if type == "Loco":
-                self.current_row3 = "Select Loco"
-            elif type == "App":
-                self.current_row3 = "default"
-            else:
-                self.current_row3 = "Select Event"
-        if from_row <= 4:
-            if type == "Loco":
-                self.current_row4 = "Select Action"
-            else:
-                self.current_row4 = "default"
-        if from_row <= 5:
-            self.current_row5 = "default"
 
     def _set_input_types (self, type="default", mode="default"):
         """Set the input types based on type."""
@@ -189,7 +155,6 @@ class AutomationStepDialog(QDialog):
             return
         
         # Node selected to reach here
-        #print (f"selected node {selected_node} curr {self.current_row2}")
         # Set Event to visible
         self.rows.show_hide_row(3, True, "Event:")
         if self.current_row_value[2] != selected_node:
@@ -213,7 +178,6 @@ class AutomationStepDialog(QDialog):
         
         # show value field
         self.rows.show_hide_row(4, True, "Value:")
-        #print (f"selected event {selected_event} curr {self.current_row3}")
         if selected_event != self.current_row_value[3]:
             # event is different to current - so update value list
             # For vlcb then value is on / off depending on event (no select default to on)
@@ -231,7 +195,6 @@ class AutomationStepDialog(QDialog):
 
 
     def form_selected_loco (self):
-        #print (f"Loco selected action current row4 {self.current_row4}")
         self._set_input_types(type="Loco")
         self.rows.show_hide_row(2, True, "Loco No.:")    # Show loco row
 
@@ -288,7 +251,6 @@ class AutomationStepDialog(QDialog):
 
         ## Now add Action field (row 4 as dccid is row 3)
         self.rows.show_hide_row(4, True, "Action:")
-        #print (f"Loco action current row4 {self.current_row4}")
         # Actions aren't dependent on loco so just add when new
         if self.current_row_value[2] != selected_loco:
             action_items = ["Select Action"] + LocoEvent.get_action_names()
@@ -449,9 +411,6 @@ class AutomationStepDialog(QDialog):
 
 
     def form_app_variable (self):
-        #if self.step != None:
-        #    print (f"In variable form {self.step}, row3 {self.current_row3}, row 4 {self.current_row4}")
-        #print (f"Set Variable selected current row 3 {self.current_row3}")
         self.rows.set_field_type(3, "combo")
         self.rows.show_hide_row(3, True, "Variable name:")
 
