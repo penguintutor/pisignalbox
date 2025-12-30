@@ -173,6 +173,14 @@ class AutomationDialogRows:
         return ""
 
     # These still have the row value for consistancy, but not use - only allows 5
+    def get_spinbox_value (self, row):
+        """Get the value of the spinbox for row 5 custom widget."""
+        return self.row5_inner_spinbox.value()
+
+    def set_spinbox_value (self, row, value):
+        """Set the value of the spinbox for row 5 custom widget."""
+        self.row5_inner_spinbox.setValue(value)
+
     def get_inner_spinbox_value (self, row):
         """Get the value of the inner spinbox for row 5 custom widget."""
         return self.row5_inner_spinbox.value()

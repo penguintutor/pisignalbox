@@ -31,6 +31,11 @@ class AutomationStepDialog(QDialog):
         self.step = step
         self.params = {}
 
+        # Used to track current selections to avoid reloading combos unnecessarily
+        self.current_row_value = [""] * 6
+
+        # TODO: remove these
+        # OLD method
         # Used to track if loading a new dialog and whether type has changed
         # If current type equals new selected type then no need to reload combos
         self.current_type = "New"
@@ -58,46 +63,23 @@ class AutomationStepDialog(QDialog):
         button_box.addWidget(cancel_button)
         self.layout().addRow(button_box)
                
-        # Update the rows
-        self.update_rows ()
-            
+        # Update the rows - intially call with load 
+        # If step is not set then load is ignored
+        self.update_rows (load=True)
 
-    def update_rows (self):
-        # disable signals - prevents multiple calls during update
-        self.rows.enable_combo_signals(False)
-
-        # If initial open and step is not None then set current title and type
-        if self.current_type == "New" and self.step != None:
-            self.rows.set_lineedit_text(0, self.step.get('name'))
-            step_type = self.step.get('type')
-            if step_type == "User Interface":
-                step_type = "Gui"   # adjust for combo display
-            self.rows.set_combo_text(1, step_type)
-
-        # Get form type and call appropriate method to set up the form
-        form_type = self.rows.get_type_text()
-        if form_type == None:
-            self.form_selected_none()
-        elif form_type == "VLCB":
-            self.form_selected_vlcb()
-        elif form_type == "Loco":
-            self.form_selected_loco()
-        elif form_type == "User Interface":
-            self.form_selected_gui()
-        elif form_type == "App":
-            self.form_selected_app()
-        else:
-            self.form_selected_none()
-
-        # enable signals
-        self.rows.enable_combo_signals(True)
-
+    
     def _hide_rows (self, row_index ):
         # Hide all rows from row_index to 5
         for i in range (row_index, 6):
-            self.rows.show_hide_row(i, False) 
+            self.rows.show_hide_row(i, False)
+            # Also reset current row values
+            self.current_row_value[i] = "" 
 
     def _reset_row_currents (self, from_row, type="VLCB"): 
+        # New method - reset to ""
+        for i in range (from_row, 6):
+            self.current_row_value[i] = ""
+
         # used to reset current row trackers if prev combo has changed  
         if from_row <= 2:
             if type == "App":
@@ -134,348 +116,356 @@ class AutomationStepDialog(QDialog):
         else:
             self.rows.set_field_type(3, "combo")  # Event is combobox
 
+    def update_rows (self, load = False):
+        # disable signals - prevents multiple calls during update
+        self.rows.enable_combo_signals(False)
+
+        # Load progress is used to determine state of loading
+        # If set to load then load from self.step, if continue then load from ui, if new then
+        # UI has changed above position so reset to default 
+        self.load_progress = "continue"
+        if load == True and self.step != None and "data" in self.step:
+            self.load_progress = "load"
+
+        # If initial open and step is not None then set current title and type
+        if self.load_progress == "load":
+            self.rows.set_lineedit_text(0, self.step.get('name'))
+            step_type = self.step.get('type')
+            if step_type == "User Interface":
+                step_type = "Gui"   # adjust for combo display
+            self.rows.set_combo_text(1, step_type)
+
+        # Get form type and call appropriate method to set up the form
+        form_type = self.rows.get_type_text()
+        #self.current_row_value[1] = form_type  # Update later
+        if form_type == None:
+            self.form_selected_none()
+        elif form_type == "VLCB":
+            self.form_selected_vlcb()
+        elif form_type == "Loco":
+            self.form_selected_loco()
+        elif form_type == "User Interface":
+            self.form_selected_gui()
+        elif form_type == "App":
+            self.form_selected_app()
+        else:
+            self.form_selected_none()
+
+        # enable signals
+        self.rows.enable_combo_signals(True)
+
+
     def form_selected_none (self):
+        self.current_row_value[1] = "Select Type"
         self._hide_rows(2)
 
     def form_selected_vlcb (self):
         self._set_input_types(type="VLCB")
         self.rows.show_hide_row(2, True, "Node:")    # Show node row
-        # Hide remaining rows (can re-enable later if required)
-        self._hide_rows(3)    # Hide remaining rows (from event onwards)
+        # Only hide when finished 
         # if  current type has changed then generate node list
-        if self.current_type != "VLCB":
+        #print (f"Current_row _values {self.current_row_value}")
+        if self.current_row_value[1] != "VLCB":
             node_items = ["Select Node"] + device_model.get_nodes_names("VLCB", null_events=False)
             # if no nodes then just show NA
             if node_items == ["Select Node"]:
                 node_items = ["NA"]
             self.rows.combo_add_items(2, node_items)
-            if self.current_type == "New" and self.step != None:
-                # Set based on loaded step
-                self.rows.set_combo_text(2, device_model.key_to_name(self.step['data']['node_id'], "VLCB"))
-            else:
-                #  If VLCB is just selected and it's not loading existing step then set all other items to default
-                self._reset_row_currents(2, type="VLCB")    # Reset from node onwards
-                #self._hide_rows(3)    # Hide remaining rows (from event onwards)
-                self.current_type = "VLCB"
-                return
-        # Reach here then VLCB was already selected or we have attempted to load from step
-        self.current_type = "VLCB"
-        # Node selection is already populated - check for a value
+        # Otherwise node list is already set
+        # remember current setting
+        self.current_row_value[1] = "VLCB"
+        # If loading then set
+        if self.load_progress == "load":
+            # Set row 2 (node) based on loaded step
+            self.rows.set_combo_text(2, device_model.key_to_name(self.step['data'].get('node_id'), "VLCB"))
+
+        # Node selection is populated - check for a value
         selected_node = device_model.name_to_key(self.rows.get_combo_text(2), "VLCB")
         # If this was new and not loaded or moved back to "Select Node" then return here - need to select node first
-        if selected_node == None:
-            self.current_row2 = "Select Node"
+        if selected_node == None or selected_node == "Select Node":
+            self.current_row_value[2] = "Select Node"
+            # Hide remaining elements
+            self._hide_rows(3)
             return
+        
+        # Node selected to reach here
         #print (f"selected node {selected_node} curr {self.current_row2}")
         # Set Event to visible
         self.rows.show_hide_row(3, True, "Event:")
-        if self.current_row2 == "New" or selected_node != self.current_row2:
+        if self.current_row_value[2] != selected_node:
             # node is different to current - so update event list
             event_items = ["Select Event"] + device_model.get_events(selected_node, "VLCB")    
             if event_items == ["Select Event"]:
                 event_items = ["NA"]
             self.rows.combo_add_items(3, event_items)
+            self.current_row_value[2] = selected_node
             
-            # Hide remaining - can re-enable later if selected
-            self._hide_rows(4)    # Hide remaining rows (from value onwards)
-            if self.current_row3 == "New" and self.step != None:
-                # Set based on loaded step
-                #print (f"Raw event {self.step['data']['event']}, as name {device_model.key_to_name(self.step['data']['event'], 'VLCB')}")
-                self.rows.set_combo_text(3, device_model.key_to_name(self.step['data']['event'], "VLCB"))
-            else:
-                # If node is just selected and it's not loading existing step then set all other items to default
-                self._reset_row_currents(3, type="VLCB")    # Reset from event onwards
-                #self._hide_rows(4)    # Hide remaining rows (from value onwards)
-                self.current_row2 = selected_node
-                return
-        self.current_row2 = selected_node
-        # Reach here then event was already selected or we have attempted to load from step
+        if self.load_progress == "load":
+            # Set based on loaded step
+            self.rows.set_combo_text(3, device_model.key_to_name(self.step['data'].get('event'), "VLCB"))
+                
         # Read in row 3 (event) and check for change
         selected_event = self.rows.get_combo_text(3)
         if selected_event == None or selected_event == "Select Event":
             self._hide_rows(4)    # Hide remaining rows (from value onwards)
-            self.current_row3 = "Select Event"
+            self.current_row_value[3] = "Select Event"
             return
+        
         # show value field
         self.rows.show_hide_row(4, True, "Value:")
         #print (f"selected event {selected_event} curr {self.current_row3}")
-        if self.current_row3 == "New" or selected_event != self.current_row3:
+        if selected_event != self.current_row_value[3]:
             # event is different to current - so update value list
             # For vlcb then value is on / off depending on event (no select default to on)
             value_items = ["on", "off"]
             self.rows.combo_add_items(4, value_items)
             
-            if self.current_row4 == "New" and self.step != None:
+            if self.load_progress == "load":
                 # Set based on loaded step
-                self.rows.set_combo_text(4, self.step['data']['value'])
+                self.rows.set_combo_text(4, self.step['data'].get('value'))
             # value 2 not used - set defaults and hide value 2
             self._reset_row_currents(4, type="VLCB")    # Reset from value onwards
-            #self._hide_rows(5)    # Hide remaining rows (from value2 onwards)
-        self.current_row3 = selected_event
+            self._hide_rows(5)    # Hide remaining rows (from value2 onwards)
+        self.current_row_value[3] = selected_event
         # Don't need to check value as there are no fields below it
-        
+
 
     def form_selected_loco (self):
         #print (f"Loco selected action current row4 {self.current_row4}")
         self._set_input_types(type="Loco")
         self.rows.show_hide_row(2, True, "Loco No.:")    # Show loco row
-        # Hide remaining rows (can re-enable later if required)
-        self._hide_rows(3)    # Hide remaining rows (from DCC ID onwards)
-        # if  current type has changed then generate node list
-        if self.current_type != "Loco":
-            #node_items = ["Select Loco"] + [f"ID {i}" for i in range(1, self.num_locos_req + 1)] + ["Use DCC ID"]
+
+        # If changed then load loco list
+        if self.current_row_value[1] != "Loco":
             node_items = ["Select Loco"] + [device_model.key_to_name(i, "Loco") for i in range(1, self.num_locos_req + 1)] + ["Use DCC ID"]
             self.rows.combo_add_items(2, node_items)
-            if self.current_type == "New" and self.step != None:
-                # Set based on loaded step
-                locoid = self.step['data'].get('locoid')
-                if locoid is not None:
-                    # Locid is already as a string
-                    # self.rows.set_combo_text(2, device_model.key_to_name(locoid, "Loco"))
-                    self.rows.set_combo_text(2, locoid)
-                # There should be only one of locoid and dccid if both then locoid takes precedence
-                # If dccid then set to Use DCC ID which will load if appropriate
-                elif self.step['data'].get('dccid') is not None:
-                    self.rows.set_combo_text(2, "Use DCC ID")
-            else:
-                #  If Loco is just selected and it's not loading existing step then set all other items to default
-                if self.current_type != "New":
-                    self._reset_row_currents(2, type="Loco")    # Reset from node onwards if not new
-                self.current_type = "Loco"
-                return
-        self.current_type = "Loco"
-        # Reach here then Loco was already selected or we have attempted to load from step
-        # or if DCC ID still need to attempt to load
+        self.current_row_value[1] = "Loco"
 
-        # Loco selection is already populated - check for a value
+        # Load existing if appropriate
+        if self.load_progress == "load":
+            # Set based on loaded step
+            locoid = self.step['data'].get('locoid')
+            if locoid is not None:
+                # Locid is already as a string
+                # self.rows.set_combo_text(2, device_model.key_to_name(locoid, "Loco"))
+                self.rows.set_combo_text(2, locoid)
+            # There should be only one of locoid and dccid if both then locoid takes precedence
+            # If dccid then set to Use DCC ID which will load if appropriate
+            elif self.step['data'].get('dccid') is not None:
+                self.rows.set_combo_text(2, "Use DCC ID")
+            
+        # Loco selection is populated - check for a value
         selected_loco = self.rows.get_combo_text(2)
         if selected_loco == None or selected_loco == "Select Loco":
-            self.current_row2 = "Select Loco"
-            
+            self.current_row_value[2] = "Select Loco"
             self._hide_rows(3)    # Hide remaining rows (from DCC ID onwards)
             return
+        
         # If DCC ID then attempt to load
-        elif selected_loco == "Use DCC ID":
+        if selected_loco == "Use DCC ID":
             self.rows.set_field_type(3, "lineedit")  # Event is lineedit for DCC ID
+            # If previous was not "Use DCC ID" then clear value
+            if self.current_row_value[2] != "Use DCC ID":
+                self.rows.set_lineedit_text(3, "")
             self.rows.show_hide_row(3, True, "DCC ID:")
             # Set edit field (show label later)
             # If loading from step then set DCC ID if present
-            if self.current_row2 == "New" and self.step != None:
+
+            if self.load_progress == "load":
                 dccid = self.step['data'].get('dccid')
                 if dccid is not None:
                     self.rows.set_lineedit_text(3, device_model.key_to_name(dccid, "Loco"))
-            # Continue later regardless of value as only verify on save
         else:
             # A Loco ID is selected so show field label 
-            # These says allocated at run time
+            # These say allocated at run time
             self.rows.show_hide_row(3, True, "DCC ID:")
             self.rows.set_field_type(3, "fieldlabel")  # Event is label
-        self.current_row2 = selected_loco
-        # note curent_row3 is not used as row2 has the same meaning
-        
-        # Don't need to check further rows as doesn't affect other fields
-        #loco_id = device_model.name_to_key(self.rows.get_combo_text(2), "Loco")
+        # Set this later as need to know if action needs to be changed
+        #self.current_row_value[2] = selected_loco
+        # Continue regardless of DCC value as only verify on save
+        # Set the row 3 to "" as not relevant
+        self.current_row_value[3] = ""
 
-        ## Now add Action field (row  as dccid is row 3)
+        ## Now add Action field (row 4 as dccid is row 3)
         self.rows.show_hide_row(4, True, "Action:")
         #print (f"Loco action current row4 {self.current_row4}")
         # Actions aren't dependent on loco so just add when new
-        if self.current_row4 == "New":
-            
+        if self.current_row_value[2] != selected_loco:
             action_items = ["Select Action"] + LocoEvent.get_action_names()
             self.rows.combo_add_items(4, action_items)
+        self.current_row_value[2] = selected_loco
             
-            # Hide remaining - can re-enable later if selected
-            self._hide_rows(5)    # Hide remaining rows (from value2 onwards)
-            if self.current_row4 == "New" and self.step != None:
-                self.rows.set_combo_text(4, self.step['data']['action'])
-            else:
-                # If node is just selected and it's not loading existing step then set all other items to default
-                self._reset_row_currents(4, type="Loco")    # Reset from event onwards
-                self._hide_rows(5)    # Hide remaining rows (from value onwards)
-                self.current_row4 = "Select Action"
-                return
+        if self.load_progress == "load":
+            self.rows.set_combo_text(4, self.step['data'].get('action'))
+
+        # Read in row 4 (action) and check for change
         selected_action = self.rows.get_combo_text(4)
-        
+
         if selected_action == None or selected_action == "Select Action":
-            self.current_row4 = "Select Action"
-            self._hide_rows(5)    # Hide remaining rows (from value2 onwards)
+            self._hide_rows(5)    # Hide remaining rows (from value onwards)
+            self.current_row_value[4] = "Select Action"
             return
+
         # show value field
         self.rows.show_hide_row(5, True, "Value:")
 
-        if self.current_row5 == "New" or selected_action != self.current_row4:
+        if selected_action != self.current_row_value[4]:
             # action is different to current - so update value list
             # Options depends upon action - due to number of options
             # this is moved into AutomationDialogRows
             # if it's new then send the value to the setup
-            if self.current_row5 == "New" and self.step != None:
+            if self.load_progress == "load":
                 data = self.step.get('data')
                 self.rows.loco_action_setup(selected_action, data)
             else:
                 self.rows.loco_action_setup(selected_action)
             
-        self.current_row4 = selected_action
+        self.current_row_value[4] = selected_action
         # row5 value doesn't matter as long as set to not New
-        self.current_row5 = "Select Value"
-        
+        # row 5 depends upon loco_action_setup
+        #self._reset_row_currents(5, type="Loco")    # Reset from value 5 onwards
+        #self._hide_rows(5)    # Hide remaining rows (from value2 onwards)
+       
 
     def form_selected_gui (self):
         self._set_input_types(type="Gui")
         self.rows.show_hide_row(2, True, "Node:")    # Show node row
-        # Hide remaining rows (can re-enable later if required)
-        self._hide_rows(3)    # Hide remaining rows (from event onwards)
+        
         # if  current type has changed then generate node list
-        if self.current_type != "Gui":
+        if self.current_row_value[1] != "Gui":
             node_items = ["Select Node"] + device_model.get_nodes_names("Gui", null_events=False)
             # if no nodes then just show NA
             if node_items == ["Select Node"]:
                 node_items = ["NA"]
             self.rows.combo_add_items(2, node_items)
-            if self.current_type == "New" and self.step != None:
-                # Set based on loaded step
-                self.rows.set_combo_text(2, device_model.key_to_name(self.step['data']['node_id'], "Gui"))
-            else:
-                #  If Gui is just selected and it's not loading existing step then set all other items to default
-                self._reset_row_currents(2, type="Gui")    # Reset from node onwards
-                #self._hide_rows(3)    # Hide remaining rows (from event onwards)
-                self.current_type = "Gui"
-                return
-        # Reach here then Gui was already selected or we have attempted to load from step
-        self.current_type = "Gui"
-        # Node selection is already populated - check for a value
+
+        self.current_row_value[1] = "Gui"
+
+        if self.load_progress == "load":
+            # Set based on loaded step
+            self.rows.set_combo_text(2, device_model.key_to_name(self.step['data'].get('node_id'), "Gui"))
+
+        # Node selection is populated - check for a value
         selected_node = device_model.name_to_key(self.rows.get_combo_text(2), "Gui")
         # If this was new and not loaded or moved back to "Select Node" then return here - need to select node first
-        if selected_node == None:
-            self.current_row2 = "Select Node"
+        if selected_node == None or selected_node == "Select Node":
+            self.current_row_value[2] = "Select Node"
+            self._hide_rows(3)
             return
-        #print (f"selected node {selected_node} curr {self.current_row2}")
+        
+        # Node selected to reach here
         # Set Action to visible
         self.rows.show_hide_row(3, True, "Action:")
-        if self.current_row2 == "New" or selected_node != self.current_row2:
+        if selected_node != self.current_row_value[2]:
             # node is different to current - so update action list
             action_items = ["Select Action"] + device_model.get_events(selected_node, "Gui")    
             if action_items == ["Select Action"]:
                 action_items = ["NA"]
             self.rows.combo_add_items(3, action_items)
-            
-            # Hide remaining - can re-enable later if selected
-            self._hide_rows(4)    # Hide remaining rows (from value onwards)
-            if self.current_row3 == "New" and self.step != None:
-                # Set based on loaded step
-                #print (f"Raw event {self.step['data']['event']}, as name {device_model.key_to_name(self.step['data']['event'], 'VLCB')}")
-                self.rows.set_combo_text(3, device_model.key_to_name(self.step['data']['event'], "Gui"))
-            else:
-                # If node is just selected and it's not loading existing step then set all other items to default
-                self._reset_row_currents(3, type="Gui")    # Reset from event onwards
-                #self._hide_rows(4)    # Hide remaining rows (from value onwards)
-                self.current_row2 = selected_node
-                return
-        self.current_row2 = selected_node
-        # Reach here then event was already selected or we have attempted to load from step
+
+        if self.load_progress == "load":
+            self.rows.set_combo_text(3, device_model.key_to_name(self.step['data'].get('event'), "Gui"))
+
+        self.current_row_value[2] = selected_node
+        
         # Read in row 3 (action) and check for change
         selected_action = self.rows.get_combo_text(3)
-        if selected_action == None or selected_action == "Select Action" or selected_action == "Toggle":
+        
+        if selected_action == None or selected_action == "Select Action":
             self._hide_rows(4)    # Hide remaining rows (from value onwards)
-            self.current_row3 = "Select Action"
+            self.current_row_value[3] = "Select Action"
             return
-        # show value field
+
+        # If action requires a value then show value row
+        # Not required for Toggle
+        if selected_action == "Toggle":
+            self._hide_rows(4)
+            self.current_row_value[3] = "Toggle"
+            return
+
         self.rows.show_hide_row(4, True, "Value:")
-        #print (f"selected event {selected_event} curr {self.current_row3}")
-        if self.current_row3 == "New" or selected_action != self.current_row3:
-            # event is different to current - so update value list
-            # For vlcb then value is on / off depending on event (no select default to on)
+        # If previous entry changed then need to create value list
+        if selected_action != self.current_row_value[3]:
             value_items = ["on", "off"]
             self.rows.combo_add_items(4, value_items)
+
+        self.current_row_value[3] = selected_action
+
+        if self.load_progress == "load":
+            self.rows.set_combo_text(4, self.step['data'].get('value'))
             
-            if self.current_row4 == "New" and self.step != None:
-                # Set based on loaded step
-                self.rows.set_combo_text(4, self.step['data']['value'])
-            # value 2 not used - set defaults and hide value 2
-            self._reset_row_currents(4, type="Gui")    # Reset from value onwards
-            #self._hide_rows(5)    # Hide remaining rows (from value2 onwards)
-        self.current_row3 = selected_action
+        # value 2 not used - set defaults and hide value 2
+        self._hide_rows(5)
         # Don't need to check value as there are no fields below it
 
 
     def form_selected_app (self):
         self._set_input_types(type="App")
         self.rows.show_hide_row(2, True, "Command:")    # Show node row
-        # Hide remaining rows (can re-enable later if required)
-        self._hide_rows(3)    # Hide remaining rows (from event onwards)
-
-        #print (f"Checking current type {self.current_type}")
         # if  current type has changed then generate node list
-        if self.current_type != "App":
+        if self.current_row_value[1] != "App":
             # For app then just hard code some options for now
             command_items = ["Select Command", "Wait", "Set Variable"]
             self.rows.combo_add_items(2, command_items)
-            if self.current_type == "New" and self.step != None:
-                # Set based on loaded step
-                self.rows.set_combo_text(2, self.step['data']['command'])
-            else:
-                #  If App is just selected and it's not loading existing step then set all other items to default
-                self._reset_row_currents(2, type="App")    # Reset from node onwards
-                #print (f"Resetting row currents 3 = {self.current_row3}")
-                #self._hide_rows(3)    # Hide remaining rows (from event onwards)
-                self.current_type = "App"
-                return
-        # Reach here then App was already selected or we have attempted to load from step
-        self.current_type = "App"
-        #print (f"Current type set to {self.current_type}")
+
+        self.current_row_value[1] = "App"
+
+        if self.load_progress == "load":
+            # Set based on loaded step
+            self.rows.set_combo_text(2, self.step['data'].get('command'))
 
         # Command selection is already populated - check for a value
         selected_command = self.rows.get_combo_text(2)
 
         # If this was new and not loaded or moved back to "Select Command" then return here - need to select node first
         if selected_command == None or selected_command == "Select Command":
-            self.current_row2 = "Command"
-            # self.current_row3 = "Select Command"
-            #print ("No command seletected row 3 = New")
-            self.current_row3 = "New"
+            self.current_row_value[2] = "Select Command"
+            self._hide_rows(3)
             return
-        # Set Argument to visible - diferent argument depending upon command
-        #self.rows.show_hide_row(3, True, "Event:")
-        if self.current_row2 == "New" or selected_command != self.current_row2:
-            #print (f"New? {self.current_row2} - selected command {selected_command}")
-            self.current_row2 = selected_command
+        
+        #print (f"App command selected {selected_command} curr {self.current_row_value[2]}")
 
+        # Set Argument to visible - different argument depending upon command
+    
         if selected_command == "Wait":
             self.form_app_wait()
         elif selected_command == "Set Variable":
             self.form_app_variable()
+        
+        self.current_row_value[2] = selected_command
 
     def form_app_wait (self):
         self.rows.set_field_type(3, "lineedit")
         self.rows.show_hide_row(3, True, "Delay:")
 
-        if self.current_row3 == "New" and self.step != None:
-            if "delay" in self.step['data']:
-                self.rows.set_lineedit_text (3, self.step['data']['delay'])
-        # set 3 to a string that is not New
-        self.current_row3 = "Wait"
+        # If command changed - reset lineedit value
+        if self.current_row_value[2] != "Wait":
+            self.rows.set_lineedit_text (3, "")
+
+        if self.load_progress == "load":
+            self.rows.set_lineedit_text (3, self.step['data'].get('delay', ""))
+
         self._hide_rows (4)
 
 
     def form_app_variable (self):
-        if self.step != None:
-            print (f"In variable form {self.step}, row3 {self.current_row3}, row 4 {self.current_row4}")
+        #if self.step != None:
+        #    print (f"In variable form {self.step}, row3 {self.current_row3}, row 4 {self.current_row4}")
         #print (f"Set Variable selected current row 3 {self.current_row3}")
         self.rows.set_field_type(3, "combo")
         self.rows.show_hide_row(3, True, "Variable name:")
 
         # row may be set to Select Command from defaults
-        if self.current_row3 == "New" or self.current_row3 == "default":
+        if self.current_row_value[2] != "Set Variable":
             variable_list = ["Select Variable"] + device_model.get_variable_names() + ["New Variable"]
             self.rows.combo_add_items(3, variable_list)
-            #self.current_row3 = "Select Variable"
-            #return
 
         # If loading existing then select variable
-        if self.current_row3 == "New" and self.step != None:
-            print (f"Variable {self.step}")
-            if "variable" in self.step['data']:
-                variable_name = self.step['data']['variable']
+        if self.load_progress == "load":
+            #print (f"Variable {self.step}")
+            variable_name = self.step['data'].get('variable')
+            # Check variable name is not ""
+            if variable_name != None and variable_name != "":
                 # If variable doesn't exist then add
                 if self.mainwindow.appvariables.is_variable(variable_name) != True:
                     # Create the variable but do not give it a value - as that will only be when automation run
@@ -483,18 +473,14 @@ class AutomationStepDialog(QDialog):
                     # Reload the combo list 
                     variable_list = ["Select Variable"] + device_model.get_variable_names() + ["New Variable"]
                     self.rows.combo_add_items(3, variable_list)
-                self.rows.set_combo_text (3, self.step['data']['variable'])
+                self.rows.set_combo_text (3, variable_name)
         
-
         # Read value back to check setting
         selected_variable = self.rows.get_combo_text (3)
 
-        #print (f"Selected variable {selected_variable}")
-
         if selected_variable == "Select Variable":
             # hide remaining - need to choose variable first
-            #self.rows.show_hide_row(3, True, "Variable name:")
-            self.current_row3 = "Select Variable"
+            self.current_row_value[3] = "Select Variable"
             self._hide_rows(4)
             return
 
@@ -502,8 +488,6 @@ class AutomationStepDialog(QDialog):
         # new dialog
         elif selected_variable == "New Variable":
             self.rows.show_hide_row(3, True, "Variable name:")
-            self._hide_rows(4)
-            self.current_row3 = "New Variable"
             #print ("Launching add variable dialog")
             new_variable = self.create_variable_dialog()
             if new_variable != None and new_variable != "" and self.mainwindow.appvariables.is_variable(new_variable) != True:
@@ -515,31 +499,34 @@ class AutomationStepDialog(QDialog):
                 self.rows.set_combo_text(3, new_variable)
             else:
                 # If didn't get a new variable then return so that the user can select again
-                self.current_row3 = "Select Variable"
+                self.current_row_value[3] = "Select Variable"
                 self._hide_rows(4)
                 return 
             
         # Here - confirm a variable is selected
         selected_variable = self.rows.get_combo_text(3)
-        #print (f"Selecte variable {selected_variable}")
-        self.current_row3 = selected_variable
 
         # Check haven't gone back to Select Variable (eg. variable creation error)
         if selected_variable == "Select Variable":
+            self.current_row_value[3] = "Select Variable"
+            self._hide_rows(4)
             return
 
-        self.rows.show_hide_row(3, True, "Variable name:")
-        # Show row4 - value entry - which is a lineedit
+        # Now have variable name
+        # Show row 4 - value entry - which is a lineedit
         self.rows.set_field_type(4, "lineedit")
-        # if loading existing
-        if self.current_row4 == "New" and self.step != None:
-            self.rows.set_lineedit_text (4, self.step['data'].get('value'))
-            self.current_row4 = "Value"
-        # TODO: clear any existing unless this is loading from previous step 
-        if self.current_row4 != "Value":
-            self.rows.set_lineedit_text (4, "")
-            self.current_row4 = "Value"
         self.rows.show_hide_row(4, True, "Value:")
+
+        # If variable changed then clear value
+        if self.current_row_value[3] != selected_variable:
+            self.rows.set_lineedit_text (4, "")
+
+        self.current_row_value[3] = selected_variable
+
+        # if loading existing
+        if self.load_progress == "load":
+            self.rows.set_lineedit_text (4, self.step['data'].get('value'))
+
         self._hide_rows(5)
 
     # Gets data if valid and returns as a dict
