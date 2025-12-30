@@ -59,9 +59,8 @@ Stop Loco
 
 
 
-Also need if / else
-
-Also handle loops
+Also need jump if (no else that should be a separate check - start with ! < > - default to =)
+Loops woud be handled by jump
 
 Also feedback to the operator (eg. if a sequence fails after x attempts)
 
@@ -76,7 +75,7 @@ whereas Locos can be swapped out as required
 Include variables (these are like an event where you can query). Rather than wait on sensor can query it's state and 
 keep running. This would be similar to have multiple processes.
 
-Can also make use of variables within a Rule - these are stored in the appropriate value fields as ${varname}
+Can also make use of variables within a Rule - these are stored in the appropriate value fields as {varname}
 
 sequence includes Labels. These are skipped over, but can be used for loops (goto loop). Loops should really only move backwards (avoid 
 jump forward to avoid risk of spagetti code), although not enforced. Still possible to make the rules difficult to follow so should be used with care

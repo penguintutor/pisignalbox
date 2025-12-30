@@ -42,9 +42,7 @@ loader.registerCustomWidget(LayoutDisplay)
 # Setup file paths
 basedir = os.path.dirname(__file__)
 
-#pc_can_id = 60      # CAN ID of CANUSB4
-
-app_title = "VLCB App"
+app_title = "Pi SignalBox"
 
 url = "http://127.0.0.1:5000/"
 
