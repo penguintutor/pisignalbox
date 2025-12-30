@@ -1,6 +1,4 @@
 """ Dialog for creating a new AutomationSequence."""
-# TODO: Fix Gui loading
-# TODO: Allow text string to wait (allow variable) - hide further rows
 
 import sys
 from PySide6.QtWidgets import (
@@ -62,6 +60,9 @@ class AutomationStepDialog(QDialog):
             self.current_row_value[i] = "" 
 
     def _reset_row_currents (self, from_row, type="VLCB"): 
+        # TODO: plan to remove in future - testing return 
+        # Replaced by hide_rows resetting values
+        return
         # New method - reset to ""
         for i in range (from_row, 6):
             self.current_row_value[i] = ""
@@ -603,14 +604,15 @@ class AutomationStepDialog(QDialog):
         elif locoid == "Use DCC ID":
             # Get DCC ID from lineedit
             dccid_str = self.rows.get_lineedit_text(3)
-            try:
-                dccid = int(dccid_str)
-                if not (1 <= dccid <= 9999):
-                    QMessageBox.warning(self, "Invalid DCC ID", "DCC ID must be between 1 and 9999.")
-                    return None
-            except ValueError:
-                QMessageBox.warning(self, "Invalid DCC ID", "DCC ID must be an integer.")
-                return None
+            # DCC ID checks removed to allow variables etc.
+            # try:
+            #     dccid = int(dccid_str)
+            #     if not (1 <= dccid <= 9999):
+            #         QMessageBox.warning(self, "Invalid DCC ID", "DCC ID must be between 1 and 9999.")
+            #         return None
+            # except ValueError:
+            #     QMessageBox.warning(self, "Invalid DCC ID", "DCC ID must be an integer.")
+            #     return None
             data_dict['dccid'] = dccid
         else:
             # Save with ID {locoid} format

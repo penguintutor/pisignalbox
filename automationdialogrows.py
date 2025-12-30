@@ -47,7 +47,8 @@ class AutomationDialogRows:
         # Special setup for Loco and App Delay - if use these for other types would need to adjust
         ### Only allow numbers for DCC ID (1 to 9999)
         # Set large range if required validate in save
-        self.lineedits[3].setValidator(QIntValidator(1, 99999, self.lineedits[3]))
+        # Removed validator to allow variables etc.
+        #self.lineedits[3].setValidator(QIntValidator(1, 99999, self.lineedits[3]))
         self.fieldlabels = [QLabel() for i in range (6)]
         self.fieldlabels[3].setText("Allocated when run")  # Event alternative label if DCC not selected
         # Can sometimes swap out combo for spinbox - eg. loco speed
