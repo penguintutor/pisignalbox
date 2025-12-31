@@ -15,6 +15,9 @@ class AutomationManager (QObject):
         "Default": "default.json"
         }
     
+    global_status = Signal(str)
+    #sequence_finished = Signal()
+    
     # Pass the directory to the init as in future may allow different files
     # Automation name is the name of the overall collection of sequences (ie. which file to load)
     
@@ -37,14 +40,12 @@ class AutomationManager (QObject):
         return vars
 
     def add_sequence(self, sequence_data):
-        print ("Adding sequence to Automation Manager")
-        #self.sequences.append(AutomationSequence(self.vars, **sequence_data))
-        #self.sequences[-1].signals.notify.connect(self.handle_notify)
-        #self.sequences[-1].signals.status.connect(self.handle_status)
+        #print ("Adding sequence to Automation Manager")
 
         sequence = AutomationSequence(self.vars, **sequence_data)
         sequence.signals.notify.connect(self.handle_notify)
         sequence.signals.status.connect(self.handle_status)
+        sequence.signals.finished.connect(self.sequence_finished)   
         self.sequences.append(sequence)
 
     def handle_notify(self, title, message):
@@ -52,6 +53,10 @@ class AutomationManager (QObject):
 
     def handle_status(self, status_message):
         QMessageBox.information(None, "Status", status_message)
+
+    def sequence_finished(self, seq_num):
+        #print (f"Automation Manager: Sequence {seq_num} finished")
+        self.global_status.emit(f"Sequence {seq_num} finished")
 
     def update_sequence(self, seq_num, sequence_data):
         if seq_num >= len(self.sequences):
@@ -137,6 +142,7 @@ class AutomationManager (QObject):
                 this_seq = AutomationSequence.from_dict(item_data, self.vars)
                 this_seq.signals.notify.connect(self.handle_notify)
                 this_seq.signals.status.connect(self.handle_status)
+                this_seq.signals.finished.connect(self.sequence_finished)
                 restored_sequences.append(this_seq)
             
             self.sequences = restored_sequences
@@ -152,7 +158,7 @@ class AutomationManager (QObject):
             
     def thread_start (self, seq_num):
         if seq_num < len(self.sequences):
-            self.sequences[seq_num].run()
+            self.sequences[seq_num].run(seq_num)
             
     def run_sequence(self, seq_num):
         # Only allow one check_responses thread to run at a time

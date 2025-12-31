@@ -7,6 +7,6 @@ from PySide6.QtWidgets import QMessageBox
 class WorkerSignals(QObject):
     notify = Signal(str, str)  # title, message
     status = Signal(str)       # status message
-    finished = Signal()
+    finished = Signal(int)   # sequence number
     error = Signal(tuple)
     result = Signal(object)

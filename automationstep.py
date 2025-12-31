@@ -64,7 +64,7 @@ class AutomationStep:
     # If any variable tokens are found they are handled in the run        
     def run (self, notify_signal, status_signal):
         run_data = self.parse_var()
-        print (f"Step {self.step_name} of type {self.step_type} running with data {run_data}")
+        #print (f"Step {self.step_name} of type {self.step_type} running with data {run_data}")
         # Now use run_data - which has any variables parsed
         if self.step_type == "App":
             app_command = run_data['data'].get("command", "")
@@ -80,11 +80,11 @@ class AutomationStep:
                 message = run_data['data'].get("message", "")
                 blocking = run_data['data'].get("blocking", "True")
                 # For now just print the message
-                print (f"User Notification: {message} (Blocking: {blocking})")
+                #print (f"User Notification: {message} (Blocking: {blocking})")
                 #QMessageBox.information(self, "User Notification", message)
                 notify_signal.emit("User Notification", message)
-                time.sleep(20)
-                print ("Sleep finished")
+                #time.sleep(20)
+                #print ("Sleep finished")
             else:
                 print (f"Unknown App command: {app_command}")
         elif self.step_type == "Rule":

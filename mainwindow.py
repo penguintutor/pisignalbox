@@ -177,6 +177,8 @@ class MainWindowUI(QMainWindow):
             #print (f"Adding variable {var} to AppVar from AutomationManager")
             self.add_variable (var, "", False)
 
+        self.automation.global_status.connect(self.update_sequence_status)
+
         
         # Signals
         self.steal_dialog_signal.connect (self.steal_loco_dialog)
@@ -292,7 +294,10 @@ class MainWindowUI(QMainWindow):
                           
         # Initial discover request
         self.api.discover()
-        
+
+    # TODO: handle sequence status updates
+    def update_sequence_status (self, status_message):
+        print (f"Sequence status update: {status_message}") 
     
     def gui_event (self, gui_event):
         #print ("Gui event receieved {gui_event}")
