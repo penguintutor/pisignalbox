@@ -39,7 +39,7 @@ class AutomationDialogRows:
         self.lineedits = [
                 QLineEdit(),    # Step Name
                 None,           # Rule Type
-                None,           # Node / Loco ID
+                QLineEdit(),    # Node / Loco ID - linedit used for label
                 QLineEdit(),    # Event / DCC ID / Delay
                 QLineEdit(),    # Value / Action
                 QLineEdit()     # Value2
@@ -72,7 +72,7 @@ class AutomationDialogRows:
         # Not added to the row - that is done through add_custom_widgets method
 
         # Rule type list is fixed
-        self.rule_types = ["Select Type", "VLCB", "Loco", "App", "User Interface"]
+        self.rule_types = ["Select Type", "VLCB", "Loco", "App", "User Interface", "Label", "Jump"]
         self.combos[1].addItems(self.rule_types)
 
         # min row height applied to all the labels to keep spacing if set to ""

@@ -1,5 +1,7 @@
 # Dialog for creating a new AutomationSequence.
 
+# TODO: Load variables when editing sequence - perhaps on all sequences?
+
 import sys
 import copy
 import re
@@ -23,6 +25,7 @@ class AutomationSeqDialog(QDialog):
         self.sequence = sequence # For editing, if passed
         self.seq_data = {}
         self.steps = [] # Stores list of AutomationSteps (as dicts) - When turned into sequence these become objects
+        self.labels = [] # List of labels in the sequence - used to pass to step dialog
         
         self._setup_ui()
         if sequence != None:
@@ -75,9 +78,13 @@ class AutomationSeqDialog(QDialog):
 
     
     # Refreshes the list widget with the current steps
+    # Also update the labels list
     def _update_steps_list(self):
         self.steps_list.clear()
+        self.labels = []
         for i, step in enumerate(self.steps):
+            if step.get("type") == "Label":
+                self.labels.append(step.get("data", {}).get("labelid", ""))
             #rule_count = len(step.rules)
             #mode = step.execution_mode.capitalize()
             #print (f"Step {step}")
@@ -97,7 +104,6 @@ class AutomationSeqDialog(QDialog):
         # copy steps by converting back to dict as though created
         # this protects the current (if cancel is pressed)
         # and ensures a edit is similar to a new
-        ## todo ###
         for step in sequence.get_steps():
             self.steps.append(step.to_dict())
         
@@ -118,7 +124,7 @@ class AutomationSeqDialog(QDialog):
         num_locos = self._calc_locos()
 
         # Use a sub-dialog (StepCreationDialog) for rule building
-        dialog = AutomationStepDialog(self, num_locos, current_step)
+        dialog = AutomationStepDialog(self, num_locos, self.labels, current_step)
         if dialog.exec() == QDialog.Accepted:
             new_step = dialog.get_step()
             #print (f"New/Edited step: {new_step}")

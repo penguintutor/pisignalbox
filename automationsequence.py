@@ -132,8 +132,8 @@ class AutomationSequence (QRunnable):
 # These are created from a dict and then extracted for the Automation Rule
 class AutomationStep:
     # sequence is the sequence this is part of (needed for loops etc.)
-    # type is Rule, Var (plus operation), Label, Loop, Sequence
-    # name is the name passed to the rule, or in the case of the label is the actual label
+    # type is Rule, Var (plus operation), Label, Jump
+    # name is the name passed to the rule
     # all other parameters are included in settings
     # rule is not normally provided - unless loading from json
     # Only used if this has an instance of AutomationRule

@@ -18,7 +18,7 @@ from locoevent import LocoEvent
 
 # Dialog for creating automation step (eg. rule)
 class AutomationStepDialog(QDialog):
-    def __init__(self, parent, num_locos, step: AutomationStep = None):
+    def __init__(self, parent, num_locos: int, labels: list, step: AutomationStep = None):
         super().__init__(parent)
         self.parent = parent
         self.mainwindow = self.parent.mainwindow
@@ -26,6 +26,7 @@ class AutomationStepDialog(QDialog):
         self.resize(350, 250)
         # Always show 1 more loco in case a new one is required
         self.num_locos_req = num_locos + 1
+        self.labels = labels # List of labels in the sequence - used for any jumps
         self.step = step
         self.params = {}
 
@@ -79,8 +80,11 @@ class AutomationStepDialog(QDialog):
         # For loco manage within selection - for others set row 3 back to combo
         if type == "Loco":
             pass
+        if type == "Label":
+            self.rows.set_field_type(2, "lineedit")  # Node is lineedit for Label ID
         # Default for all others
         else:
+            self.rows.set_field_type(2, "combo")
             self.rows.set_field_type(3, "combo")  # Event is combobox
 
     def update_rows (self, load = False):
@@ -115,6 +119,10 @@ class AutomationStepDialog(QDialog):
             self.form_selected_gui()
         elif form_type == "App":
             self.form_selected_app()
+        elif form_type == "Label":
+            self.form_selected_label()
+        elif form_type == "Jump":
+            self.form_selected_jump()
         else:
             self.form_selected_none()
 
@@ -149,7 +157,7 @@ class AutomationStepDialog(QDialog):
         # Node selection is populated - check for a value
         selected_node = device_model.name_to_key(self.rows.get_combo_text(2), "VLCB")
         # If this was new and not loaded or moved back to "Select Node" then return here - need to select node first
-        if selected_node == None or selected_node == "Select Node":
+        if selected_node == None or selected_node == "Select Node" or selected_node == "NA":
             self.current_row_value[2] = "Select Node"
             # Hide remaining elements
             self._hide_rows(3)
@@ -311,7 +319,7 @@ class AutomationStepDialog(QDialog):
         # Node selection is populated - check for a value
         selected_node = device_model.name_to_key(self.rows.get_combo_text(2), "Gui")
         # If this was new and not loaded or moved back to "Select Node" then return here - need to select node first
-        if selected_node == None or selected_node == "Select Node":
+        if selected_node == None or selected_node == "Select Node" or selected_node == "NA":
             self.current_row_value[2] = "Select Node"
             self._hide_rows(3)
             return
@@ -489,6 +497,79 @@ class AutomationStepDialog(QDialog):
 
         self._hide_rows(5)
 
+    def form_selected_label (self):
+        self._set_input_types(type="Label")
+        self.rows.show_hide_row(2, True, "ID:")    # Show label ID row
+        self._hide_rows(3)    # No further rows
+
+    def form_selected_jump (self):
+        self._set_input_types(type="Jump")
+        self.rows.show_hide_row(2, True, "Jump to:")    # Show label ID row
+        
+        # if  current type has changed then generate node list
+        if self.current_row_value[1] != "Jump":
+            label_items = ["Select Label"] + self.labels
+            # if no nodes then just show NA
+            if label_items == ["Select Label"]:
+                label_items = ["NA"]
+            self.rows.combo_add_items(2, label_items)
+
+        self.current_row_value[1] = "Jump"
+        if self.load_progress == "load":
+            # Set based on loaded step
+            self.rows.set_combo_text(2, self.step['data'].get('labelid'))
+
+        # Label selection is populated - check for a value
+        selected_label = self.rows.get_combo_text(2)
+        # If this was new and not loaded or moved back to "Select Label" then return here - need to select label first
+        if selected_label == None or selected_label == "Select Label" or selected_label == "NA":
+            self.current_row_value[2] = "Select Label"
+            self._hide_rows(3)
+            return
+        
+        # Label selected to reach here
+        # Set Variable to visible
+        self.rows.show_hide_row(3, True, "Variable:")
+        if selected_label != self.current_row_value[2]:
+            # label is different to current - so update variable list
+            variable_list = ["Select Variable"] + device_model.get_variable_names()
+            if variable_list == ["Select Variable"]:
+                variable_list = ["NA"]
+            self.rows.combo_add_items(3, variable_list)
+
+        if self.load_progress == "load":
+            self.rows.set_combo_text(3, self.step['data'].get('labelid')) 
+
+        self.current_row_value[2] = selected_label
+        
+        # Read in row 3 (variable) and check for change
+        selected_variable = self.rows.get_combo_text(3)
+
+        if selected_variable == None or selected_variable == "Select Variable" or selected_variable == "NA":
+            self._hide_rows(4)    # Hide remaining rows (from value onwards)
+            self.current_row_value[3] = "Select Variable"
+            return
+
+        # Show condition row
+
+        self.rows.show_hide_row(4, True, "Condition:")
+        # If previous entry changed then need to create value list
+        if selected_variable != self.current_row_value[3]:
+            condition_items = ["equals", "not equals", "greater than", "less than", ">=", "<="]
+            self.rows.combo_add_items(4, condition_items)
+
+        self.current_row_value[3] = selected_variable
+
+        if self.load_progress == "load":
+            self.rows.set_combo_text(4, self.step['data'].get('condition'))
+
+        # Condition defaults to equals - so no need to check it's selected
+            
+        # value 2 used for comparison, this is a lineedit allowing for text / variable / value
+        self.rows.set_field_type(5, "lineedit")
+        self.rows.show_hide_row(5, True, "Value:")
+
+
     # Gets data if valid and returns as a dict
     def save_step(self):
         rule_type = self.rows.get_combo_text(1)
@@ -559,7 +640,32 @@ class AutomationStepDialog(QDialog):
             
             # Return as a dict - let Automation Sequence convert into an Automation Step
             self.step = {"type": "App", "name": self.name, "data" : data_dict}
+        elif rule_type == "Label":
+            data_dict = self._get_step_data_label()
+            # If error then prev would give a QMessage and return None
+            # just return to allow correct and try again
+            if data_dict is None:
+                return
+            # If no name given then can replace with a user friendly
+            if self.name == "":
+                self.name = f"Label: {data_dict['labelid']}"
+
+            # Return as a dict - let Automation Sequence convert into an Automation Step
+            self.step = {"type": "Label", "name": self.name, "data" : data_dict}
             
+        elif rule_type == "Jump":
+            data_dict = self._get_step_data_jump()
+            # If error then prev would give a QMessage and return None
+            # just return to allow correct and try again
+            if data_dict is None:
+                return
+            # If no name given then can replace with a user friendly
+            if self.name == "":
+                self.name = f"Jump: {data_dict['labelid']}"
+
+            # Return as a dict - let Automation Sequence convert into an Automation Step
+            self.step = {"type": "Jump", "name": self.name, "data" : data_dict}
+
         # Todo need to implement all rule types so this doesn't happen
         else:
             print (f"Unable to validate entries {rule_type}")
@@ -613,7 +719,7 @@ class AutomationStepDialog(QDialog):
             # except ValueError:
             #     QMessageBox.warning(self, "Invalid DCC ID", "DCC ID must be an integer.")
             #     return None
-            data_dict['dccid'] = dccid
+            data_dict['dccid'] = dccid_str
         else:
             # Save with ID {locoid} format
             data_dict['locoid'] = locoid
@@ -691,6 +797,44 @@ class AutomationStepDialog(QDialog):
             return None
         data_dict['variable'] = variable
         value = self.rows.get_lineedit_text (4)
+        data_dict['value'] = value
+        return data_dict
+
+    def _get_step_data_label(self):
+        """ Gets step data for label - used in save_step """
+        # If fails uses QMessage and returns None
+        data_dict = {}
+        labelid = self.rows.get_lineedit_text(2)
+        if labelid == None or labelid == "":
+            QMessageBox.warning(self, "Invalid Label ID", "Please select a valid label ID.")
+            return None
+        data_dict['labelid'] = labelid
+        return data_dict
+
+    def _get_step_data_jump(self):
+        """ Gets step data for jump - used in save_step """
+        # If fails uses QMessage and returns None
+        data_dict = {}
+        labelid = self.rows.get_combo_text(2)
+        if labelid == None or labelid == "Select Label" or labelid == "NA":
+            QMessageBox.warning(self, "Invalid Label", "Please select a valid label.")
+            return None
+        data_dict['labelid'] = labelid
+        variable = self.rows.get_combo_text(3)
+        if variable == None or variable == "Select Variable" or variable == "NA":
+            QMessageBox.warning(self, "Invalid Variable", "Please select a valid variable.")
+            return None
+        data_dict['variable'] = variable
+        condition = self.rows.get_combo_text(4)
+        # Should always have a condition selected but check anyway
+        if condition == None or condition == "NA":
+            QMessageBox.warning(self, "Invalid Condition", "Please select a valid condition.")
+            return None
+        data_dict['condition'] = condition
+        value = self.rows.get_lineedit_text(5)
+        if value == None or value == "":
+            QMessageBox.warning(self, "Invalid Value", "Please enter a valid value.")
+            return None
         data_dict['value'] = value
         return data_dict
 

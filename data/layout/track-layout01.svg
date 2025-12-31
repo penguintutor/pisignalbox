@@ -7,7 +7,7 @@
    id="svg1"
    sodipodi:docname="track-layout01.svg"
    inkscape:version="1.4.2 (2aeb623e1d, 2025-05-12)"
-   inkscape:export-filename="track-layout01.png"
+   inkscape:export-filename="../4364078/track-layout01.png"
    inkscape:export-xdpi="257.05249"
    inkscape:export-ydpi="257.05249"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
@@ -26,10 +26,10 @@
      inkscape:pagecheckerboard="0"
      inkscape:deskcolor="#d1d1d1"
      inkscape:document-units="mm"
-     inkscape:zoom="1.3165015"
-     inkscape:cx="309.15271"
-     inkscape:cy="233.5736"
-     inkscape:window-width="1854"
+     inkscape:zoom="0.93090714"
+     inkscape:cx="214.8442"
+     inkscape:cy="283.59434"
+     inkscape:window-width="1859"
      inkscape:window-height="1011"
      inkscape:window-x="0"
      inkscape:window-y="0"
@@ -75,13 +75,13 @@
      transform="matrix(0.8305942,0.55687815,-0.61184365,0.79097873,0,0)" />
   <text
      xml:space="preserve"
-     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.35134px;font-family:'DejaVu Math TeX Gyre';-inkscape-font-specification:'DejaVu Math TeX Gyre, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#1a1a1a;stroke:#1a1a1a;stroke-width:0.156587"
-     x="50.268101"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.1111px;font-family:'DejaVu Math TeX Gyre';-inkscape-font-specification:'DejaVu Math TeX Gyre, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;text-align:start;writing-mode:lr-tb;direction:ltr;text-anchor:start;fill:#1a1a1a;stroke:#1a1a1a;stroke-width:0.156587"
+     x="49.323582"
      y="25.062817"
      id="text3-7"><tspan
        sodipodi:role="line"
        id="tspan3-67"
-       x="50.268101"
+       x="49.323582"
        y="25.062817"
-       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:8.35134px;font-family:'DejaVu Math TeX Gyre';-inkscape-font-specification:'DejaVu Math TeX Gyre, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;stroke-width:0.156587;fill:#1a1a1a;stroke:#1a1a1a">Pico Point Controller</tspan></text>
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:14.1111px;font-family:'DejaVu Math TeX Gyre';-inkscape-font-specification:'DejaVu Math TeX Gyre, Normal';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-east-asian:normal;fill:#1a1a1a;stroke:#1a1a1a;stroke-width:0.156587">Pi SignalBox</tspan></text>
 </svg>
