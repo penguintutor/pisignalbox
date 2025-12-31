@@ -32,16 +32,36 @@ class AutomationSequence (QRunnable):
         self.active = False		# Set to true when starting, set back to false to stop
         
         # Each step contains self.step = {"step_type": rule_type, "step_name": step_name, data : data_dict}
+        #print ("Loading into Auatomation Sequence")
         for i, step_data in enumerate(list_steps):
             #print (f"Adding {step_data} to sequence")
             #print (f"{step_data}")
             # If it's a label then add to dict of labels
             if step_data['type'] == "Label":
                 self.labels[step_data['name']] = i
+            ## Variables need to be added through automationmanager to use the mainwindow and so be included in device_model
+            # if step_data['type'] == "App":
+            #     print (f"App Step data: {step_data}, var {self.vars}")
+            #     # If it's a set variable command then ensure variable exists
+            #     if step_data['data'].get("command", "") == "Set Variable":
+            #         var_name = step_data['data'].get("variable", "")
+            #         print (f"Variable name {var_name}")
+            #         if not self.vars.is_variable(var_name):
+            #             self.vars.add_variable(var_name, "")
+            #             print (f"Adding variable {var_name} to AppVar from AutomationSequence")
             #print (f"Step data {step_data}")
             #print (f"Name {step_data['name']}")
+            #print (f"Variables {self.vars.variables}")
             self.steps.append(AutomationStep(self.vars, step_data['type'], step_data['name'], step_data))
          
+    def get_variables (self):
+        vars = []
+        for step in self.steps:
+            variable = step.get_variable()
+            if variable != "":
+                vars.append(variable)
+        return vars
+
     @Slot()
     def run (self):
         print (f"Starting sequence {self.title}")
@@ -115,6 +135,7 @@ class AutomationSequence (QRunnable):
     # from json also needs mainwindow - pass as optional argument
     @classmethod
     def from_json(cls, json_str: str, appvariables=None):
+        print (f"Loading AutomationSequence from JSON")
         """Deserialize JSON string to AutomationSequence."""
         d = json.loads(json_str)
         return cls.from_dict(d, appvariables)
@@ -155,6 +176,12 @@ class AutomationStep:
             self.rule = AutomationRule(self.step_name, ruletype, self.data)
         #  Variables are not created / updated here - only when run
 
+    def get_variable (self):
+        if 'variable' in self.data['data']:
+            varname = self.data['data'].get("variable", "")
+            #print (f"Variable name found: {varname}")
+            return varname
+        return ""
             
     def parse_var (self):
         # Copy data dict to run_data - which allows for any variable substitutions

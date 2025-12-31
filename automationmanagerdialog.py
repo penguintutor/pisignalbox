@@ -22,6 +22,10 @@ class AutomationManagerDialog(QDialog):
         
         self.mainwindow = parent
 
+        print (f"AutomationManagerDialog created with AutomationManager: {self.manager}")
+        print (f"Manager AppVar: {self.manager.vars}")
+        print (f"Main Window appvr value : {self.mainwindow.appvariables.variables}")
+
         self._setup_ui()
         self._update_list()
 
@@ -68,33 +72,6 @@ class AutomationManagerDialog(QDialog):
         self.open_sequence_dialog(None)
 
     def edit_sequence(self):
-        # Todo setup edit of sequence
-        # Get the selected sequence
-        # indexFromItem
-        row_num = self.rule_list.currentRow()
-        sequence = self.manager.get_sequence(row_num)
-        dialog = AutomationSeqDialog(self, sequence)
-        if dialog.exec() == QDialog.Accepted:
-            new_sequence = dialog.get_sequence()
-            self.manager.update_sequence(row_num, new_sequence)
-            result = self.manager.save()
-            if result == "Save successful":
-                QMessageBox.information(self, "Success", f"Sequence '{new_sequence['title']}' updated.")
-            else:
-                QMessageBox.information(self, "Save Error", result)    
-        self._update_list()
-            
-        # Todo setup edit of sequence
-        # Get the selected sequence
-        # indexFromItem
-        row_num = self.rule_list.currentRow()
-        sequence = self.manager.get_sequence(row_num)
-        dialog = AutomationSeqDialog(self, sequence)
-        if dialog.exec() == QDialog.Accepted:
-            # todo Edit here
-            pass
-        pass
-            
         row = self.rule_list.currentRow()
         self.open_sequence_dialog(row)
 

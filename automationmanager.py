@@ -17,13 +17,22 @@ class AutomationManager (QObject):
     # Automation name is the name of the overall collection of sequences (ie. which file to load)
     
     def __init__ (self, threadpool: QThreadPool, appvariables, directory, automation_name="Default"):
+        super().__init__()
         self.threadpool = threadpool
         self.dir = directory
         self.name = automation_name
         self.description = ""	# Description for the automation - loaded from file
         self.vars = appvariables
         self.sequences = []
+
         
+    # Get sequence variables 
+    def get_variables(self):
+        #print ("Getting variables from all sequences")
+        vars = []
+        for seq in self.sequences:
+            vars.extend(seq.get_variables())
+        return vars
 
     def add_sequence(self, sequence_data):
         self.sequences.append(AutomationSequence(self.vars, **sequence_data))
@@ -109,7 +118,7 @@ class AutomationManager (QObject):
             # Reconstruct as AutomationSequence and store them
             restored_sequences = []
             for item_data in seq_list:
-                this_seq = AutomationSequence.from_dict(item_data)
+                this_seq = AutomationSequence.from_dict(item_data, self.vars)
                 restored_sequences.append(this_seq)
             
             self.sequences = restored_sequences

@@ -166,11 +166,16 @@ class MainWindowUI(QMainWindow):
         # Now set enabled locos from settings
         if 'enabledlocos' in self.settings.settings:
             device_model.enable_locos (self.settings.settings['enabledlocos'])
-            
+        
         # Automation Manager class used to load / store the sequences
         self.automation = AutomationManager(self.threadpool, self.appvariables, self.dirs['automation'], "Default")
         # Load the default automation
         self.automation.load()
+        # Add any variables from the sequences to the appvariables
+        auto_vars = self.automation.get_variables()
+        for var in auto_vars:
+            #print (f"Adding variable {var} to AppVar from AutomationManager")
+            self.add_variable (var, "", False)
 
         
         # Signals
@@ -312,6 +317,7 @@ class MainWindowUI(QMainWindow):
         
     # Launch the automation manager dialog
     def automation_manager_dialog (self):
+        print (f"Launching Automation Manager Dialog {self.automation}")
         dialog = AutomationManagerDialog(self, self.automation)
         dialog.exec()
     

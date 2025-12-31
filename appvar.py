@@ -6,8 +6,19 @@ from varevent import VarEvent
 # Always use getters and setters as they can update device_model and/or trigger events if required
 class AppVar():
     def __init__ (self, varsignal):
+        #print ("Creating AppVar")
         # Variables in a dict with the variable name as the key
         self.variables={}
+
+    def add_variable (self, variable_name, initial_value=""):
+        print ("Do not use - add through mainwindow instead")
+        # print (f"Variables {self.variables}")
+        # print (f"Adding variable {variable_name} with initial value '{initial_value}'")
+        # if variable_name not in self.variables:
+        #     self.variables[variable_name] = initial_value
+        #     var_event = VarEvent ({"name":variable_name, "value":initial_value, "event_type": "new"})
+        #     event_bus.broadcast(var_event)
+        # print (f"New variables list: {self.variables}")
 
     def is_variable (self, variable_name):
         return variable_name in self.variables

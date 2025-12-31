@@ -80,11 +80,20 @@ class AutomationSeqDialog(QDialog):
     # Refreshes the list widget with the current steps
     # Also update the labels list
     def _update_steps_list(self):
+        #print ("Loading steps into list")
         self.steps_list.clear()
         self.labels = []
         for i, step in enumerate(self.steps):
             if step.get("type") == "Label":
                 self.labels.append(step.get("data", {}).get("labelid", ""))
+            # Loading variables handled by automation manager
+            # Also load any variables used in steps
+            # if step.get("type") == "App" and "data" in step:
+            #     if step["data"].get("command", "") == "Set Variable":
+            #         var_name = step["data"].get("varname", "")
+            #         if self.mainwindow.appvariables.is_variable(var_name):
+            #             # Add variable to manager with default value 0
+            #             self.mainwindow.appvariables.add_variable(var_name, "")
             #rule_count = len(step.rules)
             #mode = step.execution_mode.capitalize()
             #print (f"Step {step}")
