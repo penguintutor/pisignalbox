@@ -500,6 +500,11 @@ class AutomationStepDialog(QDialog):
     def form_selected_label (self):
         self._set_input_types(type="Label")
         self.rows.show_hide_row(2, True, "ID:")    # Show label ID row
+
+        if self.load_progress == "load":
+            # Set based on loaded step
+            self.rows.set_lineedit_text(2, self.step['data'].get('labelid'))
+
         self._hide_rows(3)    # No further rows
 
     def form_selected_jump (self):
@@ -538,7 +543,7 @@ class AutomationStepDialog(QDialog):
             self.rows.combo_add_items(3, variable_list)
 
         if self.load_progress == "load":
-            self.rows.set_combo_text(3, self.step['data'].get('labelid')) 
+            self.rows.set_combo_text(3, self.step['data'].get('variable')) 
 
         self.current_row_value[2] = selected_label
         
@@ -568,6 +573,9 @@ class AutomationStepDialog(QDialog):
         # value 2 used for comparison, this is a lineedit allowing for text / variable / value
         self.rows.set_field_type(5, "lineedit")
         self.rows.show_hide_row(5, True, "Value:")
+
+        if self.load_progress == "load":
+            self.rows.set_lineedit_text(5, self.step['data'].get('value'))
 
 
     # Gets data if valid and returns as a dict

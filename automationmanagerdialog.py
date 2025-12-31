@@ -17,14 +17,8 @@ class AutomationManagerDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Automation Rule Manager")
         self.resize(500, 400)
-        self.manager = manager
-        
-        
+        self.manager = manager        
         self.mainwindow = parent
-
-        print (f"AutomationManagerDialog created with AutomationManager: {self.manager}")
-        print (f"Manager AppVar: {self.manager.vars}")
-        print (f"Main Window appvr value : {self.mainwindow.appvariables.variables}")
 
         self._setup_ui()
         self._update_list()

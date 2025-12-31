@@ -317,7 +317,7 @@ class MainWindowUI(QMainWindow):
         
     # Launch the automation manager dialog
     def automation_manager_dialog (self):
-        print (f"Launching Automation Manager Dialog {self.automation}")
+        #print (f"Launching Automation Manager Dialog {self.automation}")
         dialog = AutomationManagerDialog(self, self.automation)
         dialog.exec()
     
