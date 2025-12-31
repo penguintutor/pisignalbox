@@ -1,14 +1,11 @@
 from PySide6.QtCore import QRunnable, Slot, Signal, QObject, QThread, QThreadPool
 import time
 import json
+from automationstep import AutomationStep
 from automationrule import AutomationRule
 from appvar import AppVar
+from workersignals import WorkerSignals
 
-# Helper QObject to hold signals (QRunnable cannot have signals)
-class WorkerSignals(QObject):
-    finished = Signal()
-    error = Signal(tuple)
-    result = Signal(object)
 
 # Automation routine, composed of multiple steps
 # Each step is a rule, command or launch another sequence
@@ -65,6 +62,7 @@ class AutomationSequence (QRunnable):
     @Slot()
     def run (self):
         print (f"Starting sequence {self.title}")
+        self.signals.status.emit(f"Starting sequence {self.title}")
         self.active = True
         position = 0
         while position < len(self.steps):
@@ -90,7 +88,7 @@ class AutomationSequence (QRunnable):
                 # otherwise jump is ignored (eg. if loop then until no longer met)
             else:
                 # Otherwise run it  
-                self.steps[position].run()
+                self.steps[position].run(self.signals.notify, self.signals.status)
             position += 1
         # Emit a signal to indicate the thread has finished
         self.signals.finished.emit()
@@ -148,187 +146,3 @@ class AutomationSequence (QRunnable):
         return f"{self.title}"
     
     
-    
-# Each step contains a rule commands or sequences
-# These are created from a dict and then extracted for the Automation Rule
-class AutomationStep:
-    # sequence is the sequence this is part of (needed for loops etc.)
-    # type is Rule, Var (plus operation), Label, Jump
-    # name is the name passed to the rule
-    # all other parameters are included in settings
-    # rule is not normally provided - unless loading from json
-    # Only used if this has an instance of AutomationRule
-    def __init__(self, appvariables, step_type, step_name, data={}, rule=None):
-        #print (f"\n\nCreating step with {data}")
-        self.step_type = step_type
-        self.step_name = step_name
-        self.data = data
-        self.vars = appvariables
-        self.rule = rule # Only used if this has an instance of AutomationRule
-        
-        # If the step_type is a rule then create an automation rule
-        if self.rule == None and self.step_type == "Rule":
-            #self.rule = AutomationRule(self.step_name, self.step_type, self.data)
-            # If ruletype not in the step then look in step.data['data']
-            ruletype = self.data.get('ruletype', '')
-            if ruletype == "":
-                ruletype = self.data['data'].get('ruletype', '')
-            self.rule = AutomationRule(self.step_name, ruletype, self.data)
-        #  Variables are not created / updated here - only when run
-
-    def get_variable (self):
-        if 'variable' in self.data['data']:
-            varname = self.data['data'].get("variable", "")
-            #print (f"Variable name found: {varname}")
-            return varname
-        return ""
-            
-    def parse_var (self):
-        # Copy data dict to run_data - which allows for any variable substitutions
-        run_data = {}
-        var_data = False # If parse a variable then set to True to indicate updated
-        for key, value in self.data.items():           
-            if isinstance(value, str) and value.startswith("${") and value.endswith("}"):
-                var_data = True
-                var_name = value[2:-1]
-                if vars == None:
-                    print ("Variable detected {var_name} but no AppVar created")
-                    continue
-                # If the value doesn't exist then it will be None
-                run_data[key] = self.vars.get_variable(var_name)
-            else:
-                run_data[key] = value
-        # If a substitution has been made then temporarily add it to the dict
-        # so that the calling method knows a substitution has been made
-        if var_data:
-            run_data["var_data"] = True
-        return run_data
-
-    # If any variable tokens are found they are handled in the run        
-    def run (self):
-        run_data = self.parse_var()
-        # Now use run_data - which has any variables parsed
-        if self.step_type == "Rule":
-            # check any value fields for variables
-            if ("var_data" in run_data and run_data["var_data"]):
-                # remove it from the dict
-                del run_data['var_data']
-                # If new data (ie. variable) then replace data within the rule object
-                self.rule.run(run_data)
-            else:
-                self.rule.run()
-        # Variable can be "set" (which create or set value)
-        # or "inc" - allows increase without needing to query current value
-        elif self.step_type == "Var":
-            # check we have an appvar
-            if self.vars == None:
-                print ("Warning: Attempt to set a variable with no AppVar configured")
-                return
-            if run_data["action"] == "set":
-                self.vars.set_variable(run_data["varname"], run_data["value"])
-            elif run_data["action"] == "inc":
-                # value is optional for inc - default to 1
-                self.vars.inc_variable(run_data["varname"], run_data.get("value",1))
-        elif self.step_type == "Wait":
-            # default 1 second
-            delay_time = self.data.get("time", 1)
-            # If this is a basic wait / delay (which is default) then sleep and continue
-            waittype = self.data.get("waittype", "delay")
-            if waittype == "delay":
-                time.sleep(delay_time)
-            else:
-                loop_num = 0
-                # max_loop 0 means no maximum (keep looping)
-                # this is not subject to variable substitution 
-                max_loop = self.data.get("maxloop", 0)
-                # Create a loop until the condition is met
-                while self.test_condition():
-                    time.sleep(delay_time)
-                    loop_num += 1
-                    if max_loop > 0 and loop_num > max_loop:
-                        break
-
-    # Test condition is used for any check operations eg. 
-    # "test": "equals" "==" or "lessthan" "<" or "greaterthan" ">", or 
-    # "notequal" "!=" or "<=" or ">=" (no long version of those)
-    # Returns True / False
-    def test_condition (self):
-        # first substitute in any variables
-        run_data = self.parse_var()
-        # Now test the condition
-        condition = run_data.get("test")
-        value1 = run_data.get("value1")
-        value2 = run_data.get("value2")
-        
-        #print (f"Test {value1} {condition} {value2}")
-        
-        # if any of the values are not varlid then return False
-        if (condition == None or value1 == None or value2 == None):
-            return False
-        # Now perform the check
-        if (condition == "equal" or condition == "=="):
-            return (value1 == value2)
-        elif (condition == "notequal" or condition == "!="):
-            return (value1 != value2)
-        elif (condition == "lessthan" or condition == "<"):
-            return (value1 < value2)
-        elif (condition == "greaterthan" or condition == ">"):
-            return (value1 > value2)
-        elif (condition == ">="):
-            return (value1 >= value2)
-        elif (condition == "<="):
-            return (value1 <= value2)
-        else:
-            return False
-        
-    def get_type (self):
-        return self.step_type
-        
-    def get_name (self):
-        return self.step_name
-
-    def __repr__(self):
-        return f"Step: {self.step_type}: {self.step_name}"
-    
-    
-
-    def to_dict(self) -> dict:
-        """Convert the object to a dictionary, excluding 'appvar' from data."""
-        #print (f"\nReturning AutomationStep as dict {self.data}")
-        #filtered_data = {k: v for k, v in self.data.items() if k != 'appvars'}
-        #print ("Converting Step to Dict")
-        #print (f"Filtered data {filtered_data}")
-        # return_dict = {
-        #     "type": self.step_type,
-        #     "name": self.step_name,
-        #     "data": self.data,
-        #     "rule": self.rule.to_dict() if self.rule else None
-        # }
-        return_dict = self.data.copy()
-        return_dict["rule"] = self.rule.to_dict() if self.rule else None
-
-        #print (f"Return automation step {return_dict}")
-        return return_dict
-        
-
-    # Json created at Sequence
-    #def to_json(self) -> str:
-    #    """Serialize the object to a JSON string."""
-    #    return json.dumps(self.to_dict(), indent=4)
-
-    @classmethod
-    def from_dict(cls, d: dict, parent = None):
-        """Create an object from a dictionary."""
-        return cls(
-            parent=parent,
-            step_type=d.get("step_type", ""),
-            step_name=d.get("step_name", ""),
-            data=d.get("data", {}),
-            rule=d.get("rule", None)
-        )
-
-    @classmethod
-    def from_json(cls, json_str: str, parent = None):
-        """Deserialize from JSON string to object."""
-        d = json.loads(json_str)
-        return cls.from_dict(d, parent)

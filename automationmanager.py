@@ -1,9 +1,11 @@
 # AutomationManager is used to store and manage the AutomationSequence objects
 import os
 import json
-from PySide6.QtCore import Qt, QTimer, QObject, QThreadPool, QRunnable
+from PySide6.QtCore import Qt, QTimer, QObject, QThreadPool, QRunnable, Signal, Slot
+from PySide6.QtWidgets import QMessageBox
 from worker import Worker
 from automationsequence import AutomationSequence
+from workersignals import WorkerSignals
 
 
 class AutomationManager (QObject):
@@ -35,7 +37,21 @@ class AutomationManager (QObject):
         return vars
 
     def add_sequence(self, sequence_data):
-        self.sequences.append(AutomationSequence(self.vars, **sequence_data))
+        print ("Adding sequence to Automation Manager")
+        #self.sequences.append(AutomationSequence(self.vars, **sequence_data))
+        #self.sequences[-1].signals.notify.connect(self.handle_notify)
+        #self.sequences[-1].signals.status.connect(self.handle_status)
+
+        sequence = AutomationSequence(self.vars, **sequence_data)
+        sequence.signals.notify.connect(self.handle_notify)
+        sequence.signals.status.connect(self.handle_status)
+        self.sequences.append(sequence)
+
+    def handle_notify(self, title, message):
+        QMessageBox.information(None, title, message)
+
+    def handle_status(self, status_message):
+        QMessageBox.information(None, "Status", status_message)
 
     def update_sequence(self, seq_num, sequence_data):
         if seq_num >= len(self.sequences):
@@ -119,6 +135,8 @@ class AutomationManager (QObject):
             restored_sequences = []
             for item_data in seq_list:
                 this_seq = AutomationSequence.from_dict(item_data, self.vars)
+                this_seq.signals.notify.connect(self.handle_notify)
+                this_seq.signals.status.connect(self.handle_status)
                 restored_sequences.append(this_seq)
             
             self.sequences = restored_sequences
