@@ -44,12 +44,18 @@ class AutomationManager (QObject):
 
         sequence = AutomationSequence(self.vars, **sequence_data)
         sequence.signals.notify.connect(self.handle_notify)
+        sequence.signals.notify_wait.connect(self.handle_notify_wait)
         sequence.signals.status.connect(self.handle_status)
         sequence.signals.finished.connect(self.sequence_finished)   
         self.sequences.append(sequence)
 
     def handle_notify(self, title, message):
         QMessageBox.information(None, title, message)
+
+    def handle_notify_wait(self, title, message, resume_event):
+        QMessageBox.information(None, title, message)
+        resume_event.set()
+        
 
     def handle_status(self, status_message):
         QMessageBox.information(None, "Status", status_message)
@@ -141,6 +147,7 @@ class AutomationManager (QObject):
             for item_data in seq_list:
                 this_seq = AutomationSequence.from_dict(item_data, self.vars)
                 this_seq.signals.notify.connect(self.handle_notify)
+                this_seq.signals.notify_wait.connect(self.handle_notify_wait)
                 this_seq.signals.status.connect(self.handle_status)
                 this_seq.signals.finished.connect(self.sequence_finished)
                 restored_sequences.append(this_seq)

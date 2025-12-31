@@ -493,13 +493,14 @@ class AutomationStepDialog(QDialog):
         self._hide_rows(5)
 
     def form_app_notify (self):
-        # Currently only support blocking 
-        # Non-blocking has the issue of multiple messages - perhaps have a separate console?
-        block_items = ["True"]
-        self.rows.combo_add_items(3, block_items)
-        self.rows.show_hide_row(3, True, "Blocking:")
+        if self.current_row_value[2] != "Notify User":
+            block_items = ["True", "False"]
+            self.rows.combo_add_items(3, block_items)
+            self.rows.show_hide_row(3, True, "Blocking:")
 
-        # When implementing non  blocking then add all the checks and loading etc.
+        if self.load_progress == "load":
+            blocking = str(self.step['data'].get('blocking', "True"))
+            self.rows.set_combo_text(3, blocking)
 
         self.rows.set_field_type(4, "lineedit")
         self.rows.show_hide_row(4, True, "Message:")
@@ -509,6 +510,8 @@ class AutomationStepDialog(QDialog):
             self.rows.set_lineedit_text (4, "")
         if self.load_progress == "load":
             self.rows.set_lineedit_text (4, self.step['data'].get('message', ""))
+
+        self.current_row_value[2] = "Notify User"
 
         self._hide_rows (5)
 
@@ -830,7 +833,7 @@ class AutomationStepDialog(QDialog):
         """ Gets step data for app notify command - used in save_step """
         # If fails uses QMessage and returns None
         data_dict = {'command': "Notify User"}
-        data_dict['blocking'] = self.rows.get_combo_text(3)  # Currently only blocking
+        data_dict['blocking'] = self.rows.get_combo_text(3)  
         message = self.rows.get_lineedit_text (4)
         data_dict['message'] = message
         return data_dict

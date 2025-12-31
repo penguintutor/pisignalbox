@@ -146,7 +146,7 @@ class AutomationSeqDialog(QDialog):
     def remove_step(self):
         selected_row = self.steps_list.currentRow()
         if selected_row >= 0:
-            del self.steps_data[selected_row]
+            del self.steps[selected_row]
             self._update_steps_list()
         else:
             QMessageBox.warning(self, "Error", "Please select a step to remove.")

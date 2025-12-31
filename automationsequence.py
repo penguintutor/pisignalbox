@@ -60,9 +60,9 @@ class AutomationSequence (QRunnable):
         return vars
 
     @Slot()
-    def run (self):
+    def run (self, seq_num=None):
         print (f"Starting sequence {self.title}")
-        self.signals.status.emit(f"Starting sequence {self.title}")
+        #self.signals.status.emit(f"Starting sequence {self.title}")
         self.active = True
         position = 0
         while position < len(self.steps):
@@ -88,10 +88,10 @@ class AutomationSequence (QRunnable):
                 # otherwise jump is ignored (eg. if loop then until no longer met)
             else:
                 # Otherwise run it  
-                self.steps[position].run(self.signals.notify, self.signals.status)
+                self.steps[position].run(self.signals.notify, self.signals.notify_wait,self.signals.status)
             position += 1
         # Emit a signal to indicate the thread has finished
-        self.signals.finished.emit()
+        self.signals.finished.emit(seq_num)
         
     # return info about the sequence in the form of a dict
     # does not include steps (see get_steps)
