@@ -60,13 +60,6 @@ class AutomationStepDialog(QDialog):
             # Also reset current row values
             self.current_row_value[i] = "" 
 
-    def _reset_row_currents (self, from_row, type="VLCB"): 
-        # TODO: plan to remove in future - testing return 
-        # Replaced by hide_rows resetting values
-        return
-        # New method - reset to ""
-        for i in range (from_row, 6):
-            self.current_row_value[i] = ""
 
     def _set_input_types (self, type="default", mode="default"):
         """Set the input types based on type."""
@@ -376,7 +369,7 @@ class AutomationStepDialog(QDialog):
         # if  current type has changed then generate node list
         if self.current_row_value[1] != "App":
             # For app then just hard code some options for now
-            command_items = ["Select Command", "Wait", "Set Variable"]
+            command_items = ["Select Command", "Wait", "Set Variable", "Notify User"]
             self.rows.combo_add_items(2, command_items)
 
         self.current_row_value[1] = "App"
@@ -402,6 +395,8 @@ class AutomationStepDialog(QDialog):
             self.form_app_wait()
         elif selected_command == "Set Variable":
             self.form_app_variable()
+        elif selected_command == "Notify User":
+            self.form_app_notify()
         
         self.current_row_value[2] = selected_command
 
@@ -496,6 +491,27 @@ class AutomationStepDialog(QDialog):
             self.rows.set_lineedit_text (4, self.step['data'].get('value'))
 
         self._hide_rows(5)
+
+    def form_app_notify (self):
+        # Currently only support blocking 
+        # Non-blocking has the issue of multiple messages - perhaps have a separate console?
+        block_items = ["True"]
+        self.rows.combo_add_items(3, block_items)
+        self.rows.show_hide_row(3, True, "Blocking:")
+
+        # When implementing non  blocking then add all the checks and loading etc.
+
+        self.rows.set_field_type(4, "lineedit")
+        self.rows.show_hide_row(4, True, "Message:")
+
+        # If command changed - reset lineedit value
+        if self.current_row_value[2] != "Notify User":
+            self.rows.set_lineedit_text (4, "")
+        if self.load_progress == "load":
+            self.rows.set_lineedit_text (4, self.step['data'].get('message', ""))
+
+        self._hide_rows (5)
+
 
     def form_selected_label (self):
         self._set_input_types(type="Label")
@@ -782,8 +798,10 @@ class AutomationStepDialog(QDialog):
             return self._get_step_data_app_wait()
         elif app_command == "Set Variable":
             return self._get_step_data_app_variable()
+        elif app_command == "Notify User":
+            return self._get_step_data_app_notify()
         else:
-            print ("Unknown app command")
+            print ("Unknown app command {app_command}")
             return None
 
 
@@ -806,6 +824,15 @@ class AutomationStepDialog(QDialog):
         data_dict['variable'] = variable
         value = self.rows.get_lineedit_text (4)
         data_dict['value'] = value
+        return data_dict
+
+    def _get_step_data_app_notify(self):
+        """ Gets step data for app notify command - used in save_step """
+        # If fails uses QMessage and returns None
+        data_dict = {'command': "Notify User"}
+        data_dict['blocking'] = self.rows.get_combo_text(3)  # Currently only blocking
+        message = self.rows.get_lineedit_text (4)
+        data_dict['message'] = message
         return data_dict
 
     def _get_step_data_label(self):
