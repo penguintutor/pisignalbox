@@ -1,5 +1,7 @@
 Automation Sequence
 
+These are some approximate notes for guidance when creating an automation sequence.
+
 
 Event driven
 
@@ -59,8 +61,7 @@ Stop Loco
 
 
 
-Also need jump if (no else that should be a separate check - start with ! < > - default to =)
-Loops woud be handled by jump
+Also have jump
 
 Also feedback to the operator (eg. if a sequence fails after x attempts)
 
@@ -75,11 +76,14 @@ whereas Locos can be swapped out as required
 Include variables (these are like an event where you can query). Rather than wait on sensor can query it's state and 
 keep running. This would be similar to have multiple processes.
 
+All Variables are global. Whilst it is perfectly fine to read any other variables it is advisable to avoid updating variables from different rules and/or sequences. 
+There is only very little risk due to lack of thread lock, which would be protected by the GIL.
+The risk can be mitigated by using a unique prefix or unique ID.
+
 Can also make use of variables within a Rule - these are stored in the appropriate value fields as {varname}
 
 sequence includes Labels. These are skipped over, but can be used for loops (goto loop). Loops should really only move backwards (avoid 
 jump forward to avoid risk of spagetti code), although not enforced. Still possible to make the rules difficult to follow so should be used with care
-Ideally prefix loop with : but not required
 
 Where a rule performs a condition check (eg Jump) then it needs "test": "equals" "==" or "lessthan" "<" or "greaterthan" ">", or 
 "notequals" "!=" or "<=" or ">=" (no long version of those) 

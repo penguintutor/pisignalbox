@@ -46,9 +46,9 @@ class AutomationStep:
         run_data = {}
         var_data = False # If parse a variable then set to True to indicate updated
         for key, value in self.data.items():           
-            if isinstance(value, str) and value.startswith("${") and value.endswith("}"):
+            if isinstance(value, str) and value.startswith("{") and value.endswith("}"):
                 var_data = True
-                var_name = value[2:-1]
+                var_name = value[1:-1]
                 if vars == None:
                     print ("Variable detected {var_name} but no AppVar created")
                     continue
@@ -87,7 +87,10 @@ class AutomationStep:
                     resume_event.wait()
                 else:
                     notify_signal.emit("User Notification", message)
-                
+            elif app_command == "Wait":
+                delay_time = run_data['data'].get("delay", 1)
+                time.sleep(int(delay_time))
+
             else:
                 print (f"Unknown App command: {app_command}")
         elif self.step_type == "Rule":
@@ -135,7 +138,18 @@ class AutomationStep:
     # "notequal" "!=" or "<=" or ">=" (no long version of those)
     # Returns True / False
     def test_condition (self):
-        # first substitute in any variables
+        #Jump can be either variable & value - or value1 & value2
+        # if we have variable and value then convert to value1 and value2
+        # this will remove any values already in value1 and value2
+        if 'variable' in self.data['data'] and 'value' in self.data['data']:
+            var_name = self.data['data'].get("variable", "")
+            value1 = self.vars.get_variable(var_name)
+            value2 = self.data['data'].get("value", "")
+            # if both value1 and value2 are valid then put into run_data
+            if value1 != None and value2 != None:
+                self.data['data']['value1'] = value1
+                self.data['data']['value2'] = value2
+        # substitute in any variables
         run_data = self.parse_var()
         # Now test the condition
         condition = run_data.get("test")
@@ -144,23 +158,29 @@ class AutomationStep:
         
         #print (f"Test {value1} {condition} {value2}")
         
-        # if any of the values are not varlid then return False
+        # if any of the values are not valid then return False
         if (condition == None or value1 == None or value2 == None):
             return False
-        # Now perform the check
-        if (condition == "equal" or condition == "=="):
-            return (value1 == value2)
-        elif (condition == "notequal" or condition == "!="):
-            return (value1 != value2)
-        elif (condition == "lessthan" or condition == "<"):
-            return (value1 < value2)
-        elif (condition == "greaterthan" or condition == ">"):
-            return (value1 > value2)
-        elif (condition == ">="):
-            return (value1 >= value2)
-        elif (condition == "<="):
-            return (value1 <= value2)
-        else:
+
+        try:
+            # Now perform the check
+            # For equality / no equal then compare as a string - rest convert to float
+            # This allows both numeric and text comparisons
+            if (condition == "equal" or condition == "=="):
+                return (str(value1) == str(value2))
+            elif (condition == "notequal" or condition == "!="):
+                return (str(value1) != str(value2))
+            elif (condition == "lessthan" or condition == "<"):
+                return (float(value1) < float(value2))
+            elif (condition == "greaterthan" or condition == ">"):
+                return (float(value1) > float(value2))
+            elif (condition == ">="):
+                return (float(value1) >= float(value2))
+            elif (condition == "<="):
+                return (float(value1) <= float(value2))
+            else:
+                return False
+        except Exception as e:
             return False
         
     def get_type (self):
