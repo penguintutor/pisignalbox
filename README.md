@@ -1,4 +1,4 @@
-# pyvlcb
+# Pi SignalBox 
 VLCB / CBUS implementation in Python
 
 This is currently in development. The class and method names and arguments are all subject to change.
@@ -29,6 +29,11 @@ To setup using virtual environment:
     pip install pyserial
 
 
+# Development
+
+If you would like to be involved in the development then you will likely want to download the submodule when cloning the repository. Use:
+
+    git clone --recurse-submodules git@github.com:penguintutor/pisignalbox.git
 
 
 # Running
