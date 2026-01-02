@@ -1,6 +1,9 @@
 *.json
 # Secret
 secret.cfg
+data/locos/*
+data/layout
+data/layouts/*
 
 # C object files
 *.o

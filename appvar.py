@@ -53,6 +53,9 @@ class AppVar():
         # Use try and if unable to increase value (new or not number) then set to 1
         try:
             #print (f"Updating {variable_name} adding {inc_amount} to {self.variables[variable_name]}")
+            # If inc_amount is not already a number (most likely a string from dialog) then convert to float
+            if isinstance (inc_amount, str):
+                inc_amount = float(inc_amount)
             self.variables[variable_name] += inc_amount
         except:
             #print ("Exception")

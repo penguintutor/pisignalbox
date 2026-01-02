@@ -369,7 +369,7 @@ class AutomationStepDialog(QDialog):
         # if  current type has changed then generate node list
         if self.current_row_value[1] != "App":
             # For app then just hard code some options for now
-            command_items = ["Select Command", "Wait", "Set Variable", "Notify User"]
+            command_items = ["Select Command", "Wait", "Set Variable", "Increment Variable", "Notify User"]
             self.rows.combo_add_items(2, command_items)
 
         self.current_row_value[1] = "App"
@@ -395,6 +395,8 @@ class AutomationStepDialog(QDialog):
             self.form_app_wait()
         elif selected_command == "Set Variable":
             self.form_app_variable()
+        elif selected_command == "Increment Variable":
+            self.form_app_inc_variable()
         elif selected_command == "Notify User":
             self.form_app_notify()
         
@@ -491,6 +493,49 @@ class AutomationStepDialog(QDialog):
             self.rows.set_lineedit_text (4, self.step['data'].get('value'))
 
         self._hide_rows(5)
+
+    def form_app_inc_variable (self):
+        self.rows.set_field_type(3, "combo")
+        self.rows.show_hide_row(3, True, "Variable name:")
+
+        # row may be set to Select Command from defaults
+        if self.current_row_value[2] != "Increment Variable":
+            variable_list = ["Select Variable"] + device_model.get_variable_names()
+            self.rows.combo_add_items(3, variable_list)
+
+        # If loading existing then select variable
+        if self.load_progress == "load":
+            #print (f"Variable {self.step}")
+            variable_name = self.step['data'].get('variable')
+            self.rows.set_combo_text (3, variable_name)
+                
+
+        # Read value back to check setting
+        selected_variable = self.rows.get_combo_text (3)
+
+        if selected_variable == "Select Variable":
+            # hide remaining - need to choose variable first
+            self.current_row_value[3] = "Select Variable"
+            self._hide_rows(4)
+            return
+
+        # Now have variable name
+        # Show row 4 - value entry - which is a lineedit
+        self.rows.set_field_type(4, "lineedit")
+        self.rows.show_hide_row(4, True, "Value:")
+
+        # If variable changed then clear value
+        if self.current_row_value[3] != selected_variable:
+            self.rows.set_lineedit_text (4, "")
+
+        self.current_row_value[3] = selected_variable
+
+        # if loading existing
+        if self.load_progress == "load":
+            self.rows.set_lineedit_text (4, self.step['data'].get('value'))
+
+        self._hide_rows(5)
+
 
     def form_app_notify (self):
         if self.current_row_value[2] != "Notify User":
@@ -801,10 +846,13 @@ class AutomationStepDialog(QDialog):
             return self._get_step_data_app_wait()
         elif app_command == "Set Variable":
             return self._get_step_data_app_variable()
+        # Increment variable is the same as set variable but different command
+        elif app_command == "Increment Variable":
+            return self._get_step_data_app_variable(command="Increment Variable")
         elif app_command == "Notify User":
             return self._get_step_data_app_notify()
         else:
-            print ("Unknown app command {app_command}")
+            print (f"Unknown app command {app_command}")
             return None
 
 
@@ -816,10 +864,10 @@ class AutomationStepDialog(QDialog):
         data_dict['delay'] = delay
         return data_dict
 
-    def _get_step_data_app_variable (self):
+    def _get_step_data_app_variable (self, command="Set Variable"):
         """ Gets step data for app set variable command - used in save_step """
         # If fails uses QMessage and returns None
-        data_dict = {'command': "Set Variable"}
+        data_dict = {'command': command}
         variable = self.rows.get_combo_text (3)
         if variable == "Select Variable" or variable == "New Variable":
             QMessageBox.warning(self, "Invalid Variable", "Please select a valid variable.")

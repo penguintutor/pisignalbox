@@ -77,6 +77,14 @@ class AutomationStep:
                 var_name = run_data['data'].get("variable", "")
                 var_value = run_data['data'].get("value", "")
                 self.vars.set_variable(var_name, var_value)
+            elif app_command == "Increment Variable":
+                # check we have an appvar
+                if self.vars == None:
+                    print ("Warning: Attempt to increment a variable with no AppVar configured")
+                    return
+                var_name = run_data['data'].get("variable", "")
+                inc_value = run_data['data'].get("value", 1)
+                self.vars.inc_variable(var_name, inc_value)
             elif app_command == "Notify User":
                 message = run_data['data'].get("message", "")
                 blocking = run_data['data'].get("blocking", "True")
