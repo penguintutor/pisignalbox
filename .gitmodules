@@ -1,0 +1,3 @@
+[submodule "lib/pyvlcb"]
+	path = lib/pyvlcb
+	url = git@github.com:penguintutor/pyvlcb.git
