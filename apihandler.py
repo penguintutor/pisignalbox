@@ -4,7 +4,7 @@ from eventbus import EventBus, event_bus
 from locoevent import LocoEvent
 from devicemodel import DeviceModel, device_model
 from pyvlcb import VLCB
-from vlcbformat import VLCBopcode
+from pyvlcb import VLCBopcode
 from vlcbnode import VLCBNode
 from vlcbclient import VLCBClient
 from guievent import GuiEvent

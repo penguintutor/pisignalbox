@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QMainWindow, QTextBrowser, QTableWidget, QTableWid
 from PySide6.QtUiTools import QUiLoader
 from eventbus import EventBus, event_bus
 from pyvlcb import VLCB
-from vlcbformat import VLCBopcode
+from pyvlcb import VLCBopcode
 import queue
 
 loader = QUiLoader()

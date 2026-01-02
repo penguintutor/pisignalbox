@@ -5,7 +5,7 @@ import json
 from PySide6.QtCore import Qt, QObject, Signal, Slot
 from PySide6.QtGui import QStandardItemModel, QStandardItem
 from pyvlcb import VLCB
-from vlcbformat import VLCBopcode
+from pyvlcb import VLCBopcode
 from vlcbnode import VLCBNode
 from vlcbclient import VLCBClient
 from eventbus import EventBus, event_bus
