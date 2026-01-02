@@ -22,8 +22,8 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
-!lib/pyvlcb
+lib/*
+!lib/pyvlcb/
 lib64/
 parts/
 sdist/
