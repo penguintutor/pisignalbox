@@ -15,7 +15,7 @@ class Loco:
         self.loco_id = loco_id
         #self.loco_class = ""
         self.loco_name = ""	# This needs to be unique (no checking so if not then the first will be returned)
-        #					todo - need to remove this unique depenccency use filename instead
+        #					todo - need to remove this unique depencency use filename instead
         self.loco_data = {}
         self.session = session # If session == 0 then no session allocated (don't support none DCC)
         self.direction = direction # 1 = forward, 0 = reverse
@@ -31,7 +31,8 @@ class Loco:
         
     # Returns the display name
     def get_display_name (self):
-        return self.loco_data['displayname']
+        print (f"Getting display name for loco: {self.loco_data}")
+        return self.loco_data.get('displayname', 'Loco')
         
         
     # Returns filename. If not filename then return default so as valid image
@@ -61,8 +62,8 @@ class Loco:
     def load_file (self, filename):
         with open(filename, 'r') as data_file:
             self.loco_data = json.load(data_file)
-        self.loco_id = self.loco_data["address"]
-        self.loco_name = self.loco_data["displayname"]
+        self.loco_id = self.loco_data.get("address")
+        self.loco_name = self.loco_data.get("displayname", "Loco")
         self.filename = filename
         
     # Returns True is successful save
@@ -80,7 +81,7 @@ class Loco:
     # handles if none defined
     def num_functions (self):
         if "functions" in self.loco_data:
-            return len(self.loco_data["functions"])
+            return len(self.loco_data.get("functions", []))
         else:
             # If none then return 5 (just none defined)
             return 5

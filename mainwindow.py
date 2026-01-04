@@ -301,9 +301,10 @@ class MainWindowUI(QMainWindow):
     
     def gui_event (self, gui_event):
         #print ("Gui event receieved {gui_event}")
-        gui_node = device_model.get_guiobject_name(gui_event.data['name'])
+        # TODO - is name valid 
+        gui_node = device_model.get_guiobject_name(gui_event.data.get('name'))
         if gui_node != None:
-            gui_node.set_value(gui_event.data['value'])
+            gui_node.set_value(gui_event.data.get('value'))
         self.update_table()
 
     # Edit events associations between different objects
@@ -1103,7 +1104,7 @@ class MainWindowUI(QMainWindow):
             return
         #print (f"Selected {self.selected_node}")
         if type(self.selected_node) is VLCBEv:
-            self.api.start_request(self.api.vlcb.accessory_command(self.selected_node.node.node_id, self.selected_node.ev_id, False))
+            self.api.start_request(self.api.vlcb.accessory_command(self.selected_node.node.node_id, self.selected_node.get_en(), False))
         elif type(self.selected_node) is GuiObject:
             self.selected_node.activate("GuiObject", 1)
         else:
@@ -1115,7 +1116,7 @@ class MainWindowUI(QMainWindow):
             return
         #print (f"Selected {self.selected_node}")
         if type(self.selected_node) is VLCBEv:
-            self.api.start_request(self.api.vlcb.accessory_command(self.selected_node.node.node_id, self.selected_node.ev_id, True))
+            self.api.start_request(self.api.vlcb.accessory_command(self.selected_node.node.node_id, self.selected_node.get_en(), True))
         elif type(self.selected_node) is GuiObject:
             self.selected_node.activate("GuiObject", 0)
         else:

@@ -51,7 +51,9 @@ class ApiHandler(QObject):
         
     # Receives event from event_bus and issues start_request
     def send_event (self, event):
-        self.start_request(self.vlcb.accessory_command(event.get_node_id(), event.get_event_id(), event.get_value()))
+        print (f"API Handler sending event {event}")
+        print (f" Node ID {event.get_node_id()} Event ID {event.get_event_id()} Value {event.get_value()}")
+        self.start_request(self.vlcb.accessory_command(event.get_node_id(), event.get_event(), event.get_value()))
         
 #     def gui_event (self, gui_event):
 #         # Is the event a start request - if so handle the request

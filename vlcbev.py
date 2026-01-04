@@ -25,6 +25,9 @@ class VLCBEv():
         
     def get_name (self):
         return self.name
+    
+    def get_en (self):
+        return self.en
 
     # Is it long format
     # basic check just look for <= ffff for short
