@@ -1,5 +1,5 @@
 #!/usr/bin/bash
-cd ~/pyvlcb
+cd ~/pisignalbox
 source ~/venv/pyvlcb/bin/activate
 ./vlcbserver.py
 
