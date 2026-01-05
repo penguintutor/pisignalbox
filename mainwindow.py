@@ -302,7 +302,7 @@ class MainWindowUI(QMainWindow):
     def gui_event (self, gui_event):
         #print ("Gui event receieved {gui_event}")
         # TODO - is name valid 
-        gui_node = device_model.get_guiobject_name(gui_event.data.get('name'))
+        gui_node = device_model.get_guiobject_name(gui_event.data.get('node'))
         if gui_node != None:
             gui_node.set_value(gui_event.data.get('value'))
         self.update_table()
@@ -425,8 +425,8 @@ class MainWindowUI(QMainWindow):
         dialog = EventDialog()
         if dialog.exec():
             node, event = dialog.get_selected_values()
-            print(f"Selected Node: {node}")
-            print(f"Selected Event: {event}")
+            #print(f"Selected Node: {node}")
+            #print(f"Selected Event: {event}")
         #else:
         #    print("Dialog cancelled.")
 

@@ -19,7 +19,7 @@ def serialize_event(obj):
     if isinstance(obj, Event):
         #print ("Is instance")
         return obj.__dict__()
-    print ("Trying to serialize from EvenBus")
+    print ("Trying to serialize from EventBus")
     raise TypeError(f'Object of type {obj.__class__.__name__} is not JSON serializable')
 
 def deserialize_event(data):
@@ -75,8 +75,10 @@ class EventBus(QObject):
     # then broadcsts to the appropriate signal
     # To register an event publish with the appropriate event type
     def publish(self, event):
+        #print (f"Publishing event: {event}")
         # Apply automation rules by consuming the input
         self.consume(event)
+        #print (f"Broadcasting event: {event}")
         # broadcast the signal
         self.broadcast(event)
         

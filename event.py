@@ -40,6 +40,7 @@ class Event:
     # each event type must implement to see if the event matches the current event
     # Added a simple matches method, but should be overridden by subclasses
     def matches(self, other_event):
+        #print (f"Base Event matches called {other_event}")
         # Simple match logic for testing
         # Match if type is the same and value is the same
         return (isinstance(other_event, type(self)) and

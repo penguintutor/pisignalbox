@@ -65,7 +65,7 @@ class LayoutObject:
     # not to be confused with activate which calls parent class on this object
     # perform required action (eg. set / toggle and return value)
     def activate_value (self, current_value, num_states):
-        #print (f"Value is {current_value, num_states}")
+        #print (f"Value is {current_value, num_states}, click type {self.click_type}")
         if self.click_type == "none":
             return current_value
         elif self.click_type == "toggle":
@@ -80,6 +80,7 @@ class LayoutObject:
             return self.click_value
             
         # temp just return current - not yet handled
+        print (f"activate_value not handled for click type {self.click_type}")
         return current_value
 
     # Get a string representing action

@@ -121,7 +121,8 @@ class GuiObject:
         #print (f"Now {self.state_value}")
  
         # Create and send GUI event
-        event_bus.publish(GuiEvent({'name': self.name, 'value': self.state_value}))
+        #event_bus.publish(GuiEvent({'name': self.name, 'value': self.state_value}))
+        event_bus.publish(GuiEvent({'node': self.name, 'value': self.state_value}))
         
     def get_ev_names (self):
         #print (f"Getting evs for {self.name}")

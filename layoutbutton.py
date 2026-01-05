@@ -23,7 +23,7 @@ from layoutobject import LayoutObject
 
 # In settings
 # click_type - "value", "toggle", "none"	# For button default = "value"
-# click_value - only used if click_type = "value" - response to click (if not spplied set to index)
+# click_value - only used if click_type = "value" - response to click (if not supplied set to index)
 
 
 class LayoutButton (LayoutObject):
@@ -156,6 +156,7 @@ class LayoutButton (LayoutObject):
         return [width, height]
            
     def draw (self, painter):
+        #print (f"Drawing button {self.button_type} at {self.pixel_pos()} size {self.pixel_size()} value {self.value}")
         # There are only 3 colours by default, if value is larger than number of colours
         # then use unknown colour
         color_val = self.value
