@@ -203,7 +203,6 @@ class LocoWindow(QMainWindow):
                 device_model.remove_loco(safe_filename, delete=False)
         # If existing filename then just update exising file
         else:
-            #Todo implement save existing
             # get the current loco object (from filename)
             loco = device_model.get_loco_from_filename(filename)
             # If don't get loco then error (has file been deleted during edit)

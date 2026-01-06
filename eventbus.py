@@ -75,7 +75,6 @@ class EventBus(QObject):
     # then broadcsts to the appropriate signal
     # To register an event publish with the appropriate event type
     def publish(self, event):
-        #print (f"Publishing event: {event}")
         # Apply automation rules by consuming the input
         self.consume(event)
         #print (f"Broadcasting event: {event}")
@@ -86,7 +85,6 @@ class EventBus(QObject):
     # Broadcast signal
     def broadcast(self, event):
         # Broadcast the event
-        #print (f"Broadcast {event}")
         if isinstance(event, AppEvent):
             self.app_event_signal.emit(event)
         elif isinstance(event, GuiEvent):
@@ -118,7 +116,6 @@ class EventBus(QObject):
     def apply_rules (self, event):
         # Add number of events
         self.automation_count += 1
-        #print (f"Num automation {self.automation_count}")
         # Have we reached maximum
         if self.automation_count >= self.max_automation_count:
             print ("*** Warning automation events exceeded ***")
@@ -128,20 +125,14 @@ class EventBus(QObject):
         
         # Get the event type to save making multiple calls to type method
         event_type = type(event)
-        #print (f"Applying rules for {event}")
         # Apply across all rules
         #print (f"Event {event}")
         for rule in self.event_rules:
-            #print (f"Event rules {self.event_rules}")
             # rule[0] is the event we are monitoring for
             if isinstance(rule[0], event_type):
-                #print (f"Rule matches type {event_type} - {rule[0]}")
                 # Matches same type pass to the event to see if this matches
                 # This allows each event type to look for certain features
                 if rule[0].matches(event):
-                    # Print number automation events in queue along with details of matching event
-                    #print (f"{self.automation_count} - Match {event}")
-                    #self.publish (rule[1])
                     # Broadcast rather than publish
                     # Automation will be received from the incoming deviceevent
                     self.broadcast (rule[1])

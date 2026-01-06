@@ -98,7 +98,6 @@ class AutomationDialogRows:
         for combo in self.combos:
             if combo != None:
                 combo.currentIndexChanged.connect(self.parent.update_rows)
-        # Todo add update_rows to parent
 
     def enable_combo_signals(self, enable=True):
         """Enable or disable signals for all combo boxes."""

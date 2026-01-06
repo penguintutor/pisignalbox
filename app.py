@@ -8,6 +8,9 @@ from mainwindow import MainWindowUI
 from locowindow import LocoWindow
 from locodialog import LocoDialog
 
+# Suppress the specific logging category for qt6ct
+# This prevents debug messages from cluttering the console
+os.environ["QT_LOGGING_RULES"] = "*.debug=false"
 
 # filenames are relative to data directory
 # by default that is basedir/data/

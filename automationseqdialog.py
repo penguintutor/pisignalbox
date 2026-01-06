@@ -1,7 +1,5 @@
 # Dialog for creating a new AutomationSequence.
 
-# TODO: Load variables when editing sequence - perhaps on all sequences?
-
 import sys
 import copy
 import re
@@ -37,12 +35,7 @@ class AutomationSeqDialog(QDialog):
         # Title and Loco Count
         title_layout = QFormLayout()
         self.title_input = QLineEdit()
-# Num Locos removed from sequence. Instead take  from steps
-#        self.num_locos_spinbox = QSpinBox()
-#        self.num_locos_spinbox.setRange(0, 3)
-#        self.num_locos_spinbox.setValue(0)
         title_layout.addRow("Sequence Title:", self.title_input)
-#        title_layout.addRow("Locos Required:", self.num_locos_spinbox)
         main_layout.addLayout(title_layout)
 
         main_layout.addWidget(QLabel("Automation Steps"))
@@ -86,17 +79,6 @@ class AutomationSeqDialog(QDialog):
         for i, step in enumerate(self.steps):
             if step.get("type") == "Label":
                 self.labels.append(step.get("data", {}).get("labelid", ""))
-            # Loading variables handled by automation manager
-            # Also load any variables used in steps
-            # if step.get("type") == "App" and "data" in step:
-            #     if step["data"].get("command", "") == "Set Variable":
-            #         var_name = step["data"].get("varname", "")
-            #         if self.mainwindow.appvariables.is_variable(var_name):
-            #             # Add variable to manager with default value 0
-            #             self.mainwindow.appvariables.add_variable(var_name, "")
-            #rule_count = len(step.rules)
-            #mode = step.execution_mode.capitalize()
-            #print (f"Step {step}")
             self.steps_list.addItem(f"Step {i+1} ({step['name']})")
         
     # Load the details from the sequence
@@ -105,10 +87,6 @@ class AutomationSeqDialog(QDialog):
         self.steps = []
         # title, numlocos
         self.title_input.setText(info["title"])
-        #self.num_locos_spinbox.setValue(info["numlocos"])
-        # Use a deep copy of the steps so as not to update if cancel is pressed
-        #self.steps = copy.deepcopy(sequence.get_steps())
-        #print (f"Steps now contains {self.steps}")
         
         # copy steps by converting back to dict as though created
         # this protects the current (if cancel is pressed)
@@ -150,8 +128,6 @@ class AutomationSeqDialog(QDialog):
             self._update_steps_list()
         else:
             QMessageBox.warning(self, "Error", "Please select a step to remove.")
-            
-    # --- Finalization Logic ---
 
     def save_sequence(self):
         """Finalizes the sequence creation and accepts the dialog."""

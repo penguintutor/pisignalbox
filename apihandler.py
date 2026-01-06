@@ -127,11 +127,7 @@ class ApiHandler(QObject):
     def thread_getupdate(self):
         #Only allow one thread at a time
         self.update_in_progress = True
-        
-        # debug -
-        #if len(self.send_queue) > 0:
-        #    print (f"Queue {self.send_queue}")
-               
+                      
         # see if there is a specific request
         request = self.get_request()
         if request != False:
@@ -143,9 +139,6 @@ class ApiHandler(QObject):
                 return
             else:
                 self.status = "Connected"
-            # Todo handle response
-            # Just a True / false response
-            # clear send_request ready for next request
             
         #print ("Reading response")
         # Get updates since last_packet
