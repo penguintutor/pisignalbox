@@ -110,8 +110,8 @@ class MainWindowUI(QMainWindow):
         self.update_in_progress = False
         
         # Setup API handler
-        if 'settings' in self.cmd_settings and 'mock_mode' in self.cmd_settings['settings'] and self.cmd_settings['settings']['mock_mode']:
-            print("Using Mock VLCB Client")
+        if 'mock_mode' in self.cmd_settings and self.cmd_settings['mock_mode']:
+            #print("Using Mock VLCB Client")
             from tests.mock_vlcbclient import MockVLCBClient
             mock_client = MockVLCBClient()
             self.api = ApiHandler(self.threadpool, url, mock_client)
