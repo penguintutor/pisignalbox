@@ -68,6 +68,10 @@ class AutomationSeqDialog(QDialog):
         self.add_step_button.clicked.connect(self.add_edit_step)
         self.edit_step_button.clicked.connect(lambda: self.add_edit_step(edit=True))
         self.remove_step_button.clicked.connect(self.remove_step)
+        # Connect the double-click signal
+        # We use 'item' to catch the QListWidgetItem argument sent by the signal, 
+        # but we ignore it and just call your existing method.
+        self.steps_list.itemDoubleClicked.connect(lambda item: self.add_edit_step(edit=True))
 
     
     # Refreshes the list widget with the current steps

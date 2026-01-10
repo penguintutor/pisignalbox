@@ -53,6 +53,8 @@ class AutomationManagerDialog(QDialog):
         self.run_button.clicked.connect(self.run_selected_sequence)
         self.close_button.clicked.connect(self.accept)
         # Note: Edit/Delete connections would be similar to add, updating self.sequences and re-running _update_list
+        # Enable double click on the rule list to edit
+        self.rule_list.itemDoubleClicked.connect(self.edit_sequence)
 
     def _update_list(self):
         """Refreshes the list widget with current sequences."""
