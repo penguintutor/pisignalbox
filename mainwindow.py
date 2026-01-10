@@ -186,6 +186,10 @@ class MainWindowUI(QMainWindow):
 
         self.automation.global_status.connect(self.update_sequence_status)
 
+        # Add automation list 
+        self.update_automation_list()
+
+        self.ui.automationRunButton.clicked.connect(self.run_selected_sequence)
         
         # Signals
         self.steal_dialog_signal.connect (self.steal_loco_dialog)
@@ -305,6 +309,20 @@ class MainWindowUI(QMainWindow):
     # TODO: handle sequence status updates
     def update_sequence_status (self, status_message):
         print (f"Sequence status update: {status_message}") 
+
+    def run_selected_sequence(self):
+        """Triggers the run process in the main window."""
+        selected_row = self.ui.automationList.currentRow()
+        if selected_row >= 0:
+            
+            self.automation.run_sequence(selected_row)
+            
+            #selected_sequence = self.sequences[selected_row]
+            # Pass to the main window for execution
+            #self.mainwindow.run_automation_sequence(selected_sequence)
+            
+        else:
+            QMessageBox.warning(self, "Selection Error", "Please select a rule sequence to run.")
     
     def gui_event (self, gui_event):
         #print ("Gui event receieved {gui_event}")
@@ -313,6 +331,12 @@ class MainWindowUI(QMainWindow):
         if gui_node != None:
             gui_node.set_value(gui_event.data.get('value'))
         self.update_table()
+
+    def update_automation_list (self):
+        # Update the automation list in the UI
+        self.ui.automationList.clear()
+        for seq_string in self.automation.get_sequence_strings():
+            self.ui.automationList.addItem(seq_string)
 
     # Edit events associations between different objects
     def loco_manager (self):

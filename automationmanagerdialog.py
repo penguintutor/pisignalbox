@@ -76,7 +76,6 @@ class AutomationManagerDialog(QDialog):
         selected_row = self.rule_list.currentRow()
         if selected_row >= 0:
             
-            ## Here
             self.manager.run_sequence(selected_row)
             
             #selected_sequence = self.sequences[selected_row]
