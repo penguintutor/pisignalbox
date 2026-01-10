@@ -13,7 +13,7 @@ from deviceevent import DeviceEvent
 
 
 class ApiHandler(QObject):
-    def __init__(self, thread_pool: QThreadPool, url):
+    def __init__(self, thread_pool: QThreadPool, url, server_client=None):
         super().__init__()
         self.threadpool = thread_pool
         self.url = url
@@ -29,7 +29,8 @@ class ApiHandler(QObject):
         
         # The class is called client, but as it's used to communicate
         # with the server it's referred to in this as self.server
-        self.server = VLCBClient(self.url)
+        # Allow injection of a mock or alternate client for testing.
+        self.server = server_client or VLCBClient(self.url)
         
         # Add request to be sent next time timer expires
         #self.send_queue = []

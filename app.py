@@ -52,6 +52,14 @@ parser.add_argument (
     help="The directory with the data files."
     )
 
+# Enable mock mode
+# Used for testing GUI without a live server
+parser.add_argument(
+    '-m', '--mock',         # short or long option
+    action='store_true',    # This makes it a boolean flag (True if present, False if not)
+    help="Use mock client code instead of communicating with a real server."
+    )
+
 args = parser.parse_args()
 data_dir = args.datadir
 if data_dir:
@@ -63,7 +71,12 @@ if data_dir:
         print(f"Warning: Directory '{data_dir}' does not exist.")
         # continue with defaults
 
-        
+# Handle Mock Mode
+if args.mock:
+    print("starting in MOCK mode...")
+    settings['mock_mode'] = True
+else:
+    settings['mock_mode'] = False
         
 # Windows with dialogs are ones that may lose focus to their dialogs
 # Add to this list to ensure their dialogs are kept on top

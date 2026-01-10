@@ -109,8 +109,15 @@ class MainWindowUI(QMainWindow):
         self.threadpool = QThreadPool()
         self.update_in_progress = False
         
-        self.api = ApiHandler(self.threadpool, url)
-        
+        # Setup API handler
+        if 'settings' in self.cmd_settings and 'mock_mode' in self.cmd_settings['settings'] and self.cmd_settings['settings']['mock_mode']:
+            print("Using Mock VLCB Client")
+            from tests.mock_vlcbclient import MockVLCBClient
+            mock_client = MockVLCBClient()
+            self.api = ApiHandler(self.threadpool, url, mock_client)
+        else:
+            self.api = ApiHandler(self.threadpool, url)
+
         # Get the QFont object for the default font
         app = QApplication.instance()
         self.default_font = app.font()
