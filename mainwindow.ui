@@ -50,7 +50,7 @@
          </size>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>2</number>
         </property>
         <widget class="QWidget" name="locoTab">
          <attribute name="title">
@@ -634,7 +634,7 @@
            <rect>
             <x>10</x>
             <y>200</y>
-            <width>141</width>
+            <width>201</width>
             <height>25</height>
            </rect>
           </property>
@@ -652,7 +652,7 @@
          <widget class="QPushButton" name="automationApplyButton">
           <property name="geometry">
            <rect>
-            <x>180</x>
+            <x>220</x>
             <y>200</y>
             <width>88</width>
             <height>25</height>
@@ -662,27 +662,27 @@
            <string>Apply</string>
           </property>
          </widget>
-         <widget class="QListView" name="automationListView">
-          <property name="geometry">
-           <rect>
-            <x>10</x>
-            <y>230</y>
-            <width>301</width>
-            <height>411</height>
-           </rect>
-          </property>
-         </widget>
          <widget class="QPushButton" name="automationRunButton">
           <property name="geometry">
            <rect>
-            <x>177</x>
-            <y>650</y>
+            <x>190</x>
+            <y>660</y>
             <width>111</width>
             <height>27</height>
            </rect>
           </property>
           <property name="text">
            <string>Run Selected</string>
+          </property>
+         </widget>
+         <widget class="QListWidget" name="automationList">
+          <property name="geometry">
+           <rect>
+            <x>10</x>
+            <y>230</y>
+            <width>301</width>
+            <height>421</height>
+           </rect>
           </property>
          </widget>
         </widget>
