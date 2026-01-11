@@ -21,8 +21,9 @@ class AutomationManager (QObject):
     # Pass the directory to the init as in future may allow different files
     # Automation name is the name of the overall collection of sequences (ie. which file to load)
     
-    def __init__ (self, threadpool: QThreadPool, appvariables, directory, automation_name="Default"):
+    def __init__ (self, mainwindow, threadpool: QThreadPool, appvariables, directory, automation_name="Default"):
         super().__init__()
+        self.mainwindow = mainwindow
         self.threadpool = threadpool
         self.dir = directory
         self.name = automation_name
@@ -42,7 +43,7 @@ class AutomationManager (QObject):
     def add_sequence(self, sequence_data):
         #print ("Adding sequence to Automation Manager")
 
-        sequence = AutomationSequence(self.vars, **sequence_data)
+        sequence = AutomationSequence(self.vars, **sequence_data, check_stop_func=  lambda: self.mainwindow.stop_automation)
         sequence.signals.notify.connect(self.handle_notify)
         sequence.signals.notify_wait.connect(self.handle_notify_wait)
         sequence.signals.status.connect(self.handle_status)
@@ -70,7 +71,7 @@ class AutomationManager (QObject):
             return
         # Just replace with new sequence
         # Could create before replace if concern about errors
-        self.sequences[seq_num] = AutomationSequence(self.vars, **sequence_data)
+        self.sequences[seq_num] = AutomationSequence(self.vars, **sequence_data, check_stop_func=  lambda: self.mainwindow.stop_automation)
         
         
     # Return sequence based on sequence number (index in list)
@@ -145,7 +146,7 @@ class AutomationManager (QObject):
             # Reconstruct as AutomationSequence and store them
             restored_sequences = []
             for item_data in seq_list:
-                this_seq = AutomationSequence.from_dict(item_data, self.vars)
+                this_seq = AutomationSequence.from_dict(item_data, self.vars, check_stop_func= lambda: self.mainwindow.stop_automation)
                 this_seq.signals.notify.connect(self.handle_notify)
                 this_seq.signals.notify_wait.connect(self.handle_notify_wait)
                 this_seq.signals.status.connect(self.handle_status)

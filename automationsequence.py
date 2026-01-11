@@ -12,7 +12,7 @@ from workersignals import WorkerSignals
 # These are provided as a list with each entry as a dict with the AutomationStep created in the init
 # Settings is used to pass the locos,
 class AutomationSequence (QRunnable):
-    def __init__(self, appvariables, title, steps, settings = {}):
+    def __init__(self, appvariables, title, steps, settings = {}, check_stop_func=None):
         # steps are provided as a list so save as list_steps, but then use self.steps when AutomationStep object created
         list_steps = steps
         #self.mainwindow = mainwindow
@@ -27,6 +27,10 @@ class AutomationSequence (QRunnable):
         self.labels = {}
         self.signals = WorkerSignals()
         self.active = False		# Set to true when starting, set back to false to stop
+        self.check_stop = check_stop_func
+        if self.check_stop is None:
+            print ("No stop function provided")
+            self.check_stop = lambda: False
         
         # Each step contains self.step = {"step_type": rule_type, "step_name": step_name, data : data_dict}
         #print ("Loading into Auatomation Sequence")
@@ -49,7 +53,7 @@ class AutomationSequence (QRunnable):
             #print (f"Step data {step_data}")
             #print (f"Name {step_data['name']}")
             #print (f"Variables {self.vars.variables}")
-            self.steps.append(AutomationStep(self.vars, step_data['type'], step_data['name'], step_data))
+            self.steps.append(AutomationStep(self.vars, step_data['type'], step_data['name'], step_data, self.check_stop))
          
     def get_variables (self):
         vars = []
@@ -66,6 +70,11 @@ class AutomationSequence (QRunnable):
         self.active = True
         position = 0
         while position < len(self.steps):
+            # Check if we need to stop
+            if self.check_stop():
+                print ("AutomationSequence stopping as requested")
+                self.active = False
+                break
             # If set to false then stop
             if self.active == False:
                 break
@@ -117,8 +126,9 @@ class AutomationSequence (QRunnable):
         return json.dumps(self.to_dict(), indent=4)
 
     @classmethod
-    def from_dict(cls, d: dict, appvariables=None):
+    def from_dict(cls, d: dict, appvariables=None, check_stop_func=None):
         """Create AutomationSequence from dict."""
+        #print (f"Loading AutomationSequence from dict {check_stop_func}")
         #steps = [AutomationStep.from_dict(s, self) for s in d.get("steps", [])]
         steps = d.get("steps", [])
         return cls(
@@ -126,20 +136,21 @@ class AutomationSequence (QRunnable):
             title=d.get("title", ""),
             steps=steps,
             settings=d.get("settings", {}),
-            
+            check_stop_func=check_stop_func
         )
 
     #def __init__(self, mainwindow, title, list_steps, settings = {}):
     # from json also needs mainwindow - pass as optional argument
     @classmethod
-    def from_json(cls, json_str: str, appvariables=None):
+    def from_json(cls, json_str: str, appvariables=None, check_stop_func=None):
         print (f"Loading AutomationSequence from JSON")
         """Deserialize JSON string to AutomationSequence."""
         d = json.loads(json_str)
-        return cls.from_dict(d, appvariables)
+        return cls.from_dict(d, appvariables, check_stop_func=check_stop_func)
+
 
     def __repr__(self):
-        return f"AutomationSequence (title, steps, settings): {self.title}"
+        return f"AutomationSequence (title, steps, settings, check_stop_func=self.check_stop): {self.title}"
     
 
     def __str__(self):

@@ -100,7 +100,7 @@ class AutomationManagerDialog(QDialog):
         if dialog.exec() == QDialog.Accepted:
             new_sequence = dialog.get_sequence()
             if row is None:
-                self.manager.add_sequence(new_sequence)
+                self.manager.add_sequence(new_sequence, lambda: self.mainwindow.stop_automation)
                 verb = "created"
             else:
                 self.manager.update_sequence(row, new_sequence)

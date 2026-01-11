@@ -1,5 +1,6 @@
 import os
 import shutil
+import time
 from PySide6.QtCore import QTimer, QCoreApplication, Signal, QThreadPool, Qt, QPoint, QSize
 from PySide6.QtWidgets import QApplication, QMainWindow, QAbstractItemView, QMenu, QLineEdit, QDialog, QColorDialog, QFileDialog, QMessageBox
 from PySide6.QtGui import QPixmap, QImage, QPalette, QColor, QFont, QResizeEvent
@@ -88,6 +89,8 @@ class MainWindowUI(QMainWindow):
         
         # This will hold the QPixmap for the loco image
         self.loco_image = None
+
+        self.stop_automation = False
         
         # All data files are relative to this directory
         # Default this is basedir/data
@@ -175,7 +178,7 @@ class MainWindowUI(QMainWindow):
             device_model.enable_locos (self.settings.settings['enabledlocos'])
         
         # Automation Manager class used to load / store the sequences
-        self.automation = AutomationManager(self.threadpool, self.appvariables, self.dirs['automation'], "Default")
+        self.automation = AutomationManager(self, self.threadpool, self.appvariables, self.dirs['automation'], "Default")
         # Load the default automation
         self.automation.load()
         # Add any variables from the sequences to the appvariables
@@ -1459,3 +1462,23 @@ class MainWindowUI(QMainWindow):
         self.appvariables.set_variable(variable_name, value, event)
         device_model.add_variable(variable_name)
         return True
+
+    def closeEvent(self, event):
+        """ called when the main window is closing """
+        print("Closing... stopping threads.")
+        
+        # Tell threads to stop
+        self.stop_automation = True
+
+        # Remove any tasks in the queue that haven't started yet
+        #self.thread_manager.clear()
+
+        # Wait for active threads to finish their current loop and exit
+        # text allows the GUI to freeze slightly while waiting, ensuring no crash.
+        print("Waiting for threads to finish...")
+        #self.thread_manager.waitForDone(2000) # Wait up to 2 seconds
+        time.sleep(2) # Simple sleep to allow threads to finish
+        
+        print("Threads finished or timed out. Closing.")
+        event.accept()
+    

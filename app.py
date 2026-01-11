@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import sys, os
 import argparse
+import time
 from PySide6.QtWidgets import QApplication, QDialog, QFileDialog, QMessageBox
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont

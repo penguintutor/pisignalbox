@@ -16,13 +16,14 @@ class AutomationStep:
     # all other parameters are included in settings
     # rule is not normally provided - unless loading from json
     # Only used if this has an instance of AutomationRule
-    def __init__(self, appvariables, step_type, step_name, data={}, rule=None):
+    def __init__(self, appvariables, step_type, step_name, data={}, rule=None, check_stop_func=None):
         #print (f"\n\nCreating step with {data}")
         self.step_type = step_type
         self.step_name = step_name
         self.data = data
         self.vars = appvariables
         self.rule = rule # Only used if this has an instance of AutomationRule
+        self.check_stop = check_stop_func   # Used if the step takes a long time to run (eg. wait)
         
         # If the step_type is a rule then create an automation rule
         if self.rule == None and self.step_type == "Rule":
@@ -96,9 +97,15 @@ class AutomationStep:
                 else:
                     notify_signal.emit("User Notification", message)
             elif app_command == "Wait":
-                delay_time = run_data['data'].get("delay", 1)
-                time.sleep(int(delay_time))
-
+                # Need to check every second for stop signal
+                total_delay = int(run_data['data'].get("delay", 1))
+                elapsed = 0
+                while elapsed < total_delay:
+                    if self.check_stop and self.check_stop():
+                        print ("Wait interrupted by stop signal")
+                        break
+                    time.sleep(1)
+                    elapsed += 1
             else:
                 print (f"Unknown App command: {app_command}")
         elif self.step_type == "Rule":
