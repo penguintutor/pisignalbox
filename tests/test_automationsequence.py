@@ -7,7 +7,7 @@ from PySide6.QtTest import QSignalSpy
 from PySide6.QtWidgets import QApplication
 
 from pyvlcb import VLCB
-from vlcbformat import VLCBformat, VLCBopcode
+from pyvlcb import VLCBformat, VLCBopcode
 from loco import Loco
 from guiobject import GuiObject
 from devicemodel import device_model
@@ -27,6 +27,17 @@ from eventbus import EventBus, serialize_event, deserialize_event, event_bus
 
 class MockWindow:
     pass
+
+    def set_variable (self, var_name, var_value):
+        if hasattr(self, 'appvariables'):
+        #if appvariables in self.__dict__:
+            self.appvariables.set_variable (var_name, var_value)
+        
+
+    def inc_variable (self, var_name, inc_value=1):
+        if hasattr(self, 'appvariables'):
+            return self.appvariables.inc_variable (var_name, inc_value)
+        return 1
 
 ## Test creation of rules, including importing and handling recursion
 class TestAutomationRules(unittest.TestCase):
@@ -63,7 +74,7 @@ class TestAutomationRules(unittest.TestCase):
         steps.append(rule2)
         
         # Create a rule - needs values for the Event
-        sequence_1 = AutomationSequence (mainwindow, "Test sequence 1", steps, {})
+        sequence_1 = AutomationSequence (mainwindow, "Test sequence 1", steps, {}, check_stop_func=lambda: False)
         
         # Run the sequence
         sequence_1.run()
@@ -96,7 +107,7 @@ class TestAutomationRules(unittest.TestCase):
             ]
         
         # Create a rule - needs values for the Event
-        sequence_1 = AutomationSequence (mainwindow, "Test sequence 1", steps, {})
+        sequence_1 = AutomationSequence (mainwindow, "Test sequence 1", steps, {}, check_stop_func=lambda: False)
         
         # Run the sequence
         sequence_1.run()
@@ -136,7 +147,7 @@ class TestAutomationRules(unittest.TestCase):
         
         
         # Create a rule - needs values for the Event
-        sequence_1 = AutomationSequence (mainwindow, "Test sequence 1", steps, {})
+        sequence_1 = AutomationSequence (mainwindow, "Test sequence 1", steps, {}, check_stop_func=lambda: False)
         
         # Run the sequence
         sequence_1.run()
@@ -174,7 +185,7 @@ class TestAutomationRules(unittest.TestCase):
             ]
         
         # Create a rule - needs values for the Event
-        sequence_1 = AutomationSequence (mainwindow, "Test sequence 1", steps, {})
+        sequence_1 = AutomationSequence (mainwindow, "Test sequence 1", steps, {}, check_stop_func=lambda: False)
         
         # Run the sequence
         sequence_1.run()
@@ -215,7 +226,7 @@ class TestAutomationRules(unittest.TestCase):
         sequence_1 = AutomationSequence (mainwindow, "Test save seq", steps, {})
              
         json_data = sequence_1.to_json()
-        new_sequence = AutomationSequence.from_json(json_data, mainwindow)
+        new_sequence = AutomationSequence.from_json(json_data, mainwindow, check_stop_func=lambda: False)
         
         
         self.assertEqual(sequence_1.title, "Test save seq")

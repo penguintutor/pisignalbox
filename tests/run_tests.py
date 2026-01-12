@@ -2,6 +2,8 @@ import unittest
 import os, sys
 
 if __name__ == '__main__':
+
+    os.environ["QT_LOGGING_RULES"] = "*.debug=false"
     
     # Get the directory of the run_tests.py file
     current_dir = os.path.dirname(os.path.abspath(__file__))

@@ -2,8 +2,7 @@ import unittest
 
 import os
 
-from pyvlcb import VLCB
-from vlcbformat import VLCBformat, VLCBopcode
+from pyvlcb import VLCB, VLCBformat, VLCBopcode
 from loco import Loco
 from guiobject import GuiObject
 from devicemodel import device_model

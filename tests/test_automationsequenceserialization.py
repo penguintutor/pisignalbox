@@ -71,17 +71,17 @@ class TestAutomationSequenceSerialization(unittest.TestCase):
 
         # Validate JSON structure
         parsed = json.loads(json_data)
-        # print (f"Parsed: {parsed}")
+        print (f"Parsed: {parsed}")
         self.assertIn("title", parsed)
         self.assertIn("steps", parsed)
         self.assertEqual(parsed["title"], "Test save seq")
         self.assertEqual(len(parsed["steps"]), 6)
 
         # Check appvar excluded
-        self.assertNotIn("appvar", parsed["steps"][0]["data"])
+        self.assertNotIn("appvar", parsed["steps"][0].get("data", {}))
 
         # Deserialize back
-        new_sequence = AutomationSequence.from_json(json_data, mainwindow)
+        new_sequence = AutomationSequence.from_json(json_data, mainwindow, check_stop_func=lambda: False)
         self.assertEqual(new_sequence.title, sequence.title)
         self.assertEqual(new_sequence.settings, sequence.settings)
         self.assertEqual(len(new_sequence.steps), len(sequence.steps))
@@ -100,7 +100,7 @@ class TestAutomationSequenceSerialization(unittest.TestCase):
         
         sequence = AutomationSequence(mainwindow, "Empty Seq", [], {})
         json_data = sequence.to_json()
-        new_sequence = AutomationSequence.from_json(json_data, mainwindow)
+        new_sequence = AutomationSequence.from_json(json_data, mainwindow, check_stop_func=lambda: False)
         self.assertEqual(len(new_sequence.steps), 0)
 
 #     def test_step_without_rule(self):

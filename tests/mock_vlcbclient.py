@@ -25,3 +25,7 @@ class MockVLCBClient:
     def clear(self):
         self._responses.clear()
         self.sent_requests.clear()
+
+    # Dummy method for var
+    def set_variable (self, var_name, var_value):
+        pass
