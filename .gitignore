@@ -1,4 +1,6 @@
 *.json
+# Re-include .json files ONLY in tests/data/
+!tests/data/*.json
 # Secret
 secret.cfg
 data/locos/*

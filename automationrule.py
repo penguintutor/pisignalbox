@@ -58,7 +58,7 @@ class AutomationRule:
             self.data = copy.copy(update)
             self.event.update(self.data)
         # Assuming this is an event then broadcast to event_bus
-        print (f"Run event {self.event}")
+        #print (f"Run event {self.event}")
         event_bus.broadcast(self.event)
         
     def get_name (self):

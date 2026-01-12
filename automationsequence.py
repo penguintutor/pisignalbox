@@ -13,6 +13,8 @@ from workersignals import WorkerSignals
 # Settings is used to pass the locos,
 class AutomationSequence (QRunnable):
     def __init__(self, appvariables, title, steps, settings = {}, check_stop_func=None):
+        #print (f"\n\nCreating AutomationSequence titled {title} with steps {steps} and settings {settings} and check_stop_func={check_stop_func}")
+        super(AutomationSequence, self).__init__()
         # steps are provided as a list so save as list_steps, but then use self.steps when AutomationStep object created
         list_steps = steps
         #self.mainwindow = mainwindow
@@ -53,7 +55,8 @@ class AutomationSequence (QRunnable):
             #print (f"Step data {step_data}")
             #print (f"Name {step_data['name']}")
             #print (f"Variables {self.vars.variables}")
-            self.steps.append(AutomationStep(self.vars, step_data['type'], step_data['name'], step_data, self.check_stop))
+            # Rule is blank (between step_data and check_stop_func)
+            self.steps.append(AutomationStep(self.vars, step_data['type'], step_data['name'], step_data, check_stop_func=self.check_stop))
          
     def get_variables (self):
         vars = []

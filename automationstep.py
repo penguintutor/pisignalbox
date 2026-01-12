@@ -17,7 +17,7 @@ class AutomationStep:
     # rule is not normally provided - unless loading from json
     # Only used if this has an instance of AutomationRule
     def __init__(self, appvariables, step_type, step_name, data={}, rule=None, check_stop_func=None):
-        #print (f"\n\nCreating step with {data}")
+        #print (f"\n\nCreating step type {step_type} with {data} rule {rule}")
         self.step_type = step_type
         self.step_name = step_name
         self.data = data
@@ -32,6 +32,7 @@ class AutomationStep:
             ruletype = self.data.get('ruletype', '')
             if ruletype == "":
                 ruletype = self.data['data'].get('ruletype', '')
+            #print (f"Creating Automation Rule: {self.step_name} of type {ruletype}")
             self.rule = AutomationRule(self.step_name, ruletype, self.data)
         #  Variables are not created / updated here - only when run
 
@@ -109,6 +110,7 @@ class AutomationStep:
             else:
                 print (f"Unknown App command: {app_command}")
         elif self.step_type == "Rule":
+            #print (f"Running Automation Rule: {self.rule}")
             # check any value fields for variables
             if ("var_data" in run_data and run_data["var_data"]):
                 # remove it from the dict
@@ -156,7 +158,7 @@ class AutomationStep:
         #Jump can be either variable & value - or value1 & value2
         # if we have variable and value then convert to value1 and value2
         # this will remove any values already in value1 and value2
-        if 'variable' in self.data['data'] and 'value' in self.data['data']:
+        if 'data' in self.data and 'variable' in self.data['data'] and 'value' in self.data['data']:
             var_name = self.data['data'].get("variable", "")
             value1 = self.vars.get_variable(var_name)
             value2 = self.data['data'].get("value", "")
