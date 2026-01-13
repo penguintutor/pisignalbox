@@ -94,19 +94,25 @@ class AutomationStep:
                 if blocking == "True" or blocking == True:
                     resume_event = threading.Event()
                     notify_wait_signal.emit("User Notification", message, resume_event)
-                    resume_event.wait()
+                    # Wait for the user to click OR for the stop flag to be raised
+                    while not resume_event.wait(timeout=0.1):
+                        if self.check_stop and self.check_stop():
+                            print ("User notification interrupted by stop signal")
+                            # Optional: You might want to emit a signal here to auto-close 
+                            # the user notification dialog since the task is dead.
+                            return
                 else:
                     notify_signal.emit("User Notification", message)
             elif app_command == "Wait":
-                # Need to check every second for stop signal
+                # Need to check every 0.1 sec for stop signal
                 total_delay = int(run_data['data'].get("delay", 1))
                 elapsed = 0
                 while elapsed < total_delay:
                     if self.check_stop and self.check_stop():
                         print ("Wait interrupted by stop signal")
                         break
-                    time.sleep(1)
-                    elapsed += 1
+                    time.sleep(0.1)
+                    elapsed += 0.1
             else:
                 print (f"Unknown App command: {app_command}")
         elif self.step_type == "Rule":

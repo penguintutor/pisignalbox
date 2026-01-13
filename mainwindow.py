@@ -1470,6 +1470,9 @@ class MainWindowUI(QMainWindow):
         # Tell threads to stop
         self.stop_automation = True
 
+        #Force close any open "wait for user" dialogs
+        self.close_all_windows()
+
         # Remove any tasks in the queue that haven't started yet
         #self.thread_manager.clear()
 
@@ -1482,3 +1485,16 @@ class MainWindowUI(QMainWindow):
         print("Threads finished or timed out. Closing.")
         event.accept()
     
+    def close_all_windows(self):
+        """ Closes all secondary windows except the main window itself. """
+        # iterate over every window the app tracks
+        for widget in QApplication.topLevelWidgets():
+            
+            # CRITICAL: Skip 'self' so we don't close the main window immediately
+            if widget is self:
+                continue
+            
+            # Optional: Check if the widget is visible before trying to close
+            if widget.isVisible():
+                print(f"Closing secondary window: {widget}")
+                widget.close()
