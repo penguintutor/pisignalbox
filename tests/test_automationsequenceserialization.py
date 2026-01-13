@@ -71,7 +71,7 @@ class TestAutomationSequenceSerialization(unittest.TestCase):
 
         # Validate JSON structure
         parsed = json.loads(json_data)
-        print (f"Parsed: {parsed}")
+        #print (f"Parsed: {parsed}")
         self.assertIn("title", parsed)
         self.assertIn("steps", parsed)
         self.assertEqual(parsed["title"], "Test save seq")

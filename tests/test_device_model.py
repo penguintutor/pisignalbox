@@ -25,7 +25,7 @@ class TestDeviceModel(unittest.TestCase):
         all_locos = device_model.get_all_locos()
         #print (f"Locos {all_locos}")
         #print (f"Loco 0 {all_locos[0].loco_name}")
-        self.assertTrue(all_locos[0].loco_name == "5190 - Prairie")
+        self.assertTrue(all_locos[0].loco_name == "5190 Prairie")
         
     def test_add_gui_node (self):
         gui_objects = []

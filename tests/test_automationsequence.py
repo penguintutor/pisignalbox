@@ -26,18 +26,35 @@ app = QApplication.instance() or QApplication(sys.argv)
 from eventbus import EventBus, serialize_event, deserialize_event, event_bus
 
 class MockWindow:
-    pass
+
+
+    def get_variable (self, var_name):
+        if hasattr(self, 'vars'):
+            value = self.vars.get_variable (var_name)
+            #print (f"MockWindow Get variable {var_name} resulting in {value}")
+            return value
+        else:
+            #print (f"MockWindow No appvariables to get variable {var_name}")
+            return 0
 
     def set_variable (self, var_name, var_value):
-        if hasattr(self, 'appvariables'):
-        #if appvariables in self.__dict__:
-            self.appvariables.set_variable (var_name, var_value)
+        if hasattr(self, 'vars'):
+            value = self.vars.set_variable (var_name, var_value)
+            #print (f"MockWindow Set variable {var_name} to {var_value} resulting in {value}")
+            return value
+        else:
+            #print (f"MockWindow No appvariables to set variable {var_name} to {var_value}")
+            return var_value
         
 
     def inc_variable (self, var_name, inc_value=1):
-        if hasattr(self, 'appvariables'):
-            return self.appvariables.inc_variable (var_name, inc_value)
-        return 1
+        if hasattr(self, 'vars'):
+            value = self.vars.inc_variable (var_name, inc_value)
+            #print (f"MockWindow Inc variable {var_name} by {inc_value} resulting in {value}")
+            return value
+        else:
+            print (f"MockWindow No appvariables to inc variable {var_name} by {inc_value}")
+            return inc_value
 
 ## Test creation of rules, including importing and handling recursion
 class TestAutomationRules(unittest.TestCase):
@@ -58,7 +75,7 @@ class TestAutomationRules(unittest.TestCase):
         # For testing AutomationSequence / AutomationStep then this only needs to house a link to
         # appvariable
         mainwindow = MockWindow()
-        mainwindow.appvariables = AppVar(event_bus.var_event_signal)
+        mainwindow.vars = AppVar(event_bus.var_event_signal)
         
         steps = []
         
@@ -96,18 +113,18 @@ class TestAutomationRules(unittest.TestCase):
         # For testing AutomationSequence / AutomationStep then this only needs to house a link to
         # appvariable
         mainwindow = MockWindow()
-        mainwindow.appvariables = AppVar(event_bus.var_event_signal)
+        mainwindow.vars = AppVar(event_bus.var_event_signal)
         
         # Create a dict for a rule:
         steps = [
             {"type": "Var", "name": "Create test var", "varname": "test", "action": "set", "value": 0},
-            {"type": "Rule", "name": "Set point 1 to A", "ruletype": "VLCB", "node_id":301, "event": 1, "value": "${test}"},
+            {"type": "Rule", "name": "Set point 1 to A", "ruletype": "VLCB", "node_id":301, "event": 1, "value": "{test}"},
             {"type": "Var", "name": "Increase test variable by 1", "varname": "test", "action": "inc", "value": 1},
-            {"type": "Rule", "name": "Set point 1 to B", "ruletype": "VLCB", "node_id":301, "event": 1, "value": "${test}"}
+            {"type": "Rule", "name": "Set point 1 to B", "ruletype": "VLCB", "node_id":301, "event": 1, "value": "{test}"}
             ]
         
         # Create a rule - needs values for the Event
-        sequence_1 = AutomationSequence (mainwindow, "Test sequence 1", steps, {}, check_stop_func=lambda: False)
+        sequence_1 = AutomationSequence (mainwindow.vars, "Test sequence 1", steps, {}, check_stop_func=lambda: False)
         
         # Run the sequence
         sequence_1.run()
@@ -133,7 +150,7 @@ class TestAutomationRules(unittest.TestCase):
         # For testing AutomationSequence / AutomationStep then this only needs to house a link to
         # appvariable
         mainwindow = MockWindow()
-        mainwindow.appvariables = AppVar(event_bus.var_event_signal)
+        mainwindow.vars = AppVar(event_bus.var_event_signal)
         
         # Create a dict for a rule:
         steps = [
@@ -142,7 +159,7 @@ class TestAutomationRules(unittest.TestCase):
             {"type": "Rule", "name": "Set point 1 to A", "ruletype": "VLCB", "node_id":301, "event": 1, "value": 1},
             {"type": "Var", "name": "Increase test variable by 1", "varname": "test", "action": "inc", "value": 1},
             {"type": "Rule", "name": "Set point 1 to B", "ruletype": "VLCB", "node_id":301, "event": 1, "value": 0},
-            {"type": "Jump", "name": "Until loop end (if value1 <= value2 jump)", "test": "<=", "value1": "${test}", "value2": 10, "label": ":loopstart"}
+            {"type": "Jump", "name": "Until loop end (if value1 <= value2 jump)", "test": "<=", "value1": "{test}", "value2": 10, "label": ":loopstart"}
             ]
         
         
@@ -173,15 +190,15 @@ class TestAutomationRules(unittest.TestCase):
         # For testing AutomationSequence / AutomationStep then this only needs to house a link to
         # appvariable
         mainwindow = MockWindow()
-        mainwindow.appvariables = AppVar(event_bus.var_event_signal)
+        mainwindow.vars = AppVar(event_bus.var_event_signal)
         
         # Create a dict for a rule:
         steps = [
             {"type": "Var", "name": "Create test var", "varname": "test", "action": "set", "value": 0},
-            {"type": "Rule", "name": "Set point 1 to A", "ruletype": "VLCB", "node_id":301, "event": 1, "value": "${test}"},
+            {"type": "Rule", "name": "Set point 1 to A", "ruletype": "VLCB", "node_id":301, "event": 1, "value": "{test}"},
             {"type": "Var", "name": "Increase test variable by 1", "varname": "test", "action": "inc", "value": 1},
             {"type": "Wait", "name": "Wait 0.5 seconds", "waittype": "delay", "time": 0.5},
-            {"type": "Rule", "name": "Set point 1 to B", "ruletype": "VLCB", "node_id":301, "event": 1, "value": "${test}"}
+            {"type": "Rule", "name": "Set point 1 to B", "ruletype": "VLCB", "node_id":301, "event": 1, "value": "{test}"}
             ]
         
         # Create a rule - needs values for the Event
@@ -209,7 +226,7 @@ class TestAutomationRules(unittest.TestCase):
         # For testing AutomationSequence / AutomationStep then this only needs to house a link to
         # appvariable
         mainwindow = MockWindow()
-        mainwindow.appvariables = AppVar(event_bus.var_event_signal)
+        mainwindow.vars = AppVar(event_bus.var_event_signal)
         
         # Create a dict for a rule:
         steps = [
@@ -218,7 +235,7 @@ class TestAutomationRules(unittest.TestCase):
             {"type": "Rule", "name": "Set point 1 to A", "ruletype": "VLCB", "node_id":301, "event": 1, "value": 1},
             {"type": "Var", "name": "Increase test variable by 1", "varname": "test", "action": "inc", "value": 1},
             {"type": "Rule", "name": "Set point 1 to B", "ruletype": "VLCB", "node_id":301, "event": 1, "value": 0},
-            {"type": "Jump", "name": "Until loop end (if value1 <= value2 jump)", "test": "<=", "value1": "${test}", "value2": 10, "label": ":loopstart"}
+            {"type": "Jump", "name": "Until loop end (if value1 <= value2 jump)", "test": "<=", "value1": "{test}", "value2": 10, "label": ":loopstart"}
             ]
         
         
