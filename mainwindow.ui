@@ -50,11 +50,11 @@
          </size>
         </property>
         <property name="currentIndex">
-         <number>2</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="locoTab">
          <attribute name="title">
-          <string>Locos</string>
+          <string>Controller</string>
          </attribute>
          <layout class="QVBoxLayout" name="verticalLayout_2">
           <item>
@@ -120,7 +120,7 @@
               <property name="minimumSize">
                <size>
                 <width>150</width>
-                <height>250</height>
+                <height>200</height>
                </size>
               </property>
               <property name="maximumSize">
@@ -290,17 +290,17 @@
             <property name="currentIndex">
              <number>0</number>
             </property>
-            <widget class="QWidget" name="tab0">
+            <widget class="QWidget" name="locoFunc0">
              <attribute name="title">
               <string>Primary</string>
              </attribute>
             </widget>
-            <widget class="QWidget" name="tab1">
+            <widget class="QWidget" name="locoFunc1">
              <attribute name="title">
               <string>Secondary</string>
              </attribute>
             </widget>
-            <widget class="QWidget" name="tab2">
+            <widget class="QWidget" name="locoFunc2">
              <attribute name="title">
               <string>Tertiary</string>
              </attribute>
@@ -387,11 +387,63 @@
           </item>
          </layout>
         </widget>
+        <widget class="QWidget" name="allLocoTab">
+         <attribute name="title">
+          <string>Locos</string>
+         </attribute>
+         <layout class="QVBoxLayout" name="verticalLayout_5">
+          <item>
+           <widget class="QLabel" name="label_3">
+            <property name="font">
+             <font>
+              <pointsize>15</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Locomotives List</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QScrollArea" name="scrollArea">
+            <property name="widgetResizable">
+             <bool>true</bool>
+            </property>
+            <widget class="QWidget" name="scrollAreaWidgetContents">
+             <property name="geometry">
+              <rect>
+               <x>0</x>
+               <y>0</y>
+               <width>296</width>
+               <height>656</height>
+              </rect>
+             </property>
+            </widget>
+           </widget>
+          </item>
+         </layout>
+        </widget>
         <widget class="QWidget" name="nodeTab">
          <attribute name="title">
           <string>Nodes</string>
          </attribute>
          <layout class="QVBoxLayout" name="verticalLayout">
+          <item>
+           <widget class="QLabel" name="label_4">
+            <property name="font">
+             <font>
+              <pointsize>15</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Detected Nodes</string>
+            </property>
+           </widget>
+          </item>
           <item>
            <widget class="QTreeView" name="nodeTreeView">
             <property name="sizePolicy">
@@ -563,133 +615,106 @@
          <attribute name="title">
           <string>Automate</string>
          </attribute>
-         <widget class="QLabel" name="automationStateLabel">
-          <property name="geometry">
-           <rect>
-            <x>20</x>
-            <y>10</y>
-            <width>211</width>
-            <height>31</height>
-           </rect>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>15</pointsize>
-            <weight>75</weight>
-            <bold>true</bold>
-           </font>
-          </property>
-          <property name="text">
-           <string>Automation Active</string>
-          </property>
-         </widget>
-         <widget class="QCheckBox" name="automationEnableCheckBox">
-          <property name="geometry">
-           <rect>
-            <x>10</x>
-            <y>80</y>
-            <width>221</width>
-            <height>23</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Enable / Disable Automation</string>
-          </property>
-         </widget>
-         <widget class="QLabel" name="automationSelectedLabel">
-          <property name="geometry">
-           <rect>
-            <x>20</x>
-            <y>50</y>
-            <width>151</width>
-            <height>17</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Default automation</string>
-          </property>
-         </widget>
-         <widget class="QLabel" name="automationStateLabel_2">
-          <property name="geometry">
-           <rect>
-            <x>20</x>
-            <y>140</y>
-            <width>271</width>
-            <height>31</height>
-           </rect>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>15</pointsize>
-            <weight>75</weight>
-            <bold>true</bold>
-           </font>
-          </property>
-          <property name="text">
-           <string>Change Automation</string>
-          </property>
-         </widget>
-         <widget class="QComboBox" name="selectAutomationCombo">
-          <property name="geometry">
-           <rect>
-            <x>10</x>
-            <y>200</y>
-            <width>201</width>
-            <height>25</height>
-           </rect>
-          </property>
+         <layout class="QVBoxLayout" name="verticalLayout_4">
           <item>
-           <property name="text">
-            <string>Default</string>
-           </property>
+           <widget class="QLabel" name="automationStateLabel">
+            <property name="font">
+             <font>
+              <pointsize>15</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Automation Active</string>
+            </property>
+           </widget>
           </item>
           <item>
-           <property name="text">
-            <string>New ...</string>
-           </property>
+           <widget class="QLabel" name="automationSelectedLabel">
+            <property name="text">
+             <string>Default automation</string>
+            </property>
+           </widget>
           </item>
-         </widget>
-         <widget class="QPushButton" name="automationApplyButton">
-          <property name="geometry">
-           <rect>
-            <x>220</x>
-            <y>200</y>
-            <width>88</width>
-            <height>25</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Apply</string>
-          </property>
-         </widget>
-         <widget class="QPushButton" name="automationRunButton">
-          <property name="geometry">
-           <rect>
-            <x>190</x>
-            <y>660</y>
-            <width>111</width>
-            <height>27</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Run Selected</string>
-          </property>
-         </widget>
-         <widget class="QListWidget" name="automationList">
-          <property name="geometry">
-           <rect>
-            <x>10</x>
-            <y>230</y>
-            <width>301</width>
-            <height>421</height>
-           </rect>
-          </property>
-         </widget>
+          <item>
+           <widget class="QCheckBox" name="automationEnableCheckBox">
+            <property name="text">
+             <string>Enable / Disable Automation</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="automationStateLabel_2">
+            <property name="font">
+             <font>
+              <pointsize>15</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Change Automation</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="automationApplyButton">
+            <property name="text">
+             <string>Apply</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="selectAutomationCombo">
+            <item>
+             <property name="text">
+              <string>Default</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>New ...</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_2">
+            <property name="font">
+             <font>
+              <pointsize>15</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
+            <property name="text">
+             <string>Automation Sequences:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QListWidget" name="automationList"/>
+          </item>
+          <item>
+           <widget class="QPushButton" name="automationRunButton">
+            <property name="text">
+             <string>Run Selected</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
         </widget>
        </widget>
       </item>
       <item>
        <widget class="LayoutDisplay" name="layoutDisplayLabel">
+        <property name="font">
+         <font>
+          <weight>75</weight>
+          <bold>true</bold>
+         </font>
+        </property>
         <property name="text">
          <string/>
         </property>
@@ -708,7 +733,7 @@
      <x>0</x>
      <y>0</y>
      <width>945</width>
-     <height>24</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
