@@ -17,11 +17,16 @@ The GUI requires PySide6.
 To install on Raspberry Pi OS Trixie (or later)
 sudo apt install python3-pyside6.qtgui python3-pyside6.qtwidgets python3-pyside6.qtuitools  
 
+First update the Raspberry Pi using:
+
+    sudo apt update
+    sudo apt install python3-venv python3-pip
+
 
 To setup using virtual environment:
 
     mkdir ~/venv
-    python3 -m venv ~/venv/pyvlcb
+    python3 -m venv ~/venv/pyvlcb --system-site-packages
     source ~/venv/pyvlcb/bin/activate
     pip install strip_tags
     pip install flask
@@ -35,6 +40,17 @@ If you would like to be involved in the development then you will likely want to
 
     git clone --recurse-submodules git@github.com:penguintutor/pisignalbox.git
 
+Then activate the venv before running the following from the pisignalbox directory
+
+    pip install -e lib/pyvlcb
+
+If you would like to update the pyvlcb library then change to that directory 
+
+    cd lib/pyvlcb
+
+and then checkout the main branch
+
+    git checkout main
 
 # Running
 
