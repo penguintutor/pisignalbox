@@ -191,6 +191,9 @@ class EventBus(QObject):
             # Could be new file
             print (f"Save failed {self.rules_filename} - {e}")
 
+    def __del__(self):
+        print("⚠️ EventBus WAS DESTROYED")
+
 
 # Access the singleton EventBus
 event_bus = EventBus()

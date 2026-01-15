@@ -155,6 +155,14 @@ class AutomationStep:
                     loop_num += 1
                     if max_loop > 0 and loop_num > max_loop:
                         break
+        elif self.step_type == "Loco":
+            # Loco step 
+            print (f"Running Loco Step: {self.step_name} with data {run_data}")
+            loco_command = run_data['data'].get("command", "")
+            if loco_command == "Function":
+                print
+            else:
+                print (f"Unknown Loco command: {loco_command}")
 
     # Test condition is used for any check operations eg. 
     # "test": "equals" "==" or "lessthan" "<" or "greaterthan" ">", or 

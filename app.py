@@ -3,7 +3,7 @@ import sys, os
 import argparse
 import time
 from PySide6.QtWidgets import QApplication, QDialog, QFileDialog, QMessageBox
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QPoint
 from PySide6.QtGui import QFont
 from mainwindow import MainWindowUI
 from locowindow import LocoWindow

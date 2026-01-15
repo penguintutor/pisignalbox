@@ -23,7 +23,7 @@ class Loco:
         # Track all functions. Only F0 to F12 are found from PLOC - rest assume start off
         self.function_status = [0] * 29
         # Set filename to allow it to be saved - must be full path - this is unique
-        # todo review alternatives to using full path - although doesn't cause any issues with portability as not saved within file
+        # . review alternatives to using full path - although doesn't cause any issues with portability as not saved within file
         self.filename = filename
     
     def set_status (self, value):

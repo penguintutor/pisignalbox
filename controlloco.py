@@ -14,7 +14,7 @@ from devicemodel import DeviceModel, device_model
 # Tracks and generates events(activities) against a loco
 # When we receive / send an event do we need to update devices and corresponding objects
 # Currently heavily reliant on mw (mainwindow) from the parent
-# perhaps decouple in futures
+# perhaps decouple in future
 class ControlLoco:
     def __init__(self):
         # Store a link to the loco (obtained from device_model)
