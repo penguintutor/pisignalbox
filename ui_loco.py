@@ -39,9 +39,10 @@ def loco_change (self, index=0):
     # Release old loco
     session = self.control_loco.get_session()
     # If not session then nothing to release
-    if session != None:
-        self.api.start_request(self.api.vlcb.release_loco(session))
-        self.control_loco.release()
+    ## Do not release uless requested
+    #if session != None:
+    #    self.api.start_request(self.api.vlcb.release_loco(session))
+    #    self.control_loco.release()
 
     # Check for a valid loco chosen (ie if gone back to 0 then return)
     if index == 0:
