@@ -50,7 +50,7 @@
          </size>
         </property>
         <property name="currentIndex">
-         <number>0</number>
+         <number>1</number>
         </property>
         <widget class="QWidget" name="locoTab">
          <attribute name="title">
@@ -407,20 +407,15 @@
            </widget>
           </item>
           <item>
-           <widget class="QScrollArea" name="scrollArea">
-            <property name="widgetResizable">
-             <bool>true</bool>
+           <widget class="QTableWidget" name="locoTable">
+            <property name="columnCount">
+             <number>2</number>
             </property>
-            <widget class="QWidget" name="scrollAreaWidgetContents">
-             <property name="geometry">
-              <rect>
-               <x>0</x>
-               <y>0</y>
-               <width>296</width>
-               <height>656</height>
-              </rect>
-             </property>
-            </widget>
+            <attribute name="horizontalHeaderVisible">
+             <bool>false</bool>
+            </attribute>
+            <column/>
+            <column/>
            </widget>
           </item>
          </layout>
@@ -733,7 +728,7 @@
      <x>0</x>
      <y>0</y>
      <width>945</width>
-     <height>22</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
