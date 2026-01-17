@@ -5,6 +5,7 @@
 
 import os
 import json
+import errno
 from loco import Loco
 
 class LocoList:
@@ -92,10 +93,10 @@ class LocoList:
                 return False
             except OSError as e:
                 # Perhaps permissions - give a warning to console only
-                if e.errno == errno.EACCESS:
+                if e.errno == errno.EACCES:
                     print(f"Permission denied. Could not delete {full_path}.")
                 else:
-                    print(f"Error attempting to delete {full_path} - {E}")
+                    print(f"Error attempting to delete {full_path} - {e}")
                 return False
         # If not asked to delete file, or file deleted successfully
         return True        
@@ -112,7 +113,7 @@ class LocoList:
             print ("File not found {loco_file}")
             return
         self.locos.append(loco_file)
-        self.load_loco(loo_file)
+        self.load_loco(loco_file)
         # save
         self.save_file()
         

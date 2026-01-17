@@ -4,7 +4,7 @@ import os
 import sys
 import time
 from PySide6.QtCore import QTimer, QSize
-from PySide6.QtWidgets import QMenu, QDialog, QFileDialog, QMessageBox
+from PySide6.QtWidgets import QMenu, QDialog, QFileDialog, QMessageBox, QTableWidgetItem, QPushButton
 from PySide6.QtGui import QPixmap, QImage, QPalette, QColor, QFont, QResizeEvent
 from devicemodel import device_model
 from eventbus import event_bus
@@ -318,4 +318,47 @@ def loco_stop_all (self):
     self.api.start_request(self.api.vlcb.loco_stop_all())
     self.ui.locoStatusLabel.setText ("Stop All!")
     self.update_lcd()
+
+
+''' Methods for loco list '''
+def update_loco_table (self):
+    locos = device_model.get_all_locos()
+    # Reset table and remove buttons 
+    self.ui.locoTable.setRowCount(0)
+    for loco in locos:
+        add_loco_to_table (self, loco)
+
+def add_loco_to_table(self, loco):
+    """
+    Adds a new row to the table with the loco name and an Acquire button.
+    """
+    # Get the current number of rows to find the index for the new row
+    row = self.ui.locoTable.rowCount()
+    self.ui.locoTable.insertRow(row)
+
+    # Add the Locomotive Name (Column 0)
+    # We use QTableWidgetItem for standard strings
+    name_item = QTableWidgetItem(loco.get_display_name())
+    self.ui.locoTable.setItem(row, 0, name_item)
+
+    # Create the Acquire Button (Column 1)
+    acquire_btn = QPushButton("Acquire")
+    
+    # Connect the signal (The tricky part!)
+    # We use a lambda to pass the specific 'loco' object to the handler.
+    # Note: 'l=loco' captures the current value of loco. 
+    # If you skip this, all buttons will try to acquire the last loco added.
+    acquire_btn.clicked.connect(lambda checked=False, l=loco: acquire_pressed(self, l))
+
+    # Insert the widget into the table
+    # setCellWidget is required for buttons (setItem is only for text/icons)
+    self.ui.locoTable.setCellWidget(row, 1, acquire_btn)
+
+def acquire_pressed(self, loco):
+    """
+    Slot to handle the button click
+    """
+    print(f"Acquiring locomotive: {loco.get_display_name()}")
+    # You can add logic here to disable the button or update the database
+
 

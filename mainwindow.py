@@ -2,7 +2,7 @@ import os
 import shutil
 import time
 from PySide6.QtCore import QTimer, QCoreApplication, Signal, QThreadPool, Qt, QPoint, QSize
-from PySide6.QtWidgets import QApplication, QMainWindow, QAbstractItemView, QMenu, QLineEdit, QDialog, QColorDialog, QFileDialog, QMessageBox
+from PySide6.QtWidgets import QApplication, QMainWindow, QAbstractItemView, QMenu, QLineEdit, QDialog, QColorDialog, QFileDialog, QMessageBox, QHeaderView
 from PySide6.QtGui import QPixmap, QImage, QPalette, QColor, QFont, QResizeEvent
 from PySide6.QtUiTools import QUiLoader
 from settings import Settings
@@ -263,6 +263,14 @@ class MainWindowUI(QMainWindow):
         # Update other GUI components
         # Add locos to menu
         self.update_loco_list ()
+        # Add locos to table
+        # Get the header object
+        header = self.ui.locoTable.horizontalHeader()
+        # Set Column 0 (Name) to fill all available empty space
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        # Set Column 1 (Button) to shrink exactly to the size of the button
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        ui_loco.update_loco_table (self)
         # Activated is based on user interaction (changing by code doesn't trigger)
         self.ui.locoComboBox.activated.connect(self.loco_change)
         self.ui.locoDial.valueChanged.connect(self.loco_change_speed)
@@ -583,9 +591,6 @@ class MainWindowUI(QMainWindow):
 
     def edit_dialog_layoutlabel (self):
         ui_layout.edit_dialog_layoutlabel(self, loader, os.path.join(basedir, "editglabeldialog.ui"))
-
-    #def resizeEvent(self, event: QResizeEvent):
-    #    ui_layout.resizeEvent(self, event)
 
     # Note that _ is used in the filename for internal
     # however when method moved to module name changed to scale_image_to_fit
