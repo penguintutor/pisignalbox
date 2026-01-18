@@ -325,6 +325,8 @@ def update_loco_table (self):
     locos = device_model.get_all_locos()
     # Reset table and remove buttons 
     self.ui.locoTable.setRowCount(0)
+    self.loco_table_list = []
+    self.loco_table_buttons = []
     for loco in locos:
         add_loco_to_table (self, loco)
 
@@ -336,29 +338,71 @@ def add_loco_to_table(self, loco):
     row = self.ui.locoTable.rowCount()
     self.ui.locoTable.insertRow(row)
 
+    self.loco_table_list.append(loco)
+
     # Add the Locomotive Name (Column 0)
     # We use QTableWidgetItem for standard strings
     name_item = QTableWidgetItem(loco.get_display_name())
     self.ui.locoTable.setItem(row, 0, name_item)
 
     # Create the Acquire Button (Column 1)
-    acquire_btn = QPushButton("Acquire")
+    self.loco_table_buttons.append(QPushButton("Acquire"))
     
     # Connect the signal (The tricky part!)
     # We use a lambda to pass the specific 'loco' object to the handler.
     # Note: 'l=loco' captures the current value of loco. 
     # If you skip this, all buttons will try to acquire the last loco added.
-    acquire_btn.clicked.connect(lambda checked=False, l=loco: acquire_pressed(self, l))
+    self.loco_table_buttons[row].clicked.connect(lambda checked=False, l=loco: acquire_pressed(self, l))
 
     # Insert the widget into the table
     # setCellWidget is required for buttons (setItem is only for text/icons)
-    self.ui.locoTable.setCellWidget(row, 1, acquire_btn)
+    self.ui.locoTable.setCellWidget(row, 1, self.loco_table_buttons[row])
 
 def acquire_pressed(self, loco):
     """
     Slot to handle the button click
     """
     print(f"Acquiring locomotive: {loco.get_display_name()}")
-    # You can add logic here to disable the button or update the database
+    # Aquire loco
+    self.api.start_request(self.api.vlcb.allocate_loco(loco.loco_id))
+    loco.set_status('rloc')
 
+
+def get_button_style(self, color_hex):
+    """Returns the stylesheet string with the requested background color."""
+    return f"""
+        QPushButton {{
+            background-color: {color_hex};
+            color: white;
+            border-radius: 5px;
+            padding: 5px;
+        }}
+        QPushButton:hover {{
+            background-color: {color_hex}AA; /* Slightly transparent version for hover */
+        }}
+    """
+
+
+def update_loco_status(self, loco_id, status):
+    """
+    Updates the button color based on the status.
+    Status can be: 'acquired', 'stolen', 'released', 'idle'
+    """
+    if loco_id not in self.loco_buttons:
+        print(f"Error: Loco {loco_id} not found in table.")
+        return
+
+    btn = self.loco_buttons[loco_id]
+
+    if status == "acquired":
+        btn.setText("Acquired")
+        btn.setStyleSheet(self.get_button_style("#4CAF50")) # Green
+        
+    elif status in ["stolen", "released"]:
+        btn.setText(status.capitalize()) # Changes text to "Stolen" or "Released"
+        btn.setStyleSheet(self.get_button_style("#D32F2F")) # Red
+        
+    else: # Reset to idle
+        btn.setText("Acquire")
+        btn.setStyleSheet(self.get_button_style("#78909C")) # Grey
 

@@ -270,6 +270,9 @@ class MainWindowUI(QMainWindow):
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
         # Set Column 1 (Button) to shrink exactly to the size of the button
         header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        # Keep a list of what loco objects relate to which table entry
+        self.loco_table_list = []
+        self.loco_table_buttons = []
         ui_loco.update_loco_table (self)
         # Activated is based on user interaction (changing by code doesn't trigger)
         self.ui.locoComboBox.activated.connect(self.loco_change)
