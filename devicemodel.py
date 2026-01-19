@@ -50,6 +50,9 @@ class DeviceModel(QObject):
         # can't create until we've loaded the directories so set to None initially
         # Need to check it's not None before use
         self.locos = None
+
+        # Monitor for loco events - eg. PLOC
+        event_bus.loco_event_signal.connect (self.event_trigger)
         
         # These directories and filenames as specified when first loading the loco
         # Listed here for easy reference
@@ -92,6 +95,24 @@ class DeviceModel(QObject):
         # The GUI nodes are contained within the node class instances. This is specific to the node list in TreeView
         self.node_model = QStandardItemModel()
         self.node_model.setHorizontalHeaderLabels(['Nodes'])
+
+    def event_trigger (self, event):
+        #print (f"ControlLoco received event {event.event_type} data {event.data}")
+        if event.event_type == "PLOC":
+            print (f"PLOC {event.data}")
+            loco_id = str(event.data.get('loco_id', ""))
+            for loco in self.locos.get_all_locos():
+                if loco.loco_id:
+                    print (f"Match {loco_id}")
+            # data = event.data
+            # self.set_session (data['Session'])
+            # self.set_speeddir (data['Speeddir'])
+            # self.set_functions (data['Fn1'], data['Fn2'], data['Fn3'])
+            # self.set_status (data['Status'])
+        elif event.event_type == "ERR":
+            # TODO: handle error
+            #self.handle_error (event.data)
+            pass
         
     # Enable / disable locos
     # Does not report back if successful (if already that state then just silently ignores)

@@ -274,8 +274,12 @@ def update_kalive (self):
 def keep_alive (self):
     # Check we have a session to send a keep alive (ie. not in process of trying
     # to aquire a new loco
-    if self.control_loco.is_active():
-        self.api.start_request(self.api.vlcb.keep_alive(self.control_loco.get_session()))
+    # Check all locos 
+    for loco in device_model.get_all_locos():
+        if self.loco.is_active():
+            self.api.start_request(self.api.vlcb.keep_alive(sel.loco.get_session()))
+    #if self.control_loco.is_active():
+    #    self.api.start_request(self.api.vlcb.keep_alive(self.control_loco.get_session()))
         
 def steal_loco_check (self):
     steal_dialog = QDialog(self)

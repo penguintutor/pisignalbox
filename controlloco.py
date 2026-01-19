@@ -21,7 +21,7 @@ class ControlLoco:
         # Refer to self.loco 
         self.loco = None
         # loco moved to devicemodel
-        event_bus.loco_event_signal.connect (self.event_trigger)
+        #event_bus.loco_event_signal.connect (self.event_trigger)
         self.debug = False
         
     def event_trigger (self, event):
