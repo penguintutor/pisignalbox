@@ -300,6 +300,7 @@ class ApiHandler(QObject):
         # Indicates allocation of loco - need to verify this is expected
         elif ret_opcode == 'PLOC':
             data_entry = VLCBopcode.parse_data(vlcb_entry.data)
+            #print (f"PLOC received {data_entry}")
             # Session,AddrHigh_AddrLow,SpeedDir,Fn1,Fn2,Fn3'
             loco_id = data_entry['AddrHigh_AddrLow'] & 0x3FFF
             event_bus.publish(LocoEvent('PLOC', {

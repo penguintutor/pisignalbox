@@ -675,11 +675,13 @@ class MainWindowUI(QMainWindow):
     # Signal to indicate kalive needs to be checked
     # start / stop as appropriate
     def update_kalive (self):
+        print ("Main Window update_kalive")
         ui_loco.update_kalive(self)
     
     # Keep alive - called every 4 secs
     # Add a keep alive to the send queue
     def keep_alive (self):
+        print ("Main window keep_alive")
         ui_loco.keep_alive(self)
             
     def steal_loco_check (self):

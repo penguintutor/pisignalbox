@@ -96,23 +96,95 @@ class DeviceModel(QObject):
         self.node_model = QStandardItemModel()
         self.node_model.setHorizontalHeaderLabels(['Nodes'])
 
+    def locos_active (self):
+        """ How many locos are active """
+        active_locos = 0
+        for loco in self.locos.get_all_locos():
+            if loco.is_active():
+                active_locos += 1
+        return active_locos
+
     def event_trigger (self, event):
         #print (f"ControlLoco received event {event.event_type} data {event.data}")
         if event.event_type == "PLOC":
-            print (f"PLOC {event.data}")
-            loco_id = str(event.data.get('loco_id', ""))
+            loco_id = event.data.get('Loco_id', "")
             for loco in self.locos.get_all_locos():
-                if loco.loco_id:
-                    print (f"Match {loco_id}")
-            # data = event.data
-            # self.set_session (data['Session'])
-            # self.set_speeddir (data['Speeddir'])
-            # self.set_functions (data['Fn1'], data['Fn2'], data['Fn3'])
-            # self.set_status (data['Status'])
+                if loco_id == loco.loco_id:
+                    loco.aquired(
+                        event.data.get('Session'),
+                        event.data.get('Speeddir'),
+                        (event.data.get('Fn1'), event.data.get('Fn2'), event.data.get('Fn3'))
+                    )
         elif event.event_type == "ERR":
-            # TODO: handle error
-            #self.handle_error (event.data)
-            pass
+            self.handle_error (event.data)
+
+    def handle_error (self, error_data):
+        #print (f"Handling loco error: {error_data}")
+        #print (f"Current loco id: {self.get_id()} Status {self.get_status()} Aquiring {self.is_aquiring()}")
+        # Depending upon the error code the data may have different interpretations
+        # Stored as Byte1, Byte2, ErrCode - where Byte1,Byte2 may eqal AddrHigh_AddrLow, or
+        # may be Byte1 = Session ID, Byte 2 = 0
+        # So only check after looking at the ErrCode
+        #loco_id = data_entry['AddrHigh_AddrLow'] & 0x3FFF
+        # Check error code relates to the current loco
+        if error_data['ErrCode'] == 1:
+            # Only valid during aquiring status
+            if self.is_aquiring() == False:
+                if self.debug:
+                    print ("Not aquiring loco - ignoring error")
+                    return
+            loco_id = VLCB.bytes_to_addr(error_data['Byte1'],error_data['Byte2']) & 0x3FFF
+            # If doesn't match then it may be for a different control thread (eg. automation vs gui) or during reallocate
+            if self.get_id() != loco_id:
+                if self.debug:
+                    print (f"ERR ID {loco_id} does not match current Loco ID {self.get_id()}")
+                return
+            if self.loco != None:
+                event_bus.publish(AppEvent({"action":"uitext", 'label': "locoStatusLabel", 'value': "Error - no sessions available", "loco_id": self.loco.loco_id}))
+
+        # Already taken - option to steal
+        elif error_data['ErrCode'] == 2:
+            if self.debug:
+                print ("Error code 2 - loco taken")
+            #Only for us if we haven't completed the session setup
+            if self.get_status() == "on":
+                return
+            elif self.is_aquiring() == False:
+                #print ("Not aquiring session")
+                return
+            loco_id = VLCB.bytes_to_addr(error_data['Byte1'],error_data['Byte2']) & 0x3FFF
+            # Not our loco
+            if self.get_id() != loco_id:
+                if self.debug:
+                    print (f"ERR ID {loco_id} does not match current Loco ID {self.get_id()}")
+                return
+            # It is our loco and we are trying to aquire - so allow aquire
+            # Let stealdialog request update gui
+            #event_bus.publish(AppEvent({"action":"uitext", 'label': "locoStatusLabel", 'value': "Error - address taken"}))
+            # request steal dialog by signalling locotaken
+            # Should be an allocated loco - otherwise why are we here, but just in case
+            if self.loco != None:
+                event_bus.publish(AppEvent({"action": "locotaken", 'loco_id': self.loco.loco_id}))
+
+        elif error_data['ErrCode'] == 8:
+            # If we are trying to aquire a session then this could be us resetting other node
+            if self.is_aquiring():
+                return
+            # byte 1 is now sessionid - byte2 is ignored - should be 00
+            session_id = int(error_data['Byte1'])
+            # if not our current session_id then could be for a different controller so ignore
+            if session_id != 0 and session_id == self.get_session():
+                if self.debug:
+                    print (f"Session cancelled {session_id}")
+                # This updates the loco and the GUI
+                self.reset_loco()
+                if self.loco != None:
+                    event_bus.publish(AppEvent({"action":"resetloco", 'loco_id': self.loco.loco_id}))
+            else:
+                # probably not for us
+                if self.debug:
+                    print (f"Session not cancelled {session_id}, loco session {self.get_session()}")
+
         
     # Enable / disable locos
     # Does not report back if successful (if already that state then just silently ignores)

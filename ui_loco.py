@@ -36,8 +36,11 @@ def reset_loco_gui (self):
 
 # or if loco removed from list in that case defaults to index=0 (Select Loco)
 def loco_change (self, index=0):
+    # Change in operation - no longer release old locos
+    # Keep for use by automation or to allow quick switch
+    # between locos
     # Release old loco
-    session = self.control_loco.get_session()
+    # session = self.control_loco.get_session()
     # If not session then nothing to release
     ## Do not release uless requested
     #if session != None:
@@ -263,7 +266,8 @@ def update_lcd (self):
 # Signal to indicate kalive needs to be checked
 # start / stop as appropriate
 def update_kalive (self):
-    if self.control_loco.is_active():
+    #if self.control_loco.is_active():
+    if device_model.locos_active() > 0:
         if not self.kalive_timer.isActive():
             self.kalive_timer.start()
     elif self.kalive_timer.isActive():
@@ -272,12 +276,14 @@ def update_kalive (self):
 # Keep alive - called every 4 secs
 # Add a keep alive to the send queue
 def keep_alive (self):
+    print ("Keep alive")
     # Check we have a session to send a keep alive (ie. not in process of trying
     # to aquire a new loco
     # Check all locos 
     for loco in device_model.get_all_locos():
-        if self.loco.is_active():
-            self.api.start_request(self.api.vlcb.keep_alive(sel.loco.get_session()))
+        if loco.is_active():
+            print (f"Loco {loco.loco_id} is active")
+            self.api.start_request(self.api.vlcb.keep_alive(loco.get_session()))
     #if self.control_loco.is_active():
     #    self.api.start_request(self.api.vlcb.keep_alive(self.control_loco.get_session()))
         

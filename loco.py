@@ -28,10 +28,25 @@ class Loco:
     
     def set_status (self, value):
         self.status = value
+
+    def is_active (self):
+        if self.status == "on":
+            return True
+        return False
+
+    def get_session (self):
+        return self.session
+
+    def aquired (self, session, speeddir, functions):
+        self.session = session
+        self.set_speeddir (speeddir)    # converts to direction and speed
+        self.set_functions (*functions)
+        self.status = "on"
+        print (f"Loco {self.loco_id} aquired")
         
     # Returns the display name
     def get_display_name (self):
-        print (f"Getting display name for loco: {self.loco_data}")
+        #print (f"Getting display name for loco: {self.loco_data}")
         return self.loco_data.get('displayname', 'Loco')
         
         
@@ -144,7 +159,7 @@ class Loco:
         
     def session_established (self, session):
         # Add session id to the loco
-        self.status = on
+        self.status = "on"
         self.session = session
         
     # get Dir/Speed combined value
