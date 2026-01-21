@@ -14,7 +14,8 @@ class AppEvent (Event):
         return "App"
            
     def get_response(self):
-        if "response" in self.data.keys():
-            return self.data['response']
-        else:
-            return ""
+        return self.data.get('response', "")
+        
+    # Optional methods for safe return of optional values
+    def get_loco_id(self):
+        return self.data.get('loco_id')

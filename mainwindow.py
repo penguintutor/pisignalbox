@@ -422,9 +422,12 @@ class MainWindowUI(QMainWindow):
             self.update_kalive_signal.emit()
         # If locotaken then launch steal_dialog
         elif app_event.action == "locotaken":
-            # Set status message - then launch dialog
-            self.ui.locoStatusLabel.setText ('Error - address taken')
-            self.steal_dialog_signal.emit(app_event.data['loco_id'])
+            # Only action if it is the controlloco that is taken
+            loco_id = app_event.get_loco_id()
+            if loco_id == self.control_loco.get_id():
+                # Set status message - then launch dialog
+                self.ui.locoStatusLabel.setText ('Warning - address taken')
+                self.steal_dialog_signal.emit(loco_id)
         elif app_event.action == "resetloco":
             # Only reset gui parts - already reset in controlloco
             self.reset_loco_gui()
@@ -675,13 +678,13 @@ class MainWindowUI(QMainWindow):
     # Signal to indicate kalive needs to be checked
     # start / stop as appropriate
     def update_kalive (self):
-        print ("Main Window update_kalive")
+        #print ("Main Window update_kalive")
         ui_loco.update_kalive(self)
     
     # Keep alive - called every 4 secs
     # Add a keep alive to the send queue
     def keep_alive (self):
-        print ("Main window keep_alive")
+        #print ("Main window keep_alive")
         ui_loco.keep_alive(self)
             
     def steal_loco_check (self):

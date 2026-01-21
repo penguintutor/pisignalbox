@@ -13,6 +13,9 @@ class LocoEvent:
         "Function",		# In menu this may be remapped to F1 / F2 etc. - perhaps spinbox
         "All Stop"		# Special case if using CBUS controller which has all stop - still need to have a session with a loco first
         ]
+    # Alternative "api"           # Request to api - request to be included in event_data
+    # eg. event_data['command'] = "share" 
+    # not included in event_types list as not user selectable
         
     def __init__(self, event_type, event_data):
         self.event_type = event_type
@@ -26,12 +29,26 @@ class LocoEvent:
         #print (f"Returning Loco actions {cls.event_types}")
         return cls.event_types
     
-
+    # Action can be from data - but if api then return "api" instead
     def get_action(self):
-        return self.data["action"]
+        if self.event_type == "api":
+            return "api"
+        # Otherwise return action - or fallback to "Loco"
+        return self.data.get("action", "Loco")
     
     def get_value(self):
         value = self.data.get("value", 0)
+
+    # Not all events include loco_id / command etc - returns None if not included
+    def get_loco_id(self):
+        if "loco_id" in self.data:
+            return self.data.get("loco_id")
+        # If event is created from a VLCB entry then it may be uppercase first letter
+        return self.data.get("Loco_id")
+    
+    # If type is ID then should include command - returns "" if not included
+    def get_command(self):
+        return self.data.get("command", "")
     
     def matches (self, event):
         if self.get_type() == event.get_type():

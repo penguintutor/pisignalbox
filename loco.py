@@ -12,6 +12,10 @@ class Loco:
         # if error after ploc then set to off
         # if gloc then set status to gloc - and then on after aquire (ploc)
         self.status = "off"   
+        # Aquired by is what has requested the initial aquire - in case of ERR
+        # If it's "controller" then can prompt the user whether to steal
+        # If it's "manual" or "automate" then ignore
+        self.aquired_by = ""   
         self.loco_id = loco_id
         #self.loco_class = ""
         self.loco_name = ""	# This needs to be unique (no checking so if not then the first will be returned)
@@ -26,8 +30,12 @@ class Loco:
         # . review alternatives to using full path - although doesn't cause any issues with portability as not saved within file
         self.filename = filename
     
-    def set_status (self, value):
+    def set_status (self, value, aquired_by=""):
+        """ set status - eg rloc if aquiring"""
+        # aquired_by is optional - used if rloc, otherwise ignored
         self.status = value
+        if value == "rloc":
+            self.aquired_by = aquired_by
 
     def is_active (self):
         if self.status == "on":
@@ -42,7 +50,7 @@ class Loco:
         self.set_speeddir (speeddir)    # converts to direction and speed
         self.set_functions (*functions)
         self.status = "on"
-        print (f"Loco {self.loco_id} aquired")
+        #print (f"Loco {self.loco_id} aquired")
         
     # Returns the display name
     def get_display_name (self):

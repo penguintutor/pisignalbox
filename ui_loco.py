@@ -68,7 +68,7 @@ def loco_change (self, index=0):
     self.control_loco.loco = loco
 
     self.ui.locoStatusLabel.setText(f"Aquiring {loco_name}")
-    self.control_loco.loco.status = 'rloc'
+    #self.control_loco.loco.set_status('rloc', "controller") - done by control_loco.set_status instead
     # Add images and summary
     if "image" in self.control_loco.loco.loco_data and self.control_loco.loco.loco_data['image'] != "":
         self.loco_image = QPixmap(os.path.join(self.dirs['locos'], self.control_loco.loco.loco_data['image']))
@@ -276,13 +276,13 @@ def update_kalive (self):
 # Keep alive - called every 4 secs
 # Add a keep alive to the send queue
 def keep_alive (self):
-    print ("Keep alive")
+    #print ("Keep alive")
     # Check we have a session to send a keep alive (ie. not in process of trying
     # to aquire a new loco
     # Check all locos 
     for loco in device_model.get_all_locos():
         if loco.is_active():
-            print (f"Loco {loco.loco_id} is active")
+            #print (f"Loco {loco.loco_id} is active")
             self.api.start_request(self.api.vlcb.keep_alive(loco.get_session()))
     #if self.control_loco.is_active():
     #    self.api.start_request(self.api.vlcb.keep_alive(self.control_loco.get_session()))
@@ -375,7 +375,7 @@ def acquire_pressed(self, loco):
     print(f"Acquiring locomotive: {loco.get_display_name()}")
     # Aquire loco
     self.api.start_request(self.api.vlcb.allocate_loco(loco.loco_id))
-    loco.set_status('rloc')
+    loco.set_status('rloc', "controller")
 
 
 def get_button_style(self, color_hex):

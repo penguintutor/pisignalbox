@@ -45,17 +45,31 @@ class ApiHandler(QObject):
         
         # Get events from the event_bus
         #event_bus.gui_event_signal.connect(self.gui_event)
-        event_bus.device_event_signal.connect(self.send_event)
+        event_bus.device_event_signal.connect(self.vlcb_event)
+        # Loco events can be sent to API if unable to access API class
+        # This is case if device_model is sending request  eg. if need to send gloc (share / steal)
+        event_bus.loco_event_signal.connect(self.loco_event)
         
         # VLCB and node creation
         self.vlcb = VLCB(self.pc_can_id)
         
     # Receives event from event_bus and issues start_request
-    def send_event (self, event):
+    def vlcb_event (self, event):
         #print (f"API Handler sending event {event}")
         #print (f" Node ID {event.get_node_id()} Event ID {event.get_event_id()} Value {event.get_value()}")
         self.start_request(self.vlcb.accessory_command(event.get_node_id(), event.get_event(), event.get_value()))
 
+    def loco_event (self, event):
+        if event.get_action() == "api":
+            loco_id = event.get_loco_id()
+            if loco_id == None:
+                return
+            command = event.get_command()
+            # Allow share or steal
+            if command == "share":
+                self.start_request(self.vlcb.share_loco(loco_id))
+            elif command == "steal":
+                self.start_request(self.vlcb.steal_loco(loco_id))
         
     # Gets request off the queue
     # Returns false if no requests, otherwise returns request string

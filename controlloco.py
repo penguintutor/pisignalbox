@@ -171,7 +171,9 @@ class ControlLoco:
     def set_status (self, value):
         if self.loco == None:
             return None
-        self.loco.set_status(value)
+        # Set controller - which triggers steal dialog if required
+        # Note ignored if not value == 'rloc'
+        self.loco.set_status(value, "controller")
         
     def set_function_dfun (self, func_index, value):
         # for a list need brackets around the method - or store in temp variable
