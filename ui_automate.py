@@ -14,3 +14,21 @@ def update_automation_list (self):
     self.ui.automationList.clear()
     for seq_string in self.automation.get_sequence_strings():
         self.ui.automationList.addItem(seq_string)
+
+
+def run_selected_sequence(self):
+    """Triggers the run process in the main window."""
+
+    selected_row = self.ui.automationList.currentRow()
+    if selected_row >= 0:
+        # First need to check for any unassigned locos (eg. "ID 1") and 
+        # assign to a real loco
+        loco_list = self.automation.get_locos(selected_row)
+
+        print (f"Loco list {loco_list}")
+
+
+
+        self.automation.run_sequence(selected_row)
+    else:
+        QMessageBox.warning(self, "Selection Error", "Please select a rule sequence to run.")

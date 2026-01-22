@@ -65,7 +65,7 @@ class AutomationStep:
         return run_data
 
     # If any variable tokens are found they are handled in the run        
-    def run (self, notify_signal, notify_wait_signal, status_signal):
+    def run (self, notify_signal, notify_wait_signal, status_signal, locos):
         run_data = self.parse_var()
         #print (f"Step {self.step_name} of type {self.step_type} running with data {run_data}")
         # Now use run_data - which has any variables parsed
@@ -157,12 +157,21 @@ class AutomationStep:
                         break
         elif self.step_type == "Loco":
             # Loco step 
-            print (f"Running Loco Step: {self.step_name} with data {run_data}")
+            # Is the Loco connected
+            #loco_id = 
+            print (f"Running Loco Step: {self.step_name} with data {run_data}, locos {locos}")
             loco_command = run_data['data'].get("command", "")
             if loco_command == "Function":
-                print
+                print ("Loco function")
             else:
                 print (f"Unknown Loco command: {loco_command}")
+
+    def get_loco (self):
+        """ If step uses loco then return loco, else return "" """
+        if self.step_type == "Loco":
+            return self.data['data'].get("locoid", "")
+        return ""
+
 
     # Test condition is used for any check operations eg. 
     # "test": "equals" "==" or "lessthan" "<" or "greaterthan" ">", or 

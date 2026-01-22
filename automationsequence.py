@@ -43,20 +43,18 @@ class AutomationSequence (QRunnable):
             if step_data['type'] == "Label":
                 self.labels[step_data['name']] = i
             ## Variables need to be added through automationmanager to use the mainwindow and so be included in device_model
-            # if step_data['type'] == "App":
-            #     print (f"App Step data: {step_data}, var {self.vars}")
-            #     # If it's a set variable command then ensure variable exists
-            #     if step_data['data'].get("command", "") == "Set Variable":
-            #         var_name = step_data['data'].get("variable", "")
-            #         print (f"Variable name {var_name}")
-            #         if not self.vars.is_variable(var_name):
-            #             self.vars.add_variable(var_name, "")
-            #             print (f"Adding variable {var_name} to AppVar from AutomationSequence")
-            #print (f"Step data {step_data}")
-            #print (f"Name {step_data['name']}")
-            #print (f"Variables {self.vars.variables}")
-            # Rule is blank (between step_data and check_stop_func)
             self.steps.append(AutomationStep(self.vars, step_data['type'], step_data['name'], step_data, check_stop_func=self.check_stop))
+
+    def get_locos (self):
+        """ Get a list of all locos in the sequence
+        used by MW when starting automation to check what locos need
+        to be allocated """
+        locos = []
+        for step in self.steps:
+            new_loco = step.get_loco()
+            if new_loco != "" and not new_loco in locos:
+                locos.append (new_loco)
+        return locos
          
     def get_variables (self):
         vars = []
@@ -67,7 +65,7 @@ class AutomationSequence (QRunnable):
         return vars
 
     @Slot()
-    def run (self, seq_num=None):
+    def run (self, seq_num=None, locos={}):
         print (f"Starting sequence {self.title}")
         #self.signals.status.emit(f"Starting sequence {self.title}")
         self.active = True
@@ -100,7 +98,7 @@ class AutomationSequence (QRunnable):
                 # otherwise jump is ignored (eg. if loop then until no longer met)
             else:
                 # Otherwise run it  
-                self.steps[position].run(self.signals.notify, self.signals.notify_wait,self.signals.status)
+                self.steps[position].run(self.signals.notify, self.signals.notify_wait,self.signals.status, locos)
             position += 1
         # Emit a signal to indicate the thread has finished
         self.signals.finished.emit(seq_num)

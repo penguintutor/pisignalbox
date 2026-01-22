@@ -163,15 +163,18 @@ class AutomationManager (QObject):
             print("Error: The provided class lacks a 'from_json' method.")
         except Exception as e:
             print(f"An error occurred while loading: {e}")
+
+    def get_locos (self, seq_num):
+        return self.sequences[seq_num].get_locos()
             
-    def thread_start (self, seq_num):
+    def thread_start (self, seq_num, locos):
         if seq_num < len(self.sequences):
-            self.sequences[seq_num].run(seq_num)
+            self.sequences[seq_num].run(seq_num, locos)
             
-    def run_sequence(self, seq_num):
+    def run_sequence(self, seq_num, locos={}):
         # Only allow one check_responses thread to run at a time
                
-        worker = Worker(self.thread_start, seq_num)
+        worker = Worker(self.thread_start, seq_num, locos)
         self.threadpool.start(worker)
         return
     
