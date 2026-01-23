@@ -29,7 +29,25 @@
     </widget>
    </item>
    <item>
-    <widget class="QTableWidget" name="locoTable"/>
+    <widget class="QTableWidget" name="locoTable">
+     <property name="columnCount">
+      <number>2</number>
+     </property>
+     <attribute name="horizontalHeaderVisible">
+      <bool>false</bool>
+     </attribute>
+     <attribute name="horizontalHeaderHighlightSections">
+      <bool>false</bool>
+     </attribute>
+     <attribute name="verticalHeaderVisible">
+      <bool>false</bool>
+     </attribute>
+     <attribute name="verticalHeaderHighlightSections">
+      <bool>false</bool>
+     </attribute>
+     <column/>
+     <column/>
+    </widget>
    </item>
    <item>
     <widget class="QDialogButtonBox" name="buttonBox">
