@@ -3,7 +3,7 @@ import os
 import re
 from pathlib import Path
 from PySide6.QtCore import Signal, Slot
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QFileDialog, QMessageBox, QTableWidget, QTableWidgetItem, QPushButton
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QFileDialog, QMessageBox, QTableWidget, QTableWidgetItem, QPushButton, QHeaderView
 from PySide6.QtUiTools import QUiLoader
 from devicemodel import device_model
 from settings import Settings
@@ -26,6 +26,13 @@ class AutoLocoDialog(QDialog):
         self.ui = loader.load(os.path.join(basedir, "autolocodialog.ui"), None)
         self.setWindowTitle("Allocate locos")
         self.setLayout(self.ui.layout())
+
+        # Get the header object
+        header = self.ui.locoTable.horizontalHeader()
+        # Set Column 0 (Name) to fill all available empty space
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Stretch)
+        # Set Column 1 (Button) to shrink exactly to the size of the button
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
         
         # handle button clicks
         self.ui.buttonBox.accepted.connect (self.accept_click)
@@ -64,7 +71,7 @@ class AutoLocoDialog(QDialog):
         # We use a lambda to pass the specific 'loco' object to the handler.
         # Note: 'l=loco' captures the current value of loco. 
         # If you skip this, all buttons will try to acquire the last loco added.
-        self.loco_table_buttons[row].clicked.connect(lambda checked=False, l=loco: self.acquire_pressed(self, l))
+        self.loco_table_buttons[row].clicked.connect(lambda checked=False, l=loco: self.acquire_pressed(l))
 
         # Insert the widget into the table
         # setCellWidget is required for buttons (setItem is only for text/icons)
