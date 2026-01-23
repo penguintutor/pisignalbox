@@ -3,7 +3,7 @@ import os
 import re
 from pathlib import Path
 from PySide6.QtCore import Signal, Slot
-from PySide6.QtWidgets import QDialog, QVBoxLayout, QFileDialog, QMessageBox
+from PySide6.QtWidgets import QDialog, QVBoxLayout, QFileDialog, QMessageBox, QTableWidget, QTableWidgetItem, QPushButton
 from PySide6.QtUiTools import QUiLoader
 from devicemodel import device_model
 from settings import Settings
@@ -34,7 +34,50 @@ class AutoLocoDialog(QDialog):
         self.update_dialog ()
 
     def update_dialog(self):
+        locos = device_model.get_all_locos()
+        # Reset table and remove buttons 
+        self.ui.locoTable.setRowCount(0)
+        self.loco_table_list = []
+        self.loco_table_buttons = []
+        for loco in locos:
+            self.add_loco_to_table (loco)
+
+    def add_loco_to_table(self, loco):
+        """
+        Adds a new row to the table with the loco name and an Acquire button.
+        """
+        # Get the current number of rows to find the index for the new row
+        row = self.ui.locoTable.rowCount()
+        self.ui.locoTable.insertRow(row)
+
+        self.loco_table_list.append(loco)
+
+        # Add the Locomotive Name (Column 0)
+        # We use QTableWidgetItem for standard strings
+        name_item = QTableWidgetItem(loco.get_display_name())
+        self.ui.locoTable.setItem(row, 0, name_item)
+
+        # Create the Acquire Button (Column 1)
+        self.loco_table_buttons.append(QPushButton("Acquire"))
         
+        # Connect the signal (The tricky part!)
+        # We use a lambda to pass the specific 'loco' object to the handler.
+        # Note: 'l=loco' captures the current value of loco. 
+        # If you skip this, all buttons will try to acquire the last loco added.
+        self.loco_table_buttons[row].clicked.connect(lambda checked=False, l=loco: self.acquire_pressed(self, l))
+
+        # Insert the widget into the table
+        # setCellWidget is required for buttons (setItem is only for text/icons)
+        self.ui.locoTable.setCellWidget(row, 1, self.loco_table_buttons[row])
+
+    def acquire_pressed(self, loco):
+        """
+        Slot to handle the button click
+        """
+        print(f"Acquiring locomotive: {loco.get_display_name()}")
+        # Aquire loco
+        self.api.start_request(self.api.vlcb.allocate_loco(loco.loco_id))
+        loco.set_status('rloc', "controller")
 
     
     def accept_click (self):
@@ -48,3 +91,4 @@ class AutoLocoDialog(QDialog):
         # temp just convert list to dict
         return {item: item for item in self.locos}
 
+    
