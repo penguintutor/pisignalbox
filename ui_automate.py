@@ -8,6 +8,7 @@ from PySide6.QtWidgets import QMenu, QDialog, QFileDialog, QMessageBox
 from PySide6.QtGui import QPixmap, QImage, QPalette, QColor, QFont, QResizeEvent
 from devicemodel import device_model
 from eventbus import event_bus
+from autolocodialog import AutoLocoDialog
 
 def update_automation_list (self):
     # Update the automation list in the UI
@@ -27,8 +28,19 @@ def run_selected_sequence(self):
 
         print (f"Loco list {loco_list}")
 
+        # If loco_list has any non DCC entries
+        # Use dialog to get loco ids
+        if any(item.startswith("ID ") for item in loco_list):
+            auto_loco_dialog = AutoLocoDialog(self, loco_list)
+            result = auto_loco_dialog.exec()
+            if result == 0:
+                return
+            loco_dict = auto_loco_dialog.get_dict()
+        else:
+            loco_dict = {item: item for item in loco_list}
 
 
-        self.automation.run_sequence(selected_row)
+
+        self.automation.run_sequence(selected_row, loco_dict)
     else:
         QMessageBox.warning(self, "Selection Error", "Please select a rule sequence to run.")
