@@ -358,7 +358,7 @@ def add_loco_to_table(self, loco):
     # Create the Acquire Button (Column 1)
     self.loco_table_buttons.append(QPushButton("Acquire"))
     
-    # Connect the signal (The tricky part!)
+    # Connect the signal 
     # We use a lambda to pass the specific 'loco' object to the handler.
     # Note: 'l=loco' captures the current value of loco. 
     # If you skip this, all buttons will try to acquire the last loco added.

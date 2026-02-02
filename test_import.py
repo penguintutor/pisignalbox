@@ -18,8 +18,8 @@ try:
     # 3. Test specific internals (The classes you use)
     # Adjust this based on your exact import structure
     try:
-        from pyvlcb import VLCBformat
-        print(f"✅ SUCCESS: 'VLCBformat' class is available.")
+        from pyvlcb import VLCBFormat
+        print(f"✅ SUCCESS: 'VLCBFormat' class is available.")
     except ImportError as e:
         print(f"❌ PARTIAL FAILURE: Could import package, but not class: {e}")
 

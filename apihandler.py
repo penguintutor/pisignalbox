@@ -4,7 +4,7 @@ from eventbus import EventBus, event_bus
 from locoevent import LocoEvent
 from devicemodel import DeviceModel, device_model
 from pyvlcb import VLCB
-from pyvlcb import VLCBopcode
+from pyvlcb import VLCBOpcode
 from vlcbnode import VLCBNode
 from vlcbclient import VLCBClient
 from guievent import GuiEvent
@@ -258,7 +258,7 @@ class ApiHandler(QObject):
             # Todo update UI when stop all
             
         elif ret_opcode == 'PNN':    # PNN (Response to query node)
-            data_entry = VLCBopcode.parse_data(vlcb_entry.data)
+            data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
             # Determine mode based on flags (bit 3)
             # Flags bit 0 = consumer, bit 1 = producer, bit 2= FliM, bit 3 = supports bootloading
             if data_entry['Flags'] & 0x4:
@@ -281,7 +281,7 @@ class ApiHandler(QObject):
             # If this is new, or has changed then we can also get the number of events
             self.discover_evn (data_entry['NN'])
         elif ret_opcode == 'NUMEV':    # Number of configured events
-            data_entry = VLCBopcode.parse_data(vlcb_entry.data)
+            data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
             # If we don't already have this node then didn't see a PNN response - so likely error
             if not device_model.node_exists(data_entry['NN']):
                 print (f"NUMV response from Unknown node {data_entry['NN']}")
@@ -290,7 +290,7 @@ class ApiHandler(QObject):
             device_model.set_numev(data_entry['NN'], data_entry['NumEvents'])
             #self.nodes[data_entry['NN']].set_numev(data_entry['NumEvents'])
         elif ret_opcode == 'EVNLF':    # Number of event space left in node
-            data_entry = VLCBopcode.parse_data(vlcb_entry.data)
+            data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
             # If we don't already have this node then didn't see a PNN response - so likely error
             if not device_model.node_exists(data_entry['NN']):
                 print (f"EVNLF response from Unknown node {data_entry['NN']}")
@@ -300,7 +300,7 @@ class ApiHandler(QObject):
             # Add a query for the next discovery stage - get a list of all the events
             self.discover_nerd (data_entry['NN'])
         elif ret_opcode == 'ENRSP':    # EV discovery
-            data_entry = VLCBopcode.parse_data(vlcb_entry.data)
+            data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
             # If we don't already have this node then didn't see a PNN response - so likely error
             if not device_model.node_exists(data_entry['NN']):
                 # Most likely reason is connected to existing server with old entries
@@ -313,7 +313,7 @@ class ApiHandler(QObject):
             #device_model.update_ev(data_entry['NN'], data_entry['EnIndex'], "name", self.mw.layout.ev_name(data_entry['NN'], data_entry['EnIndex'], data_entry['En3_0']))
         # Indicates allocation of loco - need to verify this is expected
         elif ret_opcode == 'PLOC':
-            data_entry = VLCBopcode.parse_data(vlcb_entry.data)
+            data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
             #print (f"PLOC received {data_entry}")
             # Session,AddrHigh_AddrLow,SpeedDir,Fn1,Fn2,Fn3'
             loco_id = data_entry['AddrHigh_AddrLow'] & 0x3FFF
@@ -337,8 +337,8 @@ class ApiHandler(QObject):
         # Accessory On (eg ACON = Acc / ASON = short)
         # Works on both event codes (eg. ACON) and status codes (eg. ARON)
         # Uses 'active' True / false
-        elif (ret_opcode in VLCBopcode.accessory_codes['on']):
-            data_entry = VLCBopcode.parse_data(vlcb_entry.data)
+        elif (ret_opcode in VLCBOpcode.accessory_codes['on']):
+            data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
             # pass all data into event, but also add additional information
             data_entry ['node_id'] = data_entry ['NN']
             # Long codes (ACON) use Event Number, Short codes (ASON) use Device Number
@@ -354,8 +354,8 @@ class ApiHandler(QObject):
             #print (f"On code {data_entry}")
             self.consume_device_event (data_entry)
         # Accessory Off (eg ACOFF = Acc / ASOF = short)
-        elif (ret_opcode in VLCBopcode.accessory_codes['off']):
-            data_entry = VLCBopcode.parse_data(vlcb_entry.data)
+        elif (ret_opcode in VLCBOpcode.accessory_codes['off']):
+            data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
             data_entry ['node_id'] = data_entry ['NN']
             if 'EnHigh_EnLow' in data_entry:
                 data_entry ['event_id'] = data_entry ['EnHigh_EnLow']
@@ -375,7 +375,7 @@ class ApiHandler(QObject):
             # Stored as Byte1, Byte2, ErrCode - where Byte1,Byte2 may eqal AddrHigh_AddrLow, or
             # may be Byte1 = Session ID, Byte 2 = 0
             # So only check after looking at the ErrCodepublish_device_event 
-            data_entry = VLCBopcode.parse_data(vlcb_entry.data)
+            data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
             # After extracting data publish as an event then let receiving classes process
             event_bus.publish(LocoEvent('ERR', data_entry))
 

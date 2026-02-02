@@ -12,7 +12,7 @@ from guiobject import GuiObject
 from layoutobject import LayoutObject
 from layoutbutton import LayoutButton
 from layoutlabel import LayoutLabel
-from pyvlcb import VLCB, VLCBformat
+from pyvlcb import VLCB
 from vlcbnode import VLCBNode
 from vlcbev import VLCBEv
 

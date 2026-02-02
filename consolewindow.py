@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QMainWindow, QTextBrowser, QTableWidget, QTableWid
 from PySide6.QtUiTools import QUiLoader
 from eventbus import EventBus, event_bus
 from pyvlcb import VLCB
-from pyvlcb import VLCBopcode
+from pyvlcb import VLCBOpcode
 import queue
 
 loader = QUiLoader()
@@ -84,11 +84,10 @@ class ConsoleWindowUI(QMainWindow):
             # Add new row to the table
             row_num = self.ui.consoleTable.rowCount()
             self.ui.consoleTable.setRowCount(row_num + 1)
-            #print (f"Log details : {log_details}")
             for i in range(0, len(log_details)):
                 self.ui.consoleTable.setItem(row_num, i, QTableWidgetItem(log_details[i]))
                 # Add tooltip with title of opcode
-                self.ui.consoleTable.item(row_num, i).setToolTip(VLCBopcode.opcode_title(log_details[3]))
+                self.ui.consoleTable.item(row_num, i).setToolTip(VLCBOpcode.opcode_title(log_details[4]))
             
         # If in scrollmode then go to the bottom
         if self.ui.scrollCheckBox.isChecked():
