@@ -83,7 +83,7 @@ class AutoLocoDialog(QDialog):
         """
         print(f"Acquiring locomotive: {loco.get_display_name()}")
         # Aquire loco
-        self.api.start_request(self.api.vlcb.allocate_loco(loco.loco_id))
+        self.gui.api.start_request(self.gui.api.vlcb.allocate_loco(loco.loco_id))
         loco.set_status('rloc', "controller")
 
     
