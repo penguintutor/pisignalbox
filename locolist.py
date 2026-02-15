@@ -17,7 +17,7 @@ class LocoList:
         # The index is the filename
         self.locos = {}
         
-        self.enabled_locos = []	# This is whether it's allowed in this session - not if it's been aquired etc
+        self.enabled_locos = []	# This is whether it's allowed in this session - not if it's been acquired etc
         # The order that they are stored in this list determines how they are returned
         # Stores the filename which is unique and allows easy lookup
         

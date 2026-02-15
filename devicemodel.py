@@ -112,7 +112,7 @@ class DeviceModel(QObject):
             loco_id = event.data.get('Loco_id', "")
             for loco in self.locos.get_all_locos():
                 if loco_id == loco.loco_id:
-                    loco.aquired(
+                    loco.acquired(
                         event.data.get('Session'),
                         event.data.get('Speeddir'),
                         (event.data.get('Fn1'), event.data.get('Fn2'), event.data.get('Fn3'))
@@ -138,7 +138,7 @@ class DeviceModel(QObject):
         
     def handle_error (self, error_data):
         #print (f"Handling loco error: {error_data}")
-        #print (f"Current loco id: {self.get_id()} Status {self.get_status()} Aquiring {self.is_aquiring()}")
+        #print (f"Current loco id: {self.get_id()} Status {self.get_status()} Acquiring {self.is_acquiring()}")
         # Depending upon the error code the data may have different interpretations
         # Stored as Byte1, Byte2, ErrCode - where Byte1,Byte2 may eqal AddrHigh_AddrLow, or
         # may be Byte1 = Session ID, Byte 2 = 0
@@ -147,19 +147,19 @@ class DeviceModel(QObject):
         # Check error code relates to the current loco
         if error_data['ErrCode'] == 1:
             # Loco stack full
-            # Only valid during aquiring status
+            # Only valid during acquiring status
             loco_id = VLCB.bytes_to_addr(error_data['Byte1'],error_data['Byte2']) & 0x3FFF
             # get loco object
             loco = self.loco_from_id(loco_id)
             if loco == None:
                 # Not a loco we've requested (perhaps expired)
-                print ("Loco Error 1 - Not aquiring loco {loco_id} - ignoring error")
+                print ("Loco Error 1 - Not acquiring loco {loco_id} - ignoring error")
                 return
             # set status - does not remove other values (eg. session)
             loco.set_status("error")
             # If from controller then inform controller to update
             # Note that this is specific to controller 
-            if loco.aquired_by == "controller":
+            if loco.acquired_by == "controller":
                 event_bus.publish(AppEvent({"action":"uitext", 'label': "locoStatusLabel", 'value': "Error - no sessions available", "loco_id": self.loco.loco_id}))
 
         # Already taken - option to steal or share
@@ -171,13 +171,13 @@ class DeviceModel(QObject):
             loco = self.loco_from_id(loco_id)
             if loco == None:
                 # Not a loco we've requested (perhaps expired)
-                print ("Loco Error 2 - Not aquiring loco {loco_id} - ignoring error")
+                print ("Loco Error 2 - Not acquiring loco {loco_id} - ignoring error")
                 return
             
-            # It is our loco and we are trying to aquire - so allow aquire
+            # It is our loco and we are trying to acquire - so allow acquire
             # If it's controller that request then ask user whether to steal or share
             
-            if loco.aquired_by != "controller":
+            if loco.acquired_by != "controller":
                 # If not controller then autotomate / manual so request share
                 #self.api.start_request(self.api.vlcb.share_loco(loco_id)) 
                 event_bus.publish(LocoEvent('api', {
@@ -192,8 +192,8 @@ class DeviceModel(QObject):
 
         elif error_data['ErrCode'] == 8:
             # Session cancelled
-            # If we are trying to aquire a session then this could be us resetting other node
-            # or could be aquired by different controller
+            # If we are trying to acquire a session then this could be us resetting other node
+            # or could be acquired by different controller
             # byte 1 is now sessionid - byte2 is ignored - should be 00
             session_id = int(error_data['Byte1'])
             if self.debug:

@@ -174,17 +174,6 @@ class EventBus(QObject):
                 #json.dump(self.event_rules, data_file, indent=4)
                 json.dump(self.event_rules, data_file, default=serialize_event, indent=4)
                 
-#                 serialized_rules = [
-#                     [serialize_event(event) for event in rule_pair]
-#                     for rule_pair in self.event_rules
-#                     ]
-#                 serialized_rules = []
-#                 for rule_group in self.event_rules:
-#                     serialized_rules.append([serialize_event(rule_group[0]), serialize_event(rule_group[1])])
-                        
-                #print (f"serialized_rules {serialized_rules}")
-                
-                #json.dump(serialized_rules, data_file, indent=4)
 
 
         except Exception as e:

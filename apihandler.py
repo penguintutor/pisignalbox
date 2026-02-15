@@ -329,7 +329,7 @@ class ApiHandler(QObject):
             
             event_bus.publish(AppEvent({"action":"uitext", 'label': "locoStatusLabel", 'value': "Ready"}))
             # Set status to on last gives time to ensure all entries updated
-            # Todo update controller with new values
+            # Update controller with new values
             event_bus.publish(AppEvent({"action":"lcd"}))
             # Start the keepalive timer
             event_bus.publish(AppEvent({"action":"keepalive"}))
@@ -367,7 +367,7 @@ class ApiHandler(QObject):
             data_entry ['value'] = "off"
             #print (f"Off code {data_entry}")
             self.consume_device_event (data_entry)
-        # ERR is error from DCC controller - eg. problem aquiring loco
+        # ERR is error from DCC controller - eg. problem acquiring loco
         elif ret_opcode == 'ERR':
             if self.debug:
                 print ("Error message received")

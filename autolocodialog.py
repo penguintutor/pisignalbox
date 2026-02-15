@@ -6,6 +6,8 @@ from PySide6.QtCore import Signal, Slot
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QFileDialog, QMessageBox, QTableWidget, QTableWidgetItem, QPushButton, QHeaderView
 from PySide6.QtUiTools import QUiLoader
 from devicemodel import device_model
+from eventbus import event_bus
+from locoevent import LocoEvent
 from settings import Settings
 from layout import Layout
 from layouts import Layouts
@@ -38,6 +40,9 @@ class AutoLocoDialog(QDialog):
         self.ui.buttonBox.accepted.connect (self.accept_click)
         self.ui.buttonBox.rejected.connect (self.cancel)
 
+        # If receive PLOC then update Squire status
+        event_bus.loco_event_signal.connect (self.update_locos)
+
         self.update_dialog ()
 
     def update_dialog(self):
@@ -48,6 +53,14 @@ class AutoLocoDialog(QDialog):
         self.loco_table_buttons = []
         for loco in locos:
             self.add_loco_to_table (loco)
+
+    def update_locos(self, event):
+        """ Called whenever there is a LocoEvent whilst
+        this dialog is open. If relates to allocate loco then 
+        update the deisplay"""
+        if event.event_type == "PLOC":
+            print (f"Loco allocated {event.data.get('Loco_id')}")
+            self.update_dialog()
 
     def add_loco_to_table(self, loco):
         """
@@ -65,7 +78,13 @@ class AutoLocoDialog(QDialog):
         self.ui.locoTable.setItem(row, 0, name_item)
 
         # Create the Acquire Button (Column 1)
-        self.loco_table_buttons.append(QPushButton("Acquire"))
+        # If aleady allocated then say Acquired instead of Acquire
+        # Still have ability to press though
+        if loco.is_acquired():
+            acq_button_text = "Acquired"
+        else:
+            acq_button_text = "Acquire"
+        self.loco_table_buttons.append(QPushButton(acq_button_text))
         
         # Connect the signal (The tricky part!)
         # We use a lambda to pass the specific 'loco' object to the handler.

@@ -67,7 +67,7 @@ def loco_change (self, index=0):
 
     self.control_loco.loco = loco
 
-    self.ui.locoStatusLabel.setText(f"Aquiring {loco_name}")
+    self.ui.locoStatusLabel.setText(f"Acquiring {loco_name}")
     #self.control_loco.loco.set_status('rloc', "controller") - done by control_loco.set_status instead
     # Add images and summary
     if "image" in self.control_loco.loco.loco_data and self.control_loco.loco.loco_data['image'] != "":
@@ -278,7 +278,7 @@ def update_kalive (self):
 def keep_alive (self):
     #print ("Keep alive")
     # Check we have a session to send a keep alive (ie. not in process of trying
-    # to aquire a new loco
+    # to acquire a new loco
     # Check all locos 
     for loco in device_model.get_all_locos():
         if loco.is_active():
@@ -373,7 +373,7 @@ def acquire_pressed(self, loco):
     Slot to handle the button click
     """
     print(f"Acquiring locomotive: {loco.get_display_name()}")
-    # Aquire loco
+    # Acquire loco
     self.api.start_request(self.api.vlcb.allocate_loco(loco.loco_id))
     loco.set_status('rloc', "controller")
 

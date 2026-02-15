@@ -59,7 +59,7 @@ class MainWindowUI(QMainWindow):
     
     steal_dialog_signal = Signal(int)
     # Handle loco selection
-    # reset loco to none selected (if aquire failed or loco stolen by another controller)
+    # reset loco to none selected (if acquire failed or loco stolen by another controller)
     reset_loco_signal = Signal()
     steal_loco_signal = Signal() # Attempt to steal loco
     share_loco_signal = Signal() # Attempt to share loco
@@ -137,7 +137,7 @@ class MainWindowUI(QMainWindow):
         self.timer.start()
         
         # Keep alive timer - used for DCC keep alive
-        # Create timer, but don't start until aquire locomotive
+        # Create timer, but don't start until acquire locomotive
         self.kalive_timer = QTimer(self)
         self.kalive_timer.setInterval(4000)
         self.kalive_timer.timeout.connect(self.keep_alive)

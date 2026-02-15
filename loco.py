@@ -10,12 +10,12 @@ class Loco:
     def __init__ (self, loco_id=0, session=0, direction=1, speed=0, filename=None):
         # status starts in off, change to rloc when rloc sent, then on when allocated
         # if error after ploc then set to off
-        # if gloc then set status to gloc - and then on after aquire (ploc)
+        # if gloc then set status to gloc - and then on after acquire (ploc)
         self.status = "off"   
-        # Aquired by is what has requested the initial aquire - in case of ERR
+        # Acquired by is what has requested the initial acquire - in case of ERR
         # If it's "controller" then can prompt the user whether to steal
         # If it's "manual" or "automate" then ignore
-        self.aquired_by = ""   
+        self.acquired_by = ""   
         self.loco_id = loco_id
         #self.loco_class = ""
         self.loco_name = ""	# This needs to be unique (no checking so if not then the first will be returned)
@@ -30,12 +30,12 @@ class Loco:
         # . review alternatives to using full path - although doesn't cause any issues with portability as not saved within file
         self.filename = filename
     
-    def set_status (self, value, aquired_by=""):
-        """ set status - eg rloc if aquiring"""
-        # aquired_by is optional - used if rloc, otherwise ignored
+    def set_status (self, value, acquired_by=""):
+        """ set status - eg rloc if acquiring"""
+        # acquired_by is optional - used if rloc, otherwise ignored
         self.status = value
         if value == "rloc":
-            self.aquired_by = aquired_by
+            self.acquired_by = acquired_by
 
     def is_active (self):
         if self.status == "on":
@@ -45,12 +45,20 @@ class Loco:
     def get_session (self):
         return self.session
 
-    def aquired (self, session, speeddir, functions):
+    def acquired (self, session, speeddir, functions):
         self.session = session
         self.set_speeddir (speeddir)    # converts to direction and speed
         self.set_functions (*functions)
         self.status = "on"
-        #print (f"Loco {self.loco_id} aquired")
+        #print (f"Loco {self.loco_id} acquired")
+
+    def is_acquired(self):
+        """Is the loco in an active session
+        ie. session > 0
+        """
+        if self.session > 0 and self.status == "on":
+            return True
+        return False
         
     # Returns the display name
     def get_display_name (self):
@@ -144,7 +152,7 @@ class Loco:
         return False
     
     # Is setup in progress (rloc / gloc)
-    def is_aquiring (self):
+    def is_acquiring (self):
         if self.status == 'gloc' or self.status == 'rloc':
             return True
         return False

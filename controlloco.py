@@ -38,7 +38,7 @@ class ControlLoco:
         
     def handle_error (self, error_data):
         #print (f"Handling loco error: {error_data}")
-        #print (f"Current loco id: {self.get_id()} Status {self.get_status()} Aquiring {self.is_aquiring()}")
+        #print (f"Current loco id: {self.get_id()} Status {self.get_status()} Acquiring {self.is_acquiring()}")
         # Depending upon the error code the data may have different interpretations
         # Stored as Byte1, Byte2, ErrCode - where Byte1,Byte2 may eqal AddrHigh_AddrLow, or
         # may be Byte1 = Session ID, Byte 2 = 0
@@ -46,10 +46,10 @@ class ControlLoco:
         #loco_id = data_entry['AddrHigh_AddrLow'] & 0x3FFF
         # Check error code relates to the current loco
         if error_data['ErrCode'] == 1:
-            # Only valid during aquiring status
-            if self.is_aquiring() == False:
+            # Only valid during acquiring status
+            if self.is_acquiring() == False:
                 if self.debug:
-                    print ("Not aquiring loco - ignoring error")
+                    print ("Not acquiring loco - ignoring error")
                     return
             loco_id = VLCB.bytes_to_addr(error_data['Byte1'],error_data['Byte2']) & 0x3FFF
             # If doesn't match then it may be for a different control thread (eg. automation vs gui) or during reallocate
@@ -67,8 +67,8 @@ class ControlLoco:
             #Only for us if we haven't completed the session setup
             if self.get_status() == "on":
                 return
-            elif self.is_aquiring() == False:
-                #print ("Not aquiring session")
+            elif self.is_acquiring() == False:
+                #print ("Not acquiring session")
                 return
             loco_id = VLCB.bytes_to_addr(error_data['Byte1'],error_data['Byte2']) & 0x3FFF
             # Not our loco
@@ -76,7 +76,7 @@ class ControlLoco:
                 if self.debug:
                     print (f"ERR ID {loco_id} does not match current Loco ID {self.get_id()}")
                 return
-            # It is our loco and we are trying to aquire - so allow aquire
+            # It is our loco and we are trying to acquire - so allow acquire
             # Let stealdialog request update gui
             #event_bus.publish(AppEvent({"action":"uitext", 'label': "locoStatusLabel", 'value': "Error - address taken"}))
             # request steal dialog by signalling locotaken
@@ -85,8 +85,8 @@ class ControlLoco:
                 event_bus.publish(AppEvent({"action": "locotaken", 'loco_id': self.loco.loco_id}))
 
         elif error_data['ErrCode'] == 8:
-            # If we are trying to aquire a session then this could be us resetting other node
-            if self.is_aquiring():
+            # If we are trying to acquire a session then this could be us resetting other node
+            if self.is_acquiring():
                 return
             # byte 1 is now sessionid - byte2 is ignored - should be 00
             session_id = int(error_data['Byte1'])
@@ -126,8 +126,8 @@ class ControlLoco:
         #print (f"Loco index {self.loco_index} id {self.loco.loco_id} name {self.loco.loco_name}")
         return self.loco.loco_id
     
-    def is_aquiring(self):
-        return self.loco.is_aquiring
+    def is_acquiring(self):
+        return self.loco.is_acquiring
     
     def get_session (self):
         if self.loco == None:
@@ -162,7 +162,7 @@ class ControlLoco:
         # get [status, type]
         return (self.loco.get_function_status(func_index))
     
-    # This is the low level status - perhaps use is_aquiring or a similar method instead
+    # This is the low level status - perhaps use is_acquiring or a similar method instead
     def get_status (self):
         if self.loco == None:
             return None
@@ -190,8 +190,8 @@ class ControlLoco:
             #event_bus.publish(GuiEvent("start_request", {'command': 'release_loco', 'arg1': self.loco.session}))
             # Seperate request for GUI elements
             self.loco.released()
-            # Normally would want to stop the keep alive but we are hoping to aquire a new session immediately after
-            # So the keep alive will just ignore until aquired
+            # Normally would want to stop the keep alive but we are hoping to acquire a new session immediately after
+            # So the keep alive will just ignore until acquired
 
         
     # Update function selected features
