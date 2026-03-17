@@ -3,6 +3,7 @@
 class LocoEvent:
     
     # List of type of events related to locos.
+    # This is not exhaustive - only events that can be requested
     # As a class variable so it can be used for GUI menus prior to creating event
     event_types = [
         "Set Speed",
@@ -16,6 +17,7 @@ class LocoEvent:
     # Alternative "api"           # Request to api - request to be included in event_data
     # eg. event_data['command'] = "share" 
     # not included in event_types list as not user selectable
+    # Also event_type could be related to allocate - eg. PLOC
         
     def __init__(self, event_type, event_data):
         self.event_type = event_type

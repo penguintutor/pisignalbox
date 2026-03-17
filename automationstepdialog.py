@@ -190,7 +190,8 @@ class AutomationStepDialog(QDialog):
                 # Set based on loaded step
                 self.rows.set_combo_text(4, self.step['data'].get('value'))
             # value 2 not used - set defaults and hide value 2
-            self._reset_row_currents(4, type="VLCB")    # Reset from value onwards
+            # Disable reset as not implemented
+            #self._reset_row_currents(4, type="VLCB")    # Reset from value onwards
             self._hide_rows(5)    # Hide remaining rows (from value2 onwards)
         self.current_row_value[3] = selected_event
         # Don't need to check value as there are no fields below it

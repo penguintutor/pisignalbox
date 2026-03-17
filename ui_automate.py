@@ -35,7 +35,8 @@ def run_selected_sequence(self):
             result = auto_loco_dialog.exec()
             if result == 0:
                 return
-            loco_dict = auto_loco_dialog.get_dict()
+            #loco_dict = auto_loco_dialog.get_dict()
+            loco_dict = auto_loco_dialog.get_results()
         else:
             loco_dict = {item: item for item in loco_list}
 

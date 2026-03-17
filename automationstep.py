@@ -158,15 +158,17 @@ class AutomationStep:
         elif self.step_type == "Loco":
             # Loco step 
             # Is the Loco connected
-            #loco_id = 
+            #Todo check loco connected and active
+            loco_id = self.get_loco_id()
             print (f"Running Loco Step: {self.step_name} with data {run_data}, locos {locos}")
-            loco_command = run_data['data'].get("command", "")
+            loco_command = run_data['data'].get("action", "")
+            #Todo Add actions
             if loco_command == "Function":
                 print ("Loco function")
             else:
                 print (f"Unknown Loco command: {loco_command}")
 
-    def get_loco (self):
+    def get_loco_id (self):
         """ If step uses loco then return loco, else return "" """
         if self.step_type == "Loco":
             return self.data['data'].get("locoid", "")
