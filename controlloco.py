@@ -3,6 +3,7 @@ from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QPixmap
 from layout import Layout
 from pyvlcb import VLCB
+from pyvlcb.utils import bytes_to_addr
 from loco import Loco
 from apihandler import ApiHandler
 from eventbus import EventBus, event_bus
@@ -51,7 +52,7 @@ class ControlLoco:
                 if self.debug:
                     print ("Not acquiring loco - ignoring error")
                     return
-            loco_id = VLCB.bytes_to_addr(error_data['Byte1'],error_data['Byte2']) & 0x3FFF
+            loco_id = bytes_to_addr(error_data['Byte1'],error_data['Byte2']) & 0x3FFF
             # If doesn't match then it may be for a different control thread (eg. automation vs gui) or during reallocate
             if self.get_id() != loco_id:
                 if self.debug:
@@ -70,7 +71,7 @@ class ControlLoco:
             elif self.is_acquiring() == False:
                 #print ("Not acquiring session")
                 return
-            loco_id = VLCB.bytes_to_addr(error_data['Byte1'],error_data['Byte2']) & 0x3FFF
+            loco_id = bytes_to_addr(error_data['Byte1'],error_data['Byte2']) & 0x3FFF
             # Not our loco
             if self.get_id() != loco_id:
                 if self.debug:

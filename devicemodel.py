@@ -5,6 +5,7 @@ import json
 from PySide6.QtCore import Qt, QObject, Signal, Slot
 from PySide6.QtGui import QStandardItemModel, QStandardItem
 from pyvlcb import VLCB
+from pyvlcb.utils import bytes_to_addr
 #from pyvlcb import VLCBOpcode
 from vlcbnode import VLCBNode
 from vlcbclient import VLCBClient
@@ -148,7 +149,7 @@ class DeviceModel(QObject):
         if error_data['ErrCode'] == 1:
             # Loco stack full
             # Only valid during acquiring status
-            loco_id = VLCB.bytes_to_addr(error_data['Byte1'],error_data['Byte2']) & 0x3FFF
+            loco_id = bytes_to_addr(error_data['Byte1'],error_data['Byte2']) & 0x3FFF
             # get loco object
             loco = self.loco_from_id(loco_id)
             if loco == None:
@@ -166,7 +167,7 @@ class DeviceModel(QObject):
         elif error_data['ErrCode'] == 2:
             if self.debug:
                 print ("Error code 2 - loco taken")
-            loco_id = VLCB.bytes_to_addr(error_data['Byte1'],error_data['Byte2']) & 0x3FFF
+            loco_id = bytes_to_addr(error_data['Byte1'],error_data['Byte2']) & 0x3FFF
             # get loco object
             loco = self.loco_from_id(loco_id)
             if loco == None:

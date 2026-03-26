@@ -61,7 +61,7 @@ class Loco:
         return False
         
     # Returns the display name
-    def get_display_name (self):
+    def get_display_name(self):
         #print (f"Getting display name for loco: {self.loco_data}")
         return self.loco_data.get('displayname', 'Loco')
         
@@ -309,3 +309,6 @@ class Loco:
         new_loco = cls()
         new_loco.load_file (loco_file)
         return new_loco
+    
+    def __str__(self):
+        return (f"Loco {self.get_display_name()}")

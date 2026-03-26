@@ -60,13 +60,16 @@ class ApiHandler(QObject):
         self.start_request(self.vlcb.accessory_command(event.get_node_id(), event.get_event(), event.get_value()))
 
     def loco_event (self, event):
+        ## The API action allows direct instructions to the API
         if event.get_action() == "api":
             loco_id = event.get_loco_id()
             if loco_id == None:
                 return
             command = event.get_command()
+            if command == "acquire":
+                self.start_request(self.api.vlcb.allocate_loco(loco_id))
             # Allow share or steal
-            if command == "share":
+            elif command == "share":
                 self.start_request(self.vlcb.share_loco(loco_id))
             elif command == "steal":
                 self.start_request(self.vlcb.steal_loco(loco_id))

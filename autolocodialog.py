@@ -140,43 +140,23 @@ class AutoLocoDialog(QDialog):
         # moved to separate method
         self._update_loco_status_field(widgets["status_container"], selected_loco)
 
-        # # Clear previous status widgets
-        # self.clear_layout(widgets["status_container"].layout())
-
-        # if selected_loco:
-        #     self.assignments[list_idx] = selected_loco
-            
-        #     if selected_loco.is_acquired():
-        #         # ACTIVE STATE
-        #         lbl = QLabel("✔ Active")
-        #         lbl.setStyleSheet("color: green; font-weight: bold;")
-        #         widgets["status_container"].layout().addWidget(lbl)
-        #     else:
-        #         # INACTIVE STATE -> Show Warning + Button
-        #         lbl = QLabel("⚠ Not Acquired")
-        #         lbl.setStyleSheet("color: #d68a00; font-weight: bold;")
-        #         widgets["status_container"].layout().addWidget(lbl)
-                
-        #         btn = QPushButton("Acquire")
-        #         btn.setStyleSheet("background-color: #f0f0f0; border: 1px solid #ccc; border-radius: 3px; padding: 2px 8px;")
-        #         btn.setCursor(Qt.PointingHandCursor)
-        #         # Connect acquire button
-        #         btn.clicked.connect(lambda: self.acquire_pressed(selected_loco))
-        #         widgets["status_container"].layout().addWidget(btn)
-        # else:
-        #     # NO SELECTION
-        #     if list_idx in self.assignments:
-        #         del self.assignments[list_idx]
-            
-        #     lbl = QLabel("--")
-        #     lbl.setStyleSheet("color: #888;")
-        #     widgets["status_container"].layout().addWidget(lbl)
-
         self.validate_form()
 
     def validate_form(self):
         """Check if every row has a selection."""
         all_assigned = len(self.assignments) == len(self.allocate_ids)
+        # also check all locos are acquired
+        # if all_assigned then check to see they are all acquired
+        if all_assigned:
+            for row in self.row_widgets:
+                # row is a dict of widgets
+                # Get loco object for this row
+                selected_loco = row["combo"].currentData()
+                print (f"Selected loco {selected_loco} acquired {selected_loco.is_acquired()}")
+                # if any are not acquired then set false
+                if not selected_loco.is_acquired():
+                    all_assigned = False
+                    break
         self.button_box.button(QDialogButtonBox.Ok).setEnabled(all_assigned)
 
     def clear_layout(self, layout):
@@ -243,27 +223,9 @@ class AutoLocoDialog(QDialog):
             lbl = QLabel("--")
             lbl.setStyleSheet("color: #888;")
             status_container.layout().addWidget(lbl)
+        # update button enable / disable
+        self.validate_form()
 
-
-
-##### OLD
-
-    def update_dialog_old(self):
-        locos = device_model.get_all_locos()
-        # Reset table and remove buttons 
-        self.ui.locoTable.setRowCount(0)
-        self.loco_table_list = []
-        self.loco_table_buttons = []
-        for loco in locos:
-            self.add_loco_to_table (loco)
-
-    def update_locos_old(self, event):
-        """ Called whenever there is a LocoEvent whilst
-        this dialog is open. If relates to allocate loco then 
-        update the deisplay"""
-        if event.event_type == "PLOC":
-            print (f"Loco allocated {event.data.get('Loco_id')}")
-            self.update_dialog()
 
     def add_loco_to_table(self, loco):
         """

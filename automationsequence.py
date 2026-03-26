@@ -5,6 +5,8 @@ from automationstep import AutomationStep
 from automationrule import AutomationRule
 from appvar import AppVar
 from workersignals import WorkerSignals
+from devicemodel import device_model
+from eventbus import event_bus
 
 
 # Automation routine, composed of multiple steps
@@ -22,6 +24,7 @@ class AutomationSequence (QRunnable):
         self.title = title
         self.steps = []  # List of AutomationStep objects
         self.settings = settings
+        print (f"AutomationSequence {self.vars}")
         #self.num_locos = settings.get('num_locos', 0) # 0 to 3 locos required
         #self.vars = settings.get("appvar", {})
         # Store the index of any labels to allow jumps (loops)
@@ -51,7 +54,9 @@ class AutomationSequence (QRunnable):
         to be allocated """
         locos = []
         for step in self.steps:
-            new_loco = step.get_loco()
+            # Gets a loco_id from the step
+            # Todo - does this need to be changed to a loco object?
+            new_loco = step.get_loco_id()
             if new_loco != "" and not new_loco in locos:
                 locos.append (new_loco)
         return locos
@@ -66,7 +71,26 @@ class AutomationSequence (QRunnable):
 
     @Slot()
     def run (self, seq_num=None, locos={}):
-        print (f"Starting sequence {self.title}")
+        print (f"Starting sequence {self.title}, locos {locos}")
+        # If there are any locos then make sure we can 
+        # acquire to them otherwise quit the sequence
+        # Doesn't work -loco is str not object
+        # Instead updated autolocodialog to acquire before run is called
+        # If enable then would need to handle error and provide return point
+        # for loco in locos:
+        #     # Is this loco already connected
+        #     print (f"Checking loco {loco}")
+        #     if loco.is_acquired():
+        #         print("acquired")
+        #         continue
+        #     # if not then need to acquire
+        #     loco_event = LocoEvent("api", {
+        #         "command":"acquire",
+        #         "loco_id":loco.loco_id
+        #         })
+        #     event_bus.broadcast(self.event)
+
+        
         #self.signals.status.emit(f"Starting sequence {self.title}")
         self.active = True
         position = 0

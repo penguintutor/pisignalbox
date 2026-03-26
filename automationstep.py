@@ -164,7 +164,9 @@ class AutomationStep:
             loco_command = run_data['data'].get("action", "")
             #Todo Add actions
             if loco_command == "Function":
-                print ("Loco function")
+                print ("Loco function - implement here")
+            elif loco_command == "Set Speed":
+                print ("Set spped - implement here")
             else:
                 print (f"Unknown Loco command: {loco_command}")
 
