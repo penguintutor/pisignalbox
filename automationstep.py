@@ -2,6 +2,8 @@ from PySide6.QtCore import QRunnable, Slot, Signal, QObject, QThread, QThreadPoo
 import time
 import json
 import threading
+from locoevent import LocoEvent
+from eventbus import event_bus
 from automationrule import AutomationRule
 from appvar import AppVar
 from workersignals import WorkerSignals
@@ -166,7 +168,14 @@ class AutomationStep:
             if loco_command == "Function":
                 print ("Loco function - implement here")
             elif loco_command == "Set Speed":
-                print ("Set spped - implement here")
+                print ("Set speed - implement here")
+            elif loco_command == "Stop":
+                print (f"Stopping loco {loco_id}")
+                event_bus.publish(LocoEvent('api', {
+                    'command': 'stop',
+                    'loco_id': loco_id
+                }))
+                #self.api.start_request(self.api.vlcb.loco_speeddir(self.control_loco.get_session(), self.control_loco.get_speeddir()))
             else:
                 print (f"Unknown Loco command: {loco_command}")
 

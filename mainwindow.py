@@ -420,6 +420,9 @@ class MainWindowUI(QMainWindow):
         elif app_event.action == "locotaken":
             # Only action if it is the controlloco that is taken
             loco_id = app_event.get_loco_id()
+            if loco_id == None:
+                return
+            print (f"Loco taken {loco_id}")
             if loco_id == self.control_loco.get_id():
                 # Set status message - then launch dialog
                 self.ui.locoStatusLabel.setText ('Warning - address taken')
