@@ -80,6 +80,7 @@ class Loco:
     # Data is a dict of what to change
     # Changes info about the loco
     def update_loco (self, data):
+        print (f"Updating loco {data}")
         for key, value in data.items():
             if key == 'address':
                 self.loco_id = value

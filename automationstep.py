@@ -171,10 +171,19 @@ class AutomationStep:
                 print ("Set speed - implement here")
             elif loco_command == "Stop":
                 print (f"Stopping loco {loco_id}")
+                # get loco object for this step
+                try:
+                    loco = locos[loco_id]
+                    session_id = loco.session
+                except Exception as e:
+                    print ("Loco error - possibly disconnected")
                 event_bus.publish(LocoEvent('api', {
-                    'command': 'stop',
-                    'loco_id': loco_id
-                }))
+                    'command': 'speed_dir',
+                    'session': session_id,
+                    'speed': 0,
+                    'direction': loco.direction
+                    }))
+
                 #self.api.start_request(self.api.vlcb.loco_speeddir(self.control_loco.get_session(), self.control_loco.get_speeddir()))
             else:
                 print (f"Unknown Loco command: {loco_command}")
@@ -182,6 +191,7 @@ class AutomationStep:
     def get_loco_id (self):
         """ If step uses loco then return loco, else return "" """
         if self.step_type == "Loco":
+            print (f"{self.data}")
             return self.data['data'].get("locoid", "")
         return ""
 

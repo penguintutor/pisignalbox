@@ -48,9 +48,17 @@ class LocoEvent:
         # If event is created from a VLCB entry then it may be uppercase first letter
         return self.data.get("Loco_id")
     
+    # If doesn't include loco_id then would normally provide session id
+    def get_session_id(self):
+        return self.data.get("session")
+
     # If type is ID then should include command - returns "" if not included
     def get_command(self):
         return self.data.get("command", "")
+    
+    # Argument is any value isn self.data - takes key
+    def get_arg(self, key):
+        return self.data.get(key, "")
     
     def matches (self, event):
         if self.get_type() == event.get_type():
