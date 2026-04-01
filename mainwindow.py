@@ -423,10 +423,16 @@ class MainWindowUI(QMainWindow):
             if loco_id == None:
                 return
             print (f"Loco taken {loco_id}")
-            if loco_id == self.control_loco.get_id():
-                # Set status message - then launch dialog
-                self.ui.locoStatusLabel.setText ('Warning - address taken')
-                self.steal_dialog_signal.emit(loco_id)
+            # use try in case we don't have a loco yet
+            # eg. if start automation without selecting loco first
+            try:
+                if loco_id == self.control_loco.get_id():
+                    # Set status message - then launch dialog
+                    self.ui.locoStatusLabel.setText ('Warning - address taken')
+                    self.steal_dialog_signal.emit(loco_id)
+            except Exception as e:
+                print (f"Acquire fail for a non existing loco {loco_id}")
+                return
         elif app_event.action == "resetloco":
             # Only reset gui parts - already reset in controlloco
             self.reset_loco_gui()

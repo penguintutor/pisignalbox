@@ -30,6 +30,9 @@ class Loco:
         # . review alternatives to using full path - although doesn't cause any issues with portability as not saved within file
         self.filename = filename
     
+    def get_id (self):
+        return self.loco_id
+
     def set_status (self, value, acquired_by=""):
         """ set status - eg rloc if acquiring"""
         # acquired_by is optional - used if rloc, otherwise ignored

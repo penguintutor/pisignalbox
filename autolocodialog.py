@@ -26,6 +26,9 @@ class AutoLocoDialog(QDialog):
         self.setWindowTitle("Allocate Locomotive IDs")
         self.resize(600, 300)
 
+        # Do we "share" or "steal" in event of loco already allocated
+        #Todo currently only share coded
+        self.acquire_share = "share"
 
         # Data storage
         self.allocate_ids = [item for item in loco_list if item.startswith("ID ")]
@@ -40,6 +43,8 @@ class AutoLocoDialog(QDialog):
 
         # If receive PLOC then update loco status
         event_bus.loco_event_signal.connect (self.update_locos)
+        # Register for app events - used for LocoEvent allocate error etc.
+        event_bus.app_event_signal.connect (self.app_event)
 
         #self.update_dialog ()
 
@@ -178,9 +183,37 @@ class AutoLocoDialog(QDialog):
         """ Called whenever there is a LocoEvent whilst
         this dialog is open. If relates to allocate loco then 
         update the deisplay"""
+        print (f"Loco event {event}")
         if event.event_type == "PLOC":
             print (f"Loco allocated {event.data.get('Loco_id')}")
             self.update_dialog()
+
+    def app_event(self, app_event):
+        print (f"App event {app_event}")
+        if app_event.action == "locotaken":
+            # Only action if it is the controlloco that is taken
+            loco_id = app_event.get_loco_id()
+            if loco_id == None:
+                return
+            print (f"Loco taken {loco_id}")
+            print (f"Assignments {self.assignments}")
+            # use try in case we don't have a loco yet
+            # iterate over all locos and if any match then attempt acquire again
+            for loco in self.assignments.values():
+                print (f"Checking {loco_id}, {loco.get_id()}")
+                try:
+                    if loco_id == loco.get_id():
+                        if self.acquire_share == "share":
+                            print (f'Warning - address taken attempting share {loco_id}')
+                            #self.steal_dialog_signal.emit(loco_id)
+                            self.gui.api.start_request(self.gui.api.vlcb.share_loco(loco.loco_id))
+                            # Don't need to check others if we've issued share for this loco already
+                            break
+                        else:
+                            print (f"Only share implemented see self.acquire_share")
+                except Exception as e:
+                    print (f"Acquire fail for a non automate loco {loco_id}")
+                    return
 
     # Just update the status at the moment
     # do we need to see if there are new locos (only if add new loco button)?

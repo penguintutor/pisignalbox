@@ -71,6 +71,7 @@ class EventBus(QObject):
 
     # Publish is used to send an event notification which originates in the application
     # It can be called by other classes (eg. GUI notification)
+    # It is also called from the API (eg. on receive loco acquire)
     # It first calls apply_rules which will trigger an rule events
     # then broadcsts to the appropriate signal
     # To register an event publish with the appropriate event type
