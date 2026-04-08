@@ -189,18 +189,18 @@ class AutoLocoDialog(QDialog):
             self.update_dialog()
 
     def app_event(self, app_event):
-        print (f"App event {app_event}")
+        # If the dialog is closed (not visible) then don't need to 
+        # process any events
+        if not self.isVisible():
+            return
         if app_event.action == "locotaken":
             # Only action if it is the controlloco that is taken
             loco_id = app_event.get_loco_id()
             if loco_id == None:
                 return
-            print (f"Loco taken {loco_id}")
-            print (f"Assignments {self.assignments}")
             # use try in case we don't have a loco yet
             # iterate over all locos and if any match then attempt acquire again
             for loco in self.assignments.values():
-                print (f"Checking {loco_id}, {loco.get_id()}")
                 try:
                     if loco_id == loco.get_id():
                         if self.acquire_share == "share":
@@ -212,7 +212,7 @@ class AutoLocoDialog(QDialog):
                         else:
                             print (f"Only share implemented see self.acquire_share")
                 except Exception as e:
-                    print (f"Acquire fail for a non automate loco {loco_id}")
+                    #print (f"Acquire fail for a non automate loco {loco_id}")
                     return
 
     # Just update the status at the moment

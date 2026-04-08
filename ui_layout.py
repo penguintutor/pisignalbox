@@ -117,6 +117,8 @@ def layout_edit (self, mode="toggle"):
         self.railway.save_file()
 
 def edit_dialog_layoutbutton (self, loader, filepath):
+    """ Dialog for creating and editing Layout Buttons
+    """
     # Current object - for easy ref
     button = self.selected_node
     gui_obj = button.parent
@@ -202,6 +204,8 @@ def edit_dialog_layoutbutton (self, loader, filepath):
 
 ## Setup Dialog for appropriate object type
 def edit_dialog_guiobject (self, loader, filepath):
+    """ Setup dialog for add / edit GUI object  (device)
+    """
     # Current object - for easy ref
     gui_obj = self.selected_node
     # Load the dialog
@@ -296,6 +300,8 @@ def set_button_color(self, button, color):
     button.setAutoFillBackground(True)
 
 def edit_dialog_layoutlabel (self, loader, filepath):
+    """ Add / edit Layout Labels
+    """
     # Current object - for easy ref
     label = self.selected_node
     gui_obj = label.parent

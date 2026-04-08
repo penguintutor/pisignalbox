@@ -164,9 +164,44 @@ class AutomationStep:
             loco_id = self.get_loco_id()
             print (f"Running Loco Step: {self.step_name} with data {run_data}, locos {locos}")
             loco_command = run_data['data'].get("action", "")
-            #Todo Add actions
+            # If there are any actions that just require loco_id
+            # Add them here and wrap the following in an else
+            # Get session id
+            try:
+                loco = locos[loco_id]
+                session_id = loco.session
+            except Exception as e:
+                print ("Loco error - possibly disconnected")
+
             if loco_command == "Function":
                 print ("Loco function - implement here")
+                
+                func_index = run_data['data'].get("function", "")
+                func_type = run_data['data'].get("type", "trigger")
+                func_value = run_data['data'].get("value", 1)
+                if func_index == "":
+                    print ("Function number missing")
+                    return
+                # Get current function status
+                # Need to send state of other functions in the function group
+                # status = self.loco.get_function_status(func_index)
+                # using set_function_dfun calculates based on existing
+                current_byte1_2 = loco.set_function_dfun (func_index)
+                # get off status if required (used by trigger)
+                new_byte1_2 = loco.set_function_dfun (func_index, func_value)
+                if new_byte1_2 == None:
+                    print (f"Invalid function bytes")
+                    return
+                event_bus.publish(LocoEvent('api', {
+                    'command': 'function',
+                    'session': session_id,
+                    'function': func_index,
+                    'type': func_type,
+                    'currentvalue': current_byte1_2,
+                    'newvalue': new_byte1_2
+                    }))
+                
+                
             elif loco_command == "Set Speed":
                 print ("Set speed - implement here")
             elif loco_command == "Stop":

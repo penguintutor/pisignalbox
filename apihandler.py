@@ -78,6 +78,22 @@ class ApiHandler(QObject):
                 self.start_request(self.vlcb.share_loco(loco_id))
             elif command == "steal":
                 self.start_request(self.vlcb.steal_loco(loco_id))
+            elif command == "function":
+                # Instead of needing to allocate the loco have the LocoEvent include current and new
+                # Then can just send current / new as appropriate
+                current = event.get_arg("currentvalue")
+                new = event.get_arg("newvalue")
+                session = event.get_arg("session")
+                # current and new are byte1_2 as a tuple
+                request_new =  self.vlcb.loco_set_dfun(session, *new)
+                request_current = self.vlcb.loco_set_dfun(session, *current)
+                func_type = event.get_arg("type")
+                if func_type == "trigger":
+                    # delay left to default (4 secs)
+                    self.start_request_onoff (request_new, request_current)
+                # if not just change to newvalue
+                else:
+                    self.start_request(request_new)
             elif command == "speed_dir":
                 print ("Setting speed_dir")
                 self.start_request(self.vlcb.loco_speed_dir(

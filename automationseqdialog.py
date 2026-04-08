@@ -1,4 +1,9 @@
-# Dialog for creating a new AutomationSequence.
+""" Dialog for creating a new AutomationSequence
+or 
+editing an existing AutomationSequence
+
+"""
+
 
 import sys
 import copy

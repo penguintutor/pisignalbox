@@ -353,6 +353,11 @@ class MainWindowUI(QMainWindow):
         
     # Launch the automation manager dialog
     def automation_manager_dialog (self):
+        """ Create and launch Automation Manager dialog
+        used to manage the automation sequences
+
+        usually triggered from actionAutomationMgr (mainwindow.ui)
+        """
         #print (f"Launching Automation Manager Dialog {self.automation}")
         dialog = AutomationManagerDialog(self, self.automation)
         dialog.exec()
@@ -369,6 +374,11 @@ class MainWindowUI(QMainWindow):
     
     
     def add_device_dialog (self):
+        """ Create and launch Add Device dialog
+        used to add new devices to the layout
+
+        usually triggered from actionAddDevice (mainwindow.ui)
+        """
         dialog = AddDeviceDialog()
         if dialog.exec():
             # response = id, text
@@ -378,6 +388,11 @@ class MainWindowUI(QMainWindow):
         
         
     def add_label_dialog (self):
+        """ Create and launch Add label dialog
+        used to add new labels to the layout
+
+        usually triggered from actionAddLabel (mainwindow.ui)
+        """
         dialog = AddLabelDialog(self.railway.gui_object_names())
         if dialog.exec():
             # response = id, text
@@ -387,6 +402,11 @@ class MainWindowUI(QMainWindow):
             self.railway.add_label(response[0], "text", {"text":response[1]})
         
     def add_button_dialog (self):
+        """ Create and launch Add Button dialog
+        used to add new buttons to the layout
+
+        usually triggered from actionAddButton (mainwindow.ui)
+        """
         #print (f"Label {self.ui.layoutDisplayLabel}")
         #print (f"Obj names {self.ui.layoutDisplayLabel.gui_object_names()}")
         dialog = AddButtonDialog(self.railway.gui_object_names())
@@ -473,6 +493,10 @@ class MainWindowUI(QMainWindow):
         
     # Import clicked on the menu - import assets (eg. loco file)
     def import_file(self):
+        """ Handles import request
+        Launches a QFileDialog and then performs import
+        Triggered from menu (mainwindow.ui)
+        """
         file_dialog = QFileDialog(self,
                         caption="Select Loco file",
                         directory=self.dirs['locos'],

@@ -125,6 +125,9 @@ class ControlLoco:
     # Id is the loco id (eg DCC/running number) not index
     def get_id(self):
         #print (f"Loco index {self.loco_index} id {self.loco.loco_id} name {self.loco.loco_name}")
+        # Removed error handling - instead use try except
+        #if not isinstance(self.loco, Loco):
+        #    return None
         return self.loco.loco_id
     
     def is_acquiring(self):
