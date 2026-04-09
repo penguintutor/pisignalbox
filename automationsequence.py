@@ -24,7 +24,7 @@ class AutomationSequence (QRunnable):
         self.title = title
         self.steps = []  # List of AutomationStep objects
         self.settings = settings
-        print (f"AutomationSequence {self.vars}")
+        #print (f"AutomationSequence {self.vars}")
         #self.num_locos = settings.get('num_locos', 0) # 0 to 3 locos required
         #self.vars = settings.get("appvar", {})
         # Store the index of any labels to allow jumps (loops)

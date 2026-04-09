@@ -24,7 +24,7 @@ class AutomationSeqDialog(QDialog):
         self.parent = parent
         self.mainwindow = self.parent.mainwindow
         self.setWindowTitle("Automation Sequence")
-        self.resize(400, 350)
+        self.resize(400, 450)
         self.sequence = sequence # For editing, if passed
         self.seq_data = {}
         self.steps = [] # Stores list of AutomationSteps (as dicts) - When turned into sequence these become objects
@@ -49,6 +49,14 @@ class AutomationSeqDialog(QDialog):
         self.steps_list = QListWidget()
         main_layout.addWidget(self.steps_list)
 
+        # Move sequence button
+        step_move_layout = QHBoxLayout()
+        self.move_up_button = QPushButton("Move Up")
+        self.move_down_button = QPushButton("Move Down")
+        step_move_layout.addWidget(self.move_up_button)
+        step_move_layout.addWidget(self.move_down_button)
+        main_layout.addLayout(step_move_layout)
+
         # Controls for Steps
         step_control_layout = QHBoxLayout()
         self.add_step_button = QPushButton("Add Step")
@@ -70,6 +78,8 @@ class AutomationSeqDialog(QDialog):
         main_layout.addLayout(button_box)
         
         # Connections
+        self.move_up_button.clicked.connect(self.move_up_step)
+        self.move_down_button.clicked.connect(self.move_down_step)
         self.add_step_button.clicked.connect(self.add_edit_step)
         self.edit_step_button.clicked.connect(lambda: self.add_edit_step(edit=True))
         self.remove_step_button.clicked.connect(self.remove_step)
@@ -79,6 +89,96 @@ class AutomationSeqDialog(QDialog):
         self.steps_list.itemDoubleClicked.connect(lambda item: self.add_edit_step(edit=True))
 
     
+    def move_up_step(self):
+        """ Moves the selected entry up one
+
+        """
+        # Get the currently selected row
+        current_row = self.steps_list.currentRow()
+
+        # Check if an item is selected AND it's not already at the top (index 0)
+        if current_row <= 0:
+            return
+
+        target_row = current_row - 1
+
+        # PAUSE UI UPDATES: Tell the widget to stop redrawing temporarily
+        self.steps_list.setUpdatesEnabled(False)
+
+        # Update the underlying Python list (self.steps)
+        # .pop() removes and returns the item, which we then insert at the new index
+        step_data = self.steps.pop(current_row)
+        self.steps.insert(target_row, step_data)
+
+        #  Update the QListWidget (self.steps_list)
+        # takeItem removes the QListWidgetItem from the widget so we can place it elsewhere
+        item = self.steps_list.takeItem(current_row)
+        self.steps_list.insertItem(target_row, item)
+
+        # Keep the moved item selected so the user can keep clicking "Up"
+        
+        self.steps_list.clearSelection()          # Clear any lingering background selection
+        item.setSelected(True)                    # Explicitly flag the item as selected
+        self.steps_list.setCurrentItem(item)      # Set it as the active item
+
+        # Refresh the numbered labels while the UI is still paused
+        self.update_step_numbers()
+
+        # RESUME UI UPDATES: Tell the widget it is allowed to draw again
+        self.steps_list.setUpdatesEnabled(True)
+
+        self.steps_list.setFocus()                # Return focus to the list so the highlight is active
+
+    def move_down_step(self):
+        """ Moves the selected entry down one
+
+        """
+        # Get the currently selected row
+        current_row = self.steps_list.currentRow()
+
+        # Check if an item is selected AND it's not already at the bottom
+        # len(self.steps) - 1 gives us the index of the very last item in the list
+        if current_row < 0 or current_row >= len(self.steps) - 1:
+            return
+
+        target_row = current_row + 1
+
+        # PAUSE UI UPDATES: Tell the widget to stop redrawing temporarily
+        self.steps_list.setUpdatesEnabled(False)
+
+        # Update the underlying Python list (self.steps)
+        step_data = self.steps.pop(current_row)
+        self.steps.insert(target_row, step_data)
+
+        # Update the QListWidget (self.steps_list)
+        item = self.steps_list.takeItem(current_row)
+        self.steps_list.insertItem(target_row, item)
+
+        # Keep the moved item selected so the user can keep clicking "Down"
+        self.steps_list.clearSelection()          # Clear any lingering background selection
+        item.setSelected(True)                    # Explicitly flag the item as selected
+        self.steps_list.setCurrentItem(item)      # Set it as the active item
+
+        # Refresh the numbered labels while the UI is still paused
+        self.update_step_numbers()
+
+        # RESUME UI UPDATES: Tell the widget it is allowed to draw again
+        self.steps_list.setUpdatesEnabled(True)
+
+        self.steps_list.setFocus()                # Return focus to the list so the highlight is active
+
+    def update_step_numbers(self):
+        """Updates the visual text of all items to match their current index."""
+        for i in range(self.steps_list.count()):
+            # Get the visual item from the UI
+            item = self.steps_list.item(i)
+            
+            # Get the corresponding data from your internal list
+            step_data = self.steps[i]
+            
+            # Reapply the text format with the new position (i + 1)
+            item.setText(f"Step {i+1} ({step_data['name']})")
+
     # Refreshes the list widget with the current steps
     # Also update the labels list
     def _update_steps_list(self):
