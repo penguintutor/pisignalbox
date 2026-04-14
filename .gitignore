@@ -7,6 +7,9 @@ data/locos/*
 data/layout
 data/layouts/*
 
+# Lib is excluded as submodule
+lib/
+
 # C object files
 *.o
 

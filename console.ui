@@ -34,170 +34,199 @@
    </property>
    <layout class="QVBoxLayout" name="verticalLayout_2">
     <item>
-     <layout class="QVBoxLayout" name="verticalLayout" stretch="1,0,0">
-      <item>
-       <widget class="QTableWidget" name="consoleTable">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>0</height>
-         </size>
-        </property>
-        <attribute name="horizontalHeaderStretchLastSection">
-         <bool>true</bool>
-        </attribute>
-        <column>
-         <property name="text">
-          <string>Time</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>Direction</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>CBus data</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>CAN ID</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>Op Code</string>
-         </property>
-        </column>
-        <column>
-         <property name="text">
-          <string>Data</string>
-         </property>
-        </column>
-       </widget>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <widget class="QTabWidget" name="tabWidget">
+      <property name="currentIndex">
+       <number>0</number>
+      </property>
+      <widget class="QWidget" name="vlcbtab">
+       <attribute name="title">
+        <string>VLCB Console</string>
+       </attribute>
+       <layout class="QVBoxLayout" name="verticalLayout_3">
         <item>
-         <widget class="QComboBox" name="commandSelect">
-          <item>
-           <property name="text">
-            <string>Select command</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Discover</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Query Node Number Events Configured</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Query Node Number Available Events</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Query Node Stored Events</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Accessory Command</string>
-           </property>
-          </item>
-         </widget>
-        </item>
-        <item>
-         <widget class="QComboBox" name="arg1Select">
-          <property name="editable">
-           <bool>true</bool>
+         <widget class="QTableWidget" name="consoleTable">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
           </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QComboBox" name="arg2Select">
-          <property name="editable">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QComboBox" name="arg3Select">
-          <property name="editable">
-           <bool>true</bool>
-          </property>
-          <item>
-           <property name="text">
-            <string>On</string>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>Off</string>
-           </property>
-          </item>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="makeCommandButton">
-          <property name="text">
-           <string>Make command</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <spacer name="horizontalSpacer">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
+          <property name="minimumSize">
            <size>
-            <width>40</width>
-            <height>20</height>
+            <width>0</width>
+            <height>0</height>
            </size>
           </property>
-         </spacer>
-        </item>
-        <item>
-         <widget class="QCheckBox" name="scrollCheckBox">
-          <property name="text">
-           <string>Scroll on </string>
-          </property>
-          <property name="checked">
+          <attribute name="horizontalHeaderStretchLastSection">
            <bool>true</bool>
-          </property>
+          </attribute>
+          <column>
+           <property name="text">
+            <string>Time</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Direction</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>CBus data</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>CAN ID</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Op Code</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Data</string>
+           </property>
+          </column>
          </widget>
         </item>
-       </layout>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
-         <widget class="QLineEdit" name="commandEdit"/>
-        </item>
-        <item>
-         <widget class="QPushButton" name="sendCommandButton">
-          <property name="text">
-           <string>Send Command</string>
-          </property>
-         </widget>
+         <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0">
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_2">
+            <item>
+             <widget class="QComboBox" name="commandSelect">
+              <item>
+               <property name="text">
+                <string>Select command</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Discover</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Query Node Number Events Configured</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Query Node Number Available Events</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Query Node Stored Events</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Accessory Command</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="arg1Select">
+              <property name="editable">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="arg2Select">
+              <property name="editable">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QComboBox" name="arg3Select">
+              <property name="editable">
+               <bool>true</bool>
+              </property>
+              <item>
+               <property name="text">
+                <string>On</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string>Off</string>
+               </property>
+              </item>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="makeCommandButton">
+              <property name="text">
+               <string>Make command</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="scrollCheckBox">
+              <property name="text">
+               <string>Scroll on </string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout">
+            <item>
+             <widget class="QLineEdit" name="commandEdit"/>
+            </item>
+            <item>
+             <widget class="QPushButton" name="sendCommandButton">
+              <property name="text">
+               <string>Send Command</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
         </item>
        </layout>
-      </item>
-     </layout>
+      </widget>
+      <widget class="QWidget" name="automatetab">
+       <attribute name="title">
+        <string>Automation Console</string>
+       </attribute>
+       <widget class="QTableWidget" name="tableWidget">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>0</y>
+          <width>1171</width>
+          <height>461</height>
+         </rect>
+        </property>
+       </widget>
+      </widget>
+     </widget>
     </item>
    </layout>
   </widget>
