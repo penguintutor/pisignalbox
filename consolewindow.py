@@ -7,6 +7,7 @@ from pyvlcb import VLCB
 from pyvlcb import VLCBOpcode
 import queue
 import console_ui_vlcb as ui_vlcb
+import console_ui_automation as ui_auto
 
 loader = QUiLoader()
 basedir = os.path.dirname(__file__)
@@ -54,6 +55,7 @@ class ConsoleWindowUI(QMainWindow):
         self.setCentralWidget(self.ui)
 
         ui_vlcb.setup_ui(self)
+        ui_auto.setup_ui(self)
         
         # Run command changed to setup command combobox
         self.command_changed()
