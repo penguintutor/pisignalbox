@@ -60,7 +60,7 @@ class ApiHandler(QObject):
         self.start_request(self.vlcb.accessory_command(event.get_node_id(), event.get_event(), event.get_value()))
 
     def loco_event (self, event):
-        print ("Loco event in API")
+        #print ("Loco event in API")
         """ The API action allows direct instructions to the API
         This can be particularly useful from automation step
         which doesn't have direct access to the mainwindow class to call 
@@ -70,7 +70,7 @@ class ApiHandler(QObject):
             # loco_id is common, although many use session_id and some don't need either
             loco_id = event.get_loco_id()
             command = event.get_command()
-            print (f"Command in API loco_event {command}")
+            #print (f"Command in API loco_event {command}")
             if command == "acquire":
                 self.start_request(self.api.vlcb.allocate_loco(loco_id))
             # Allow share or steal

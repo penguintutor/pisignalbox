@@ -16,12 +16,13 @@ def add_log (self, resp_string):
     # If it's blank then ignore
     if resp_string == "":
         return
-    self.new_entries.append(resp_string)
+    print (f"Automation resp_string {resp_string}")
+    self.new_auto_entries.append(resp_string)
 
 def update_log (self):
     #print (f"Updating console with {self.new_entries}")
     while len(self.new_entries) > 0:
-        resp_string = self.new_entries.pop(0)
+        resp_string = self.new_auto_entries.pop(0)
         log_details = self.vlcb.log_entry(resp_string)
         # Add new row to the table
         row_num = self.ui.consoleTable.rowCount()

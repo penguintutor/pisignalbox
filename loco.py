@@ -245,11 +245,15 @@ class Loco:
     # Second byte is 1 bit per function - set 1 for on, 0 for off, lsb to right
     # eg. 1 = 0001, 2 = 0010
     # function = function number, on_off = 1 or 0
-    def set_function_dfun (self, function, on_off):
+    # If on_off = None then return current status
+    # function is always required as it only returns the related block
+    def set_function_dfun (self, function, on_off=None):
         #print (f"Loco set_function_dfun - {function}, {on_off}, {self.function_status}")
         if function  > len (self.function_status):
             return None
-        self.function_status[function] = on_off
+        # if no change then skip
+        if on_off != None:
+            self.function_status[function] = on_off
         if function <= 4:
             byte1 = 1
             byte2 = (0b10000 * self.function_status[0] +  # fn0 is higher nibble (bit 5)

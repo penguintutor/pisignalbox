@@ -23,12 +23,15 @@ class LogEvent (Event):
     def __init__(self, data_dict={}):
         self.data = data_dict
         # log_type eg. Automation or App
-        self.log_type = self.data['type']
+        self.log_type = self.data.get('type', "Log")
         # 0 to 7 (see above)
         self.log_level = self.data['level']
         self.data['event_type'] = "Log"
+
+    def get_log_type(self):
+        return self.log_type
         
-    def type (self):
+    def type(self):
         return "Log"
            
     def get_response(self):

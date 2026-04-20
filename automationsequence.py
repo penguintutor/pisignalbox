@@ -6,6 +6,7 @@ from automationrule import AutomationRule
 from appvar import AppVar
 from workersignals import WorkerSignals
 from devicemodel import device_model
+from logevent import LogEvent
 from eventbus import event_bus
 
 
@@ -72,6 +73,14 @@ class AutomationSequence (QRunnable):
     @Slot()
     def run (self, seq_num=None, locos={}):
         print (f"Starting sequence {self.title}, locos {locos}")
+        event_bus.broadcast(LogEvent(
+            {'type':"Automation",
+             'level':5, 
+             'sequence': self.title,
+             'step': "Start - 00",
+             'description':f"Starting sequence {self.title}, locos {locos}",
+             }
+        ))
         # If there are any locos then make sure we can 
         # acquire to them otherwise quit the sequence
         # Doesn't work -loco is str not object

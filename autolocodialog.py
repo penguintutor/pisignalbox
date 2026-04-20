@@ -182,8 +182,8 @@ class AutoLocoDialog(QDialog):
     def update_locos(self, event):
         """ Called whenever there is a LocoEvent whilst
         this dialog is open. If relates to allocate loco then 
-        update the deisplay"""
-        print (f"Loco event {event}")
+        update the display"""
+        #print (f"Loco event {event}")
         if event.event_type == "PLOC":
             print (f"Loco allocated {event.data.get('Loco_id')}")
             self.update_dialog()

@@ -27,9 +27,11 @@ class ConsoleWindowUI(QMainWindow):
         # Holds new entries as they are added
         # the UI will then update and remove them
         self.new_entries = []
+        self.new_auto_entries = []
         
         # Monitor event bus for app updates
         event_bus.app_event_signal.connect (self.app_update)
+        event_bus.log_event_signal.connect (self.log_update)
         
         # Each entry represents a row on the table
         # Each row is a list of the individual entries
@@ -71,6 +73,12 @@ class ConsoleWindowUI(QMainWindow):
             self.raise_()
             self.activateWindow()
         
+    def log_update (self, log_event):
+        #print (f"App Event {app_event.data}")
+        if log_event.get_log_type() == "Automation":
+            ui_auto.add_log(self, log_event.get_response())
+            ui_auto.update_log(self)
+        #Todo other logs could be handled if desired
             
     # Uses main window to send the contents of commandEdit
     def send_command (self):
