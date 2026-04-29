@@ -203,7 +203,8 @@ class ApiHandler(QObject):
         elif response[0:5] == "Read,":
             # split into status_line and data
             status_data = response.split('\n',1)
-            #print (f"Status data {status_data}")
+            if self.debug:
+                print (f"Status data {status_data}")
 
             # First line format is "Read,<start>,<end>,<numlines>"
             header = status_data[0].split(',', 3)
@@ -233,7 +234,6 @@ class ApiHandler(QObject):
                 if data_packet == '':
                     continue
                 
-                #print (f"Handling packet {data_packet}")
                 if len(data_packet) < 5:    # If data too short (perhaps empty line) - in reality this is much longer as includes date
                     print ("Skipping empty packet")
                     print (f"This packet {data_packet}")
@@ -259,7 +259,7 @@ class ApiHandler(QObject):
         
         if self.debug:
             print (f"Incoming data {response}")
-            
+
         # pass to console (unparsed)
         event_bus.publish(AppEvent({"action":"newdata", "response":response}))
         # temp send all as DeviceEvent (is that too much?)
@@ -278,12 +278,17 @@ class ApiHandler(QObject):
                 print (f"Not a valid entry {id_date_data}")
             return
         
+        if self.debug:
+            print (f"VLCB Entry {vlcb_entry}")
+
         # Look for specific responses
         # todo - should we check timestamp first? If the entry is from before the first request then may not be
         # interested as it's an old node. Alternatively we could load anyway (max 100 past entries are stored)
         # or we could not retrieve any previous messages by first checking for -1 entries and using that for
         # the start value
         # For now we handle all responses including old ones - but check for whether there are any changes
+
+        # Special case check for null responses - If so set opcode to "NONE"
         ret_opcode = vlcb_entry.opcode()    # Instead of calling method for each condition save it in a variable
         if self.debug:
             print (f"Op code {ret_opcode}")

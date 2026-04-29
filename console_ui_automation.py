@@ -1,7 +1,9 @@
 # UI for the console window - vlcb tab
 from PySide6.QtWidgets import QMainWindow, QTextBrowser, QTableWidget, QTableWidgetItem
+from datetime import datetime
 from pyvlcb import VLCB
 from pyvlcb import VLCBOpcode
+from logevent import LogEvent
 
 
 def setup_ui (self):
@@ -9,32 +11,38 @@ def setup_ui (self):
     self.ui.automationTable.setColumnWidth(0, 170)
     self.ui.automationTable.setColumnWidth(2, 200)
 
-# log_details is unformatted string
-# Extract details and store as:
-# Cbus data (original string), can_id, op_code, data
-def add_log (self, resp_string):
-    # If it's blank then ignore
-    if resp_string == "":
-        return
-    print (f"Automation resp_string {resp_string}")
-    self.new_auto_entries.append(resp_string)
+# log_event is a LogEvent object
+# Method should only be passed objects that are type = Automation
+def add_log (self, log_event):
+    print (f"ui_auto add_log {log_event}")
+    # Extract details for log
+    # Don't have a time, so create that
+    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    log_list = [
+        timestamp,
+        log_event.get_sequence(),
+        log_event.get_step(),
+        log_event.get_description()
+    ]
+    self.new_auto_entries.append(log_list)
 
 def update_log (self):
     #print (f"Updating console with {self.new_entries}")
-    while len(self.new_entries) > 0:
-        resp_string = self.new_auto_entries.pop(0)
-        log_details = self.vlcb.log_entry(resp_string)
+    while len(self.new_auto_entries) > 0:
+        # log_details is already in the form of a list
+        log_details = self.new_auto_entries.pop(0)
         # Add new row to the table
-        row_num = self.ui.consoleTable.rowCount()
-        self.ui.consoleTable.setRowCount(row_num + 1)
+        row_num = self.ui.automationTable.rowCount()
+        self.ui.automationTable.setRowCount(row_num + 1)
         for i in range(0, len(log_details)):
-            self.ui.consoleTable.setItem(row_num, i, QTableWidgetItem(log_details[i]))
+            self.ui.automationTable.setItem(row_num, i, QTableWidgetItem(log_details[i]))
             # Add tooltip with title of opcode
-            self.ui.consoleTable.item(row_num, i).setToolTip(VLCBOpcode.opcode_title(log_details[4]))
+            #self.ui.automationTable.item(row_num, i).setToolTip(VLCBOpcode.opcode_title(log_details[4]))
         
+    #Todo add scrollmode checkbox
     # If in scrollmode then go to the bottom
-    if self.ui.scrollCheckBox.isChecked():
-        self.ui.consoleTable.scrollToBottom()
+    #if self.ui.scrollCheckBox.isChecked():
+    #    self.ui.consoleTable.scrollToBottom()
     
 # Command pulldown menu (QComboBox)
 # Set the other argument lists

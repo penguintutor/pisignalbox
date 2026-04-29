@@ -1,4 +1,5 @@
 """ Used by AutomationStepDialog - creates / modifies data collection rows in dialog"""
+# These are the rows within automationstepdialog
 from PySide6.QtWidgets import (
     QApplication, QDialog, QVBoxLayout, QGridLayout,
     QLabel, QComboBox, QPushButton, QHBoxLayout, QWidget, QMessageBox,

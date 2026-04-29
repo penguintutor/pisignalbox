@@ -19,7 +19,7 @@ dirs = {
     'layouts': 'layouts/',
     'rules': 'rules/',
     'automation': 'automation/'
-     }
+    }
 
 
 files = {

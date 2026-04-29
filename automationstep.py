@@ -226,7 +226,7 @@ class AutomationStep:
     def get_loco_id (self):
         """ If step uses loco then return loco, else return "" """
         if self.step_type == "Loco":
-            print (f"{self.data}")
+            #print (f"Loco from {self.data}")
             return self.data['data'].get("locoid", "")
         return ""
 
