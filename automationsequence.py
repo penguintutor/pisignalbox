@@ -72,15 +72,23 @@ class AutomationSequence (QRunnable):
 
     @Slot()
     def run (self, seq_num=None, locos={}):
-        print (f"Starting sequence {self.title}, locos {locos}")
+        #print (f"Starting sequence {self.title}, locos {locos}")
+        log_description = f"Starting sequence: {self.title}"
+        if len(locos) > 0:
+            # Get loco IDs and names as strings
+            loco_strings = (f"{key}={value.get_display_name()}" for key, value in locos.items())
+            # join the locos comma separated
+            log_description += ", locos: " + ", ".join(loco_strings)
         event_bus.broadcast(LogEvent(
             {'type':"Automation",
-             'level':5, 
+             'level':5, # Normal major event
              'sequence': self.title,
-             'step': "Start - 00",
-             'description':f"Starting sequence {self.title}, locos {locos}",
+             'step': "00 - Start",
+             'description': log_description
              }
         ))
+        """ This is handled in the dialog - left here in case 
+        want to add additional check in future"""
         # If there are any locos then make sure we can 
         # acquire to them otherwise quit the sequence
         # Doesn't work -loco is str not object
@@ -106,7 +114,15 @@ class AutomationSequence (QRunnable):
         while position < len(self.steps):
             # Check if we need to stop
             if self.check_stop():
-                print ("AutomationSequence stopping as requested")
+                #print ("AutomationSequence stopping as requested")
+                event_bus.broadcast(LogEvent(
+                    {'type':"Automation",
+                    'level':5, # Normal major event
+                    'sequence': self.title,
+                    'step': f"{position:02d} - Stop",
+                    'description': "Stopping sequence"
+                    }
+                ))
                 self.active = False
                 break
             # If set to false then stop
@@ -126,11 +142,35 @@ class AutomationSequence (QRunnable):
                     #print (f"Label {label}")
                     if label != None and label in self.labels:
                         #print ("Jump to label")
+                        event_bus.broadcast(LogEvent(
+                            {'type':"Automation",
+                            'level':5, # Normal major event
+                            'sequence': self.title,
+                            'step': f"{position:02d} - Jump",
+                            'description': f"Jump to {label} = {self.labels[label]}"
+                            }
+                        ))
                         position = self.labels[label]
                         continue
                 # otherwise jump is ignored (eg. if loop then until no longer met)
+                event_bus.broadcast(LogEvent(
+                    {'type':"Automation",
+                    'level':4,  # Warning
+                    'sequence': self.title,
+                    'step': f"{position:02d} - Invalid Jump",
+                    'description': f"Jump to unknown label {label}"
+                    }
+                ))
             else:
                 # Otherwise run it  
+                event_bus.broadcast(LogEvent(
+                    {'type':"Automation",
+                    'level':6, # Normal routine
+                    'sequence': self.title,
+                    'step': f"{position:02d} - {self.steps[position].get_type()}",
+                    'description': f"{self.steps[position].get_name()}"
+                    }
+                ))
                 self.steps[position].run(self.signals.notify, self.signals.notify_wait,self.signals.status, locos)
             position += 1
         # Emit a signal to indicate the thread has finished

@@ -1,3 +1,6 @@
+""" Add new device - typicaly called from edit layout menu
+"""
+
 import sys
 from PySide6.QtWidgets import (
     QApplication,
