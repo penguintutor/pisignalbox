@@ -36,6 +36,14 @@ class AutomationSequence (QRunnable):
         self.check_stop = check_stop_func
         if self.check_stop is None:
             print ("No stop function provided")
+            event_bus.broadcast(LogEvent(
+                {'type':"Automation",
+                'level':3, # Non critical error
+                'sequence': self.title,
+                'step': "00 - Init",
+                'description': "No stop function provided"
+                }
+            ))
             self.check_stop = lambda: False
         
         # Each step contains self.step = {"step_type": rule_type, "step_name": step_name, data : data_dict}
@@ -47,7 +55,7 @@ class AutomationSequence (QRunnable):
             if step_data['type'] == "Label":
                 self.labels[step_data['name']] = i
             ## Variables need to be added through automationmanager to use the mainwindow and so be included in device_model
-            self.steps.append(AutomationStep(self.vars, step_data['type'], step_data['name'], step_data, check_stop_func=self.check_stop))
+            self.steps.append(AutomationStep(self.title, self.vars, step_data['type'], step_data['name'], step_data, check_stop_func=self.check_stop))
 
     def get_locos (self):
         """ Get a list of all locos in the sequence
@@ -119,7 +127,7 @@ class AutomationSequence (QRunnable):
                     {'type':"Automation",
                     'level':5, # Normal major event
                     'sequence': self.title,
-                    'step': f"{position:02d} - Stop",
+                    'step': f"{position+1:02d} - Stop",
                     'description': "Stopping sequence"
                     }
                 ))
@@ -135,10 +143,11 @@ class AutomationSequence (QRunnable):
             elif self.steps[position].step_type == "Jump":
                 # parse the condition and get the result
                 result = self.steps[position].test_condition()
+                condition_string = self.steps[position].test_condition_str()
                 # If the result is in the labels then jump to that 
                 if result != None and result == True:
                     #print ("Test true")
-                    label = self.steps[position].data.get("label")
+                    label = self.steps[position].get_value("labelid")
                     #print (f"Label {label}")
                     if label != None and label in self.labels:
                         #print ("Jump to label")
@@ -146,28 +155,38 @@ class AutomationSequence (QRunnable):
                             {'type':"Automation",
                             'level':5, # Normal major event
                             'sequence': self.title,
-                            'step': f"{position:02d} - Jump",
-                            'description': f"Jump to {label} = {self.labels[label]}"
+                            'step': f"{position+1:02d} - Jump",
+                            'description': f"Jump to {label} = {self.labels[label]} - Condition {condition_string}"
                             }
                         ))
                         position = self.labels[label]
                         continue
-                # otherwise jump is ignored (eg. if loop then until no longer met)
-                event_bus.broadcast(LogEvent(
-                    {'type':"Automation",
-                    'level':4,  # Warning
-                    'sequence': self.title,
-                    'step': f"{position:02d} - Invalid Jump",
-                    'description': f"Jump to unknown label {label}"
-                    }
-                ))
+                    # otherwise jump is ignored (eg. if loop then until no longer met)
+                    event_bus.broadcast(LogEvent(
+                        {'type':"Automation",
+                        'level':4,  # Warning
+                        'sequence': self.title,
+                        'step': f"{position:02d} - Invalid Jump",
+                        'description': f"Jump to unknown label {label}"
+                        }
+                    ))
+                #else condition is not met
+                else: 
+                    event_bus.broadcast(LogEvent(
+                        {'type':"Automation",
+                        'level':6, # Info
+                        'sequence': self.title,
+                        'step': f"{position+1:02d} - Jump",
+                        'description': f"Condition not met - {condition_string}"
+                        }
+                    ))
             else:
                 # Otherwise run it  
                 event_bus.broadcast(LogEvent(
                     {'type':"Automation",
                     'level':6, # Normal routine
                     'sequence': self.title,
-                    'step': f"{position:02d} - {self.steps[position].get_type()}",
+                    'step': f"{position+1:02d} - {self.steps[position].get_type()}",
                     'description': f"{self.steps[position].get_name()}"
                     }
                 ))

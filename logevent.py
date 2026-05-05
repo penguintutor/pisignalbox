@@ -35,7 +35,7 @@ class LogEvent (Event):
         return "Log"
            
     def get_response(self):
-        print ("Log Event does not use response")
+        #print ("Log Event does not use response")
         return self.data.get('response', "")
 
     def get_sequence(self):

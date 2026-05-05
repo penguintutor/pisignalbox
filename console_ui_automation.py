@@ -14,7 +14,7 @@ def setup_ui (self):
 # log_event is a LogEvent object
 # Method should only be passed objects that are type = Automation
 def add_log (self, log_event):
-    print (f"ui_auto add_log {log_event}")
+    #print (f"ui_auto add_log {log_event}")
     # Extract details for log
     # Don't have a time, so create that
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')

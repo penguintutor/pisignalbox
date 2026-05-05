@@ -67,7 +67,15 @@ Launches the following dialogs
 
 AutomationSeqDialog - launched from AutomationManagerDialog
 
+Titled Automation Sequence
+
 Launches the following dialogs
 
 - AutomationStepDialog - Called for both create or edit an automation step
 
+
+## AutomationStepDialog
+
+AutomationStepDialog - launched from AutomationSeqDialog
+
+Titled Configure Rule

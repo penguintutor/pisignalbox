@@ -7,6 +7,7 @@ from eventbus import event_bus
 from automationrule import AutomationRule
 from appvar import AppVar
 from workersignals import WorkerSignals
+from logevent import LogEvent
 
 
 # Each step contains a rule commands or sequences
@@ -18,8 +19,9 @@ class AutomationStep:
     # all other parameters are included in settings
     # rule is not normally provided - unless loading from json
     # Only used if this has an instance of AutomationRule
-    def __init__(self, appvariables, step_type, step_name, data={}, rule=None, check_stop_func=None):
+    def __init__(self, sequence_name, appvariables, step_type, step_name, data={}, rule=None, check_stop_func=None):
         #print (f"\n\nCreating step type {step_type} with {data} rule {rule}")
+        self.sequence_name = sequence_name # Name of parent sequence (creator)
         self.step_type = step_type
         self.step_name = step_name
         self.data = data
@@ -44,17 +46,29 @@ class AutomationStep:
             #print (f"Variable name found: {varname}")
             return varname
         return ""
+    
+    def get_value (self, value_id):
+        """ Gets value_id variable from self.data['data'] """
+        return self.data['data'].get(value_id, "")
             
     def parse_var (self):
         # Copy data dict to run_data - which allows for any variable substitutions
         run_data = {}
         var_data = False # If parse a variable then set to True to indicate updated
-        for key, value in self.data.items():           
+        for key, value in self.data['data'].items():           
             if isinstance(value, str) and value.startswith("{") and value.endswith("}"):
                 var_data = True
                 var_name = value[1:-1]
                 if vars == None:
-                    print ("Variable detected {var_name} but no AppVar created")
+                    print (f"Variable detected {var_name} but no AppVar created")
+                    event_bus.broadcast(LogEvent(
+                        {'type':"Automation",
+                        'level':3, # None critical error
+                        'sequence': self.sequence_name, 
+                        'step': f" {self.step_name}",
+                        'description': f"Variable detected {var_name} but no AppVar created"
+                        }
+                    ))
                     continue
                 # If the value doesn't exist then it will be None
                 run_data[key] = self.vars.get_variable(var_name)
@@ -69,29 +83,55 @@ class AutomationStep:
     # If any variable tokens are found they are handled in the run        
     def run (self, notify_signal, notify_wait_signal, status_signal, locos):
         run_data = self.parse_var()
+        print (f"Run run_data {run_data}")
         #print (f"Step {self.step_name} of type {self.step_type} running with data {run_data}")
         # Now use run_data - which has any variables parsed
         if self.step_type == "App":
-            app_command = run_data['data'].get("command", "")
+            app_command = run_data.get("command", "")
             if app_command == "Set Variable":
                 # check we have an appvar
                 if self.vars == None:
-                    print ("Warning: Attempt to set a variable with no AppVar configured")
+                    #print ("Warning: Attempt to set a variable with no AppVar configured")
+                    event_bus.broadcast(LogEvent(
+                        {'type':"Automation",
+                        'level':3, # None critical error
+                        'sequence': self.sequence_name, 
+                        'step': f" {self.step_name}",
+                        'description': "Attempt to set a variable with no AppVar configured"
+                        }
+                    ))
                     return
-                var_name = run_data['data'].get("variable", "")
-                var_value = run_data['data'].get("value", "")
+                var_name = run_data.get("variable", "")
+                var_value = run_data.get("value", "")
                 self.vars.set_variable(var_name, var_value)
+                event_bus.broadcast(LogEvent(
+                    {'type':"Automation",
+                    'level':7, # Debug
+                    'sequence': self.sequence_name, 
+                    'step': f" {self.step_name}",
+                    'description': f"Set Variable {var_name} = {var_value}"
+                    }
+                ))
+                
             elif app_command == "Increment Variable":
                 # check we have an appvar
                 if self.vars == None:
-                    print ("Warning: Attempt to increment a variable with no AppVar configured")
+                    #print ("Warning: Attempt to increment a variable with no AppVar configured")
+                    event_bus.broadcast(LogEvent(
+                        {'type':"Automation",
+                        'level':3, # None critical error
+                        'sequence': self.sequence_name, 
+                        'step': f" {self.step_name}",
+                        'description': "Attempt to set a variable with no AppVar configured"
+                        }
+                    ))
                     return
-                var_name = run_data['data'].get("variable", "")
-                inc_value = run_data['data'].get("value", 1)
+                var_name = run_data.get("variable", "")
+                inc_value = run_data.get("value", 1)
                 self.vars.inc_variable(var_name, inc_value)
             elif app_command == "Notify User":
-                message = run_data['data'].get("message", "")
-                blocking = run_data['data'].get("blocking", "True")
+                message = run_data.get("message", "")
+                blocking = run_data.get("blocking", "True")
 
                 if blocking == "True" or blocking == True:
                     resume_event = threading.Event()
@@ -99,7 +139,15 @@ class AutomationStep:
                     # Wait for the user to click OR for the stop flag to be raised
                     while not resume_event.wait(timeout=0.1):
                         if self.check_stop and self.check_stop():
-                            print ("User notification interrupted by stop signal")
+                            #print ("User notification interrupted by stop signal")
+                            event_bus.broadcast(LogEvent(
+                                {'type':"Automation",
+                                'level':5, # Notice
+                                'sequence': self.sequence_name, 
+                                'step': f" {self.step_name}",
+                                'description': "User notification interrupted by stop signal"
+                                }
+                            ))
                             # Optional: You might want to emit a signal here to auto-close 
                             # the user notification dialog since the task is dead.
                             return
@@ -107,16 +155,32 @@ class AutomationStep:
                     notify_signal.emit("User Notification", message)
             elif app_command == "Wait":
                 # Need to check every 0.1 sec for stop signal
-                total_delay = int(run_data['data'].get("delay", 1))
+                total_delay = int(run_data.get("delay", 1))
                 elapsed = 0
                 while elapsed < total_delay:
                     if self.check_stop and self.check_stop():
                         print ("Wait interrupted by stop signal")
+                        event_bus.broadcast(LogEvent(
+                                {'type':"Automation",
+                                'level':5, # Notice
+                                'sequence': self.sequence_name, 
+                                'step': f" {self.step_name}",
+                                'description': "Wait interrupted by stop signal"
+                                }
+                            ))
                         break
                     time.sleep(0.1)
                     elapsed += 0.1
             else:
-                print (f"Unknown App command: {app_command}")
+                #print (f"Unknown App command: {app_command}")
+                event_bus.broadcast(LogEvent(
+                    {'type':"Automation",
+                    'level':4, # Warning
+                    'sequence': self.sequence_name, 
+                    'step': f" {self.step_name}",
+                    'description': f"Unknown App command: {app_command}"
+                    }
+                ))
         elif self.step_type == "Rule":
             #print (f"Running Automation Rule: {self.rule}")
             # check any value fields for variables
@@ -132,7 +196,15 @@ class AutomationStep:
         elif self.step_type == "Var":
             # check we have an appvar
             if self.vars == None:
-                print ("Warning: Attempt to set a variable with no AppVar configured")
+                #print ("Warning: Attempt to set a variable with no AppVar configured")
+                event_bus.broadcast(LogEvent(
+                    {'type':"Automation",
+                    'level':3, # None critical error
+                    'sequence': self.sequence_name, 
+                    'step': f" {self.step_name}",
+                    'description': "Attempt to set a variable with no AppVar configured"
+                    }
+                ))
                 return
             if run_data["action"] == "set":
                 self.vars.set_variable(run_data["varname"], run_data["value"])
@@ -163,7 +235,7 @@ class AutomationStep:
             #Todo check loco connected and active
             loco_id = self.get_loco_id()
             print (f"Running Loco Step: {self.step_name} with data {run_data}, locos {locos}")
-            loco_command = run_data['data'].get("action", "")
+            loco_command = run_data.get("action", "")
             # If there are any actions that just require loco_id
             # Add them here and wrap the following in an else
             # Get session id
@@ -176,9 +248,9 @@ class AutomationStep:
             if loco_command == "Function":
                 print ("Loco function - implement here")
                 
-                func_index = run_data['data'].get("function", "")
-                func_type = run_data['data'].get("type", "trigger")
-                func_value = run_data['data'].get("value", 1)
+                func_index = run_data.get("function", "")
+                func_type = run_data.get("type", "trigger")
+                func_value = run_data.get("value", 1)
                 if func_index == "":
                     print ("Function number missing")
                     return
@@ -231,6 +303,27 @@ class AutomationStep:
         return ""
 
 
+    # Returns test condition as a string (for logging)
+    def test_condition_str (self) -> str:
+        #print (f"Data {self.data['data']}")
+        if 'data' in self.data and 'variable' in self.data['data'] and 'value' in self.data['data']:
+            var_name = self.data['data'].get("variable", "")
+            value1 = self.vars.get_variable(var_name)
+            value2 = self.data['data'].get("value", "")
+            # if both value1 and value2 are valid then put into run_data
+            if value1 != None and value2 != None:
+                self.data['data']['value1'] = value1
+                self.data['data']['value2'] = value2
+        # substitute in any variables
+        run_data = self.parse_var()
+        # Now test the condition
+        condition = run_data.get("condition")
+        value1 = run_data.get("value1")
+        value2 = run_data.get("value2")
+        
+        return (f"{value1} {condition} {value2}")
+
+
     # Test condition is used for any check operations eg. 
     # "test": "equals" "==" or "lessthan" "<" or "greaterthan" ">", or 
     # "notequal" "!=" or "<=" or ">=" (no long version of those)
@@ -250,7 +343,7 @@ class AutomationStep:
         # substitute in any variables
         run_data = self.parse_var()
         # Now test the condition
-        condition = run_data.get("test")
+        condition = run_data.get("condition")
         value1 = run_data.get("value1")
         value2 = run_data.get("value2")
         
@@ -266,11 +359,11 @@ class AutomationStep:
             # This allows both numeric and text comparisons
             if (condition == "equal" or condition == "=="):
                 return (str(value1) == str(value2))
-            elif (condition == "notequal" or condition == "!="):
+            elif (condition == "notequal" or condition == "not equal" or condition == "!="):
                 return (str(value1) != str(value2))
-            elif (condition == "lessthan" or condition == "<"):
+            elif (condition == "lessthan" or condition == "less than" or condition == "<"):
                 return (float(value1) < float(value2))
-            elif (condition == "greaterthan" or condition == ">"):
+            elif (condition == "greaterthan" or condition == "greater than" or condition == ">"):
                 return (float(value1) > float(value2))
             elif (condition == ">="):
                 return (float(value1) >= float(value2))
