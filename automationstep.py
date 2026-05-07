@@ -83,8 +83,6 @@ class AutomationStep:
     # If any variable tokens are found they are handled in the run        
     def run (self, notify_signal, notify_wait_signal, status_signal, locos):
         run_data = self.parse_var()
-        print (f"Run run_data {run_data}")
-        #print (f"Step {self.step_name} of type {self.step_type} running with data {run_data}")
         # Now use run_data - which has any variables parsed
         if self.step_type == "App":
             app_command = run_data.get("command", "")
@@ -133,6 +131,15 @@ class AutomationStep:
                 message = run_data.get("message", "")
                 blocking = run_data.get("blocking", "True")
 
+                event_bus.broadcast(LogEvent(
+                    {'type':"Automation",
+                    'level':6, # Info
+                    'sequence': self.sequence_name, 
+                    'step': f" {self.step_name}",
+                    'description': f"User notification: {message} (blocking={blocking})"
+                    }
+                ))
+
                 if blocking == "True" or blocking == True:
                     resume_event = threading.Event()
                     notify_wait_signal.emit("User Notification", message, resume_event)
@@ -156,10 +163,18 @@ class AutomationStep:
             elif app_command == "Wait":
                 # Need to check every 0.1 sec for stop signal
                 total_delay = int(run_data.get("delay", 1))
+                event_bus.broadcast(LogEvent(
+                    {'type':"Automation",
+                    'level':6, # Info
+                    'sequence': self.sequence_name, 
+                    'step': f" {self.step_name}",
+                    'description': f"Wait for {total_delay} seconds"
+                    }
+                ))
                 elapsed = 0
                 while elapsed < total_delay:
                     if self.check_stop and self.check_stop():
-                        print ("Wait interrupted by stop signal")
+                        #print ("Wait interrupted by stop signal")
                         event_bus.broadcast(LogEvent(
                                 {'type':"Automation",
                                 'level':5, # Notice
@@ -183,6 +198,14 @@ class AutomationStep:
                 ))
         elif self.step_type == "Rule":
             #print (f"Running Automation Rule: {self.rule}")
+            event_bus.broadcast(LogEvent(
+                {'type':"Automation",
+                'level':6, # Info
+                'sequence': self.sequence_name, 
+                'step': f" {self.step_name}",
+                'description': f"Running Automation Rule {self.rule.name} of type {self.rule.ruletype}"
+                }
+            ))
             # check any value fields for variables
             if ("var_data" in run_data and run_data["var_data"]):
                 # remove it from the dict
@@ -196,7 +219,6 @@ class AutomationStep:
         elif self.step_type == "Var":
             # check we have an appvar
             if self.vars == None:
-                #print ("Warning: Attempt to set a variable with no AppVar configured")
                 event_bus.broadcast(LogEvent(
                     {'type':"Automation",
                     'level':3, # None critical error
@@ -207,13 +229,37 @@ class AutomationStep:
                 ))
                 return
             if run_data["action"] == "set":
+                event_bus.broadcast(LogEvent(
+                    {'type':"Automation",
+                    'level':6, # Info
+                    'sequence': self.sequence_name, 
+                    'step': f" {self.step_name}",
+                    'description': f"Set variable {run_data['varname']} to {run_data['value']}"
+                    }
+                ))
                 self.vars.set_variable(run_data["varname"], run_data["value"])
             elif run_data["action"] == "inc":
                 # value is optional for inc - default to 1
+                event_bus.broadcast(LogEvent(
+                    {'type':"Automation",
+                    'level':6, # Info
+                    'sequence': self.sequence_name, 
+                    'step': f" {self.step_name}",
+                    'description': f"Increment variable {run_data['varname']} by {run_data.get('value', 1)}"
+                    }
+                ))
                 self.vars.inc_variable(run_data["varname"], run_data.get("value",1))
         elif self.step_type == "Wait":
             # default 1 second
             delay_time = self.data.get("time", 1)
+            event_bus.broadcast(LogEvent(
+                    {'type':"Automation",
+                    'level':6, # Info
+                    'sequence': self.sequence_name, 
+                    'step': f" {self.step_name}",
+                    'description': f"Wait for {delay_time} seconds"
+                    }
+                ))
             # If this is a basic wait / delay (which is default) then sleep and continue
             waittype = self.data.get("waittype", "delay")
             if waittype == "delay":
@@ -234,7 +280,7 @@ class AutomationStep:
             # Is the Loco connected
             #Todo check loco connected and active
             loco_id = self.get_loco_id()
-            print (f"Running Loco Step: {self.step_name} with data {run_data}, locos {locos}")
+            #print (f"Running Loco Step: {self.step_name} with data {run_data}, locos {locos}")
             loco_command = run_data.get("action", "")
             # If there are any actions that just require loco_id
             # Add them here and wrap the following in an else
@@ -243,7 +289,15 @@ class AutomationStep:
                 loco = locos[loco_id]
                 session_id = loco.session
             except Exception as e:
-                print ("Loco error - possibly disconnected")
+                #print ("Loco error - possibly disconnected")
+                event_bus.broadcast(LogEvent(
+                    {'type':"Automation",
+                    'level':3, # None critical error
+                    'sequence': self.sequence_name, 
+                    'step': f" {self.step_name}",
+                    'description': f"Loco error - possibly disconnected {loco_id}"
+                    }
+                ))
 
             if loco_command == "Function":
                 print ("Loco function - implement here")
@@ -277,13 +331,27 @@ class AutomationStep:
             elif loco_command == "Set Speed":
                 print ("Set speed - implement here")
             elif loco_command == "Stop":
-                print (f"Stopping loco {loco_id}")
+                ##print (f"Stopping loco {loco_id}")
+                event_bus.broadcast(LogEvent(
+                    {'type':"Automation",
+                    'level':6, # Info
+                    'sequence': self.sequence_name, 
+                    'step': f" {self.step_name}",
+                    'description': f"Stopping loco {loco_id}"
+                    }
+                ))
                 # get loco object for this step
                 try:
                     loco = locos[loco_id]
                     session_id = loco.session
                 except Exception as e:
-                    print ("Loco error - possibly disconnected")
+                    #print ("Loco error - possibly disconnected")
+                    event_bus.publish(LocoEvent('api', {
+                    'command': 'speed_dir',
+                    'session': session_id,
+                    'speed': 0,
+                    'direction': loco.direction
+                    }))
                 event_bus.publish(LocoEvent('api', {
                     'command': 'speed_dir',
                     'session': session_id,

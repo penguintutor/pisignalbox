@@ -203,6 +203,14 @@ class AutomationSequence (QRunnable):
                 self.steps[position].run(self.signals.notify, self.signals.notify_wait,self.signals.status, locos)
             position += 1
         # Emit a signal to indicate the thread has finished
+        event_bus.broadcast(LogEvent(
+            {'type':"Automation",
+            'level':5, # Normal major event
+            'sequence': self.title,
+            'step': f"{position+1:02d} - End",
+            'description': f"End of sequence {self.title}"
+            }
+        ))
         self.signals.finished.emit(seq_num)
         
     # return info about the sequence in the form of a dict

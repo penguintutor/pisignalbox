@@ -322,7 +322,8 @@ class MainWindowUI(QMainWindow):
 
     # TODO: handle sequence status updates
     def update_sequence_status (self, status_message):
-        print (f"Sequence status update: {status_message}") 
+        #print (f"Sequence status update: {status_message}") 
+        pass
 
     def run_selected_sequence(self):
         """Triggers the run process in the main window."""
@@ -552,6 +553,7 @@ class MainWindowUI(QMainWindow):
     
     # Override reiszeEvent
     def resizeEvent(self, event: QResizeEvent):
+        #print ("Resize event called")
         self._scale_image_to_fit()
         super().resizeEvent(event) # Call the base class implementation
 

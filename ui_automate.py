@@ -26,8 +26,6 @@ def run_selected_sequence(self):
         # assign to a real loco
         loco_list = self.automation.get_locos(selected_row)
 
-        print (f"Loco list {loco_list}")
-
         # If loco_list has any non DCC entries
         # Use dialog to get loco ids
         if any(item.startswith("ID ") for item in loco_list):

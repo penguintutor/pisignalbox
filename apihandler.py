@@ -3,6 +3,7 @@ from worker import Worker
 from eventbus import EventBus, event_bus
 from locoevent import LocoEvent
 from devicemodel import DeviceModel, device_model
+import time
 from pyvlcb import VLCB
 from pyvlcb import VLCBOpcode
 from vlcbnode import VLCBNode
@@ -198,6 +199,9 @@ class ApiHandler(QObject):
         # Check for an empty data first as we can ignore
         if response[0:10] == "Read,0,0,0":
             # No new data received
+            # todo consider tuning this
+            # sleep does not impact performance as its the main thread that is processor bound
+            #time.sleep(0.21
             pass
         # Check response starts with "Read,"
         elif response[0:5] == "Read,":
