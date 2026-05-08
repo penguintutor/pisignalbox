@@ -252,16 +252,17 @@ class AutomationStep:
         elif self.step_type == "Wait":
             # default 1 second
             delay_time = self.data.get("time", 1)
+            # If this is a basic wait / delay (which is default) then sleep and continue
+            waittype = self.data.get("waittype", "delay")
             event_bus.broadcast(LogEvent(
                     {'type':"Automation",
                     'level':6, # Info
                     'sequence': self.sequence_name, 
                     'step': f" {self.step_name}",
-                    'description': f"Wait for {delay_time} seconds"
+                    'description': f"Wait for {delay_time} seconds - type {waittype}"
                     }
                 ))
-            # If this is a basic wait / delay (which is default) then sleep and continue
-            waittype = self.data.get("waittype", "delay")
+
             if waittype == "delay":
                 time.sleep(delay_time)
             else:
@@ -300,14 +301,32 @@ class AutomationStep:
                 ))
 
             if loco_command == "Function":
-                print ("Loco function - implement here")
-                
+                print ("Loco function - todo testing")
+
                 func_index = run_data.get("function", "")
                 func_type = run_data.get("type", "trigger")
                 func_value = run_data.get("value", 1)
+                # If not function number then cannot proceed
                 if func_index == "":
-                    print ("Function number missing")
+                    event_bus.broadcast(LogEvent(
+                        {'type':"Automation",
+                        'level':3, # None critical error
+                        'sequence': self.sequence_name, 
+                        'step': f" {self.step_name}",
+                        'description': f"Loco error - Invalid function request {func_index} {func_type} {func_value}"
+                        }
+                    ))
                     return
+                
+                event_bus.broadcast(LogEvent(
+                    {'type':"Automation",
+                    'level':6, # Info
+                    'sequence': self.sequence_name, 
+                    'step': f" {self.step_name}",
+                    'description': f"Loco action - Loco {loco_id} - Function {func_index} {func_type} {func_value}"
+                    }
+                ))
+
                 # Get current function status
                 # Need to send state of other functions in the function group
                 # status = self.loco.get_function_status(func_index)
@@ -315,8 +334,16 @@ class AutomationStep:
                 current_byte1_2 = loco.set_function_dfun (func_index)
                 # get off status if required (used by trigger)
                 new_byte1_2 = loco.set_function_dfun (func_index, func_value)
+                # If don't get current state then can't work out new signal to send
                 if new_byte1_2 == None:
-                    print (f"Invalid function bytes")
+                    event_bus.broadcast(LogEvent(
+                        {'type':"Automation",
+                        'level':3, # None critical error
+                        'sequence': self.sequence_name, 
+                        'step': f" {self.step_name}",
+                        'description': f"Loco error - Function request failed - unknown current state"
+                        }
+                    ))
                     return
                 event_bus.publish(LocoEvent('api', {
                     'command': 'function',
@@ -326,6 +353,15 @@ class AutomationStep:
                     'currentvalue': current_byte1_2,
                     'newvalue': new_byte1_2
                     }))
+                # Debug message with actual data sent
+                event_bus.broadcast(LogEvent(
+                    {'type':"Automation",
+                    'level':7, # Debug
+                    'sequence': self.sequence_name, 
+                    'step': f" {self.step_name}",
+                    'description': f"Value: Loco action - Loco {loco_id} - Function {func_index} {func_type} {func_value} - Value {new_byte1_2}"
+                    }
+                ))
                 
                 
             elif loco_command == "Set Speed":
@@ -346,12 +382,14 @@ class AutomationStep:
                     session_id = loco.session
                 except Exception as e:
                     #print ("Loco error - possibly disconnected")
-                    event_bus.publish(LocoEvent('api', {
-                    'command': 'speed_dir',
-                    'session': session_id,
-                    'speed': 0,
-                    'direction': loco.direction
-                    }))
+                    event_bus.broadcast(LogEvent(
+                        {'type':"Automation",
+                        'level':3, # None critical error
+                        'sequence': self.sequence_name, 
+                        'step': f" {self.step_name}",
+                        'description': f"Loco error - possibly disconnected {loco_id}"
+                        }
+                    ))
                 event_bus.publish(LocoEvent('api', {
                     'command': 'speed_dir',
                     'session': session_id,
@@ -361,7 +399,17 @@ class AutomationStep:
 
                 #self.api.start_request(self.api.vlcb.loco_speeddir(self.control_loco.get_session(), self.control_loco.get_speeddir()))
             else:
+                # TODO: remove this print when testing complete
+                # Still log to automation log events
                 print (f"Unknown Loco command: {loco_command}")
+                event_bus.broadcast(LogEvent(
+                    {'type':"Automation",
+                    'level':3, # None critical error
+                    'sequence': self.sequence_name, 
+                    'step': f" {self.step_name}",
+                    'description': f"Loco error - possibly disconnected {loco_id}"
+                    }
+                ))
 
     def get_loco_id (self):
         """ If step uses loco then return loco, else return "" """

@@ -4,6 +4,8 @@ import threading
 from vlcbserver.canusb import CanUSB4
 from datetime import datetime
 import time
+import argparse
+import logging
 import vlcbserver
 from vlcbserver import create_app
 import vlcbserver.requests
@@ -19,15 +21,16 @@ max_entries = 100
 
 
 
-
-def flaskThread():
+def flaskThread(debug=False):
+    if not debug:
+        log = logging.getLogger('werkzeug')
+        log.setLevel(logging.ERROR)
     app.run(host='0.0.0.0', port=5000)
     
 # Setup pixel strip and then start the updatePixels loop
-def mainThread():
+def mainThread(debug=False):
     while True:
         # Entire thread is in a loop which allows us to keep trying connection etc.
-        debug = False
         
         # Connect to USB
         usb = CanUSB4(port)
@@ -85,10 +88,14 @@ def mainThread():
             
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='VLCB Server')
+    parser.add_argument('-d', '--debug', action='store_true', help='Enable debug mode')
+    args = parser.parse_args()
+    
     app = create_app()
 
     # run as two threads - main thread and flask thread
-    mt = threading.Thread(target=mainThread)
-    ft = threading.Thread(target=flaskThread)
+    mt = threading.Thread(target=mainThread, args=(args.debug,))
+    ft = threading.Thread(target=flaskThread, args=(args.debug,))
     mt.start()
     ft.start()
