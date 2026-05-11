@@ -359,15 +359,43 @@ class AutomationStep:
                     'level':7, # Debug
                     'sequence': self.sequence_name, 
                     'step': f" {self.step_name}",
-                    'description': f"Value: Loco action - Loco {loco_id} - Function {func_index} {func_type} {func_value} - Value {new_byte1_2}"
+                    'description': f"Loco action - Loco {loco_id} - Function {func_index} {func_type} {func_value} - Value {new_byte1_2}"
                     }
                 ))
                 
                 
             elif loco_command == "Set Speed":
                 print ("Set speed - implement here")
+                speed_value = run_data.get("speed", 1)
+                # Need to know current direction to send correct speed / direction command
+                direction_value = loco.get_direction()
+                event_bus.publish(LocoEvent('api', {
+                    'command': 'speed_dir',
+                    'session': session_id,
+                    'speed': speed_value,
+                    'direction': direction_value
+                    }))
+                # Debug message with actual data sent
+                event_bus.broadcast(LogEvent(
+                    {'type':"Automation",
+                    'level':7, # Debug
+                    'sequence': self.sequence_name, 
+                    'step': f" {self.step_name}",
+                    'description': f"Loco action - Loco {loco_id} - Set Speed {speed_value} - Direction {direction_value}"
+                    }
+                ))
             elif loco_command == "Stop":
-                ##print (f"Stopping loco {loco_id}")
+                # Stop = Emergency stop
+                # For normal stop, set speed to 0 )
+                # Although stop has no direction
+                # need to know current direction to send correct speed / direction command
+                direction_value = loco.get_direction()
+                event_bus.publish(LocoEvent('api', {
+                    'command': 'speed_dir',
+                    'session': session_id,
+                    'speed': 1, # Sends an emergency stop
+                    'direction': direction_value
+                    }))
                 event_bus.broadcast(LogEvent(
                     {'type':"Automation",
                     'level':6, # Info
