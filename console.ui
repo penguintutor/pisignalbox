@@ -146,6 +146,16 @@
              </spacer>
             </item>
             <item>
+             <widget class="QCheckBox" name="noopCheckBox">
+              <property name="text">
+               <string>Show Keep Alive</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="QCheckBox" name="scrollCheckBox">
               <property name="text">
                <string>Scroll on </string>
