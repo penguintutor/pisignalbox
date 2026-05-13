@@ -6,8 +6,9 @@ from pyvlcb import VLCBOpcode
 
 def setup_ui (self):
     # Set column width for first column to ensure data fits
-    self.ui.consoleTable.setColumnWidth(0, 170)
-    self.ui.consoleTable.setColumnWidth(2, 200)
+    #self.ui.consoleTable.setColumnWidth(0, 170)
+    #self.ui.consoleTable.setColumnWidth(2, 200)
+    pass
 
 # log_details is unformatted string
 # Extract details and store as:
@@ -23,17 +24,14 @@ def update_log (self):
     while len(self.new_entries) > 0:
         resp_string = self.new_entries.pop(0)
         log_details = self.vlcb.log_entry(resp_string)
-        # Add new row to the table
-        row_num = self.ui.consoleTable.rowCount()
-        self.ui.consoleTable.setRowCount(row_num + 1)
-        for i in range(0, len(log_details)):
-            self.ui.consoleTable.setItem(row_num, i, QTableWidgetItem(log_details[i]))
-            # Add tooltip with title of opcode
-            self.ui.consoleTable.item(row_num, i).setToolTip(VLCBOpcode.opcode_title(log_details[4]))
+        # Add new row to the model
+        self.vlcb_log_model.add_log_entry(log_details)
+ 
         
     # If in scrollmode then go to the bottom
-    if self.ui.scrollCheckBox.isChecked():
-        self.ui.consoleTable.scrollToBottom()
+    # Todo - change this to MVC model
+    #if self.ui.scrollCheckBox.isChecked():
+    #    self.ui.consoleTable.scrollToBottom()
     
 # Command pulldown menu (QComboBox)
 # Set the other argument lists

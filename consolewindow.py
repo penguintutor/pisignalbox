@@ -5,6 +5,8 @@ from PySide6.QtUiTools import QUiLoader
 from eventbus import EventBus, event_bus
 from pyvlcb import VLCB
 from pyvlcb import VLCBOpcode
+from consolevlcbtablemodel import ConsoleVLCBTableModel
+from consolevlcbfilterproxymodel import ConsoleVLCBFilterProxyModel
 import queue
 import console_ui_vlcb as ui_vlcb
 import console_ui_automation as ui_auto
@@ -39,6 +41,17 @@ class ConsoleWindowUI(QMainWindow):
         
         self.ui = loader.load(os.path.join(basedir, "console.ui"), None)
         self.setWindowTitle(self.window_title)
+
+        # MVC Models
+        self.vlcb_log_model = ConsoleVLCBTableModel()
+        self.vlcb_proxy_model = ConsoleVLCBFilterProxyModel()
+
+        # Chain Models
+        self.vlcb_proxy_model.setSourceModel(self.vlcb_log_model)
+        self.ui.vlcbTableView.setModel(self.vlcb_proxy_model)
+
+        # Connect checkboxes to models
+        self.ui.noopCheckBox.toggled.connect(self.vlcb_proxy_model.set_show_keep_alive)
         
         # Set column width for first column to ensure data fits
         #self.ui.consoleTable.setColumnWidth(0, 150)
