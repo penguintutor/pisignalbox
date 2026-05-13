@@ -19,9 +19,9 @@ class ConsoleVLCBFilterProxyModel(QSortFilterProxyModel):
         if self.show_keep_alive:
             return True
 
-        # Otherwise, check the Op Code (Column 1)
+        # Otherwise, check the Op Code (Column 4)
         # Note: We must fetch the data from the SOURCE model
-        index = self.sourceModel().index(source_row, 1, source_parent)
+        index = self.sourceModel().index(source_row, 4, source_parent)
         op_code_str = self.sourceModel().data(index, Qt.ItemDataRole.DisplayRole)
 
         # If it is a DKEEP message, return False (hide it). Otherwise True (show it).
