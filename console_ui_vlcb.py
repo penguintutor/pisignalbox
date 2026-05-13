@@ -27,11 +27,7 @@ def update_log (self):
         # Add new row to the model
         self.vlcb_log_model.add_log_entry(log_details)
  
-        
-    # If in scrollmode then go to the bottom
-    # Todo - change this to MVC model
-    #if self.ui.scrollCheckBox.isChecked():
-    #    self.ui.consoleTable.scrollToBottom()
+
     
 # Command pulldown menu (QComboBox)
 # Set the other argument lists

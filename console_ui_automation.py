@@ -8,8 +8,9 @@ from logevent import LogEvent
 
 def setup_ui (self):
     # Set column width for first column to ensure data fits
-    self.ui.automationTable.setColumnWidth(0, 170)
-    self.ui.automationTable.setColumnWidth(2, 200)
+    #self.ui.automationTable.setColumnWidth(0, 170)
+    #self.ui.automationTable.setColumnWidth(2, 200)
+    pass
 
 # log_event is a LogEvent object
 # Method should only be passed objects that are type = Automation
@@ -31,18 +32,8 @@ def update_log (self):
     while len(self.new_auto_entries) > 0:
         # log_details is already in the form of a list
         log_details = self.new_auto_entries.pop(0)
-        # Add new row to the table
-        row_num = self.ui.automationTable.rowCount()
-        self.ui.automationTable.setRowCount(row_num + 1)
-        for i in range(0, len(log_details)):
-            self.ui.automationTable.setItem(row_num, i, QTableWidgetItem(log_details[i]))
-            # Add tooltip with title of opcode
-            #self.ui.automationTable.item(row_num, i).setToolTip(VLCBOpcode.opcode_title(log_details[4]))
-        
-    #Todo add scrollmode checkbox
-    # If in scrollmode then go to the bottom
-    #if self.ui.scrollCheckBox.isChecked():
-    #    self.ui.consoleTable.scrollToBottom()
+        # Add new row to the model
+        self.auto_log_model.add_log_entry(log_details)
     
 # Command pulldown menu (QComboBox)
 # Set the other argument lists

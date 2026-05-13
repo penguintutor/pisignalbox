@@ -461,7 +461,7 @@ class AutomationStep:
                     'command': 'All Stop',
                     'session': session_id
                     }
-            ))
+                ))
                 event_bus.broadcast(LogEvent(
                     {'type':"Automation",
                     'level':6, # Info
