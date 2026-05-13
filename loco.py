@@ -33,6 +33,12 @@ class Loco:
     def get_id (self):
         return self.loco_id
 
+    def get_direction (self):
+        return self.direction
+
+    def get_speed (self):
+        return self.speed
+
     def set_status (self, value, acquired_by=""):
         """ set status - eg rloc if acquiring"""
         # acquired_by is optional - used if rloc, otherwise ignored

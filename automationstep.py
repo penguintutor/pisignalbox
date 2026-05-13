@@ -361,9 +361,7 @@ class AutomationStep:
                     'step': f" {self.step_name}",
                     'description': f"Loco action - Loco {loco_id} - Function {func_index} {func_type} {func_value} - Value {new_byte1_2}"
                     }
-                ))
-                
-                
+                ))                
             elif loco_command == "Set Speed":
                 print ("Set speed - implement here")
                 speed_value = run_data.get("speed", 1)
@@ -382,6 +380,33 @@ class AutomationStep:
                     'sequence': self.sequence_name, 
                     'step': f" {self.step_name}",
                     'description': f"Loco action - Loco {loco_id} - Set Speed {speed_value} - Direction {direction_value}"
+                    }
+                ))    
+            elif loco_command == "Set Direction":
+                print ("Set direction - implement here")
+                direction_string = run_data.get("direction", "forward")
+                # default direction is forward - if reverse then set - otherwise default to forward
+                if direction_string.lower() == "reverse":
+                    direction_value = 0
+                else:
+                    direction_value = 1
+                # Need to know current speed 
+                # Should be stopped or very slow (but some DCC locos will stop and reverse)
+                speed_value = loco.get_speed()
+                event_bus.publish(LocoEvent('api', {
+                    'command': 'speed_dir',
+                    'session': session_id,
+                    'speed': speed_value,
+                    'direction': direction_value
+                    }))
+                # Debug message with actual data sent
+                event_bus.broadcast(LogEvent(
+                    {'type':"Automation",
+                    'level':7, # Debug
+                    'sequence': self.sequence_name, 
+                    'step': f" {self.step_name}",
+                    # Log entry is worded differently - direction first, speed second
+                    'description': f"Loco action - Loco {loco_id} - Set Direction {direction_value} - Speed {speed_value}"
                     }
                 ))
             elif loco_command == "Stop":
@@ -404,28 +429,47 @@ class AutomationStep:
                     'description': f"Stopping loco {loco_id}"
                     }
                 ))
-                # get loco object for this step
-                try:
-                    loco = locos[loco_id]
-                    session_id = loco.session
-                except Exception as e:
-                    #print ("Loco error - possibly disconnected")
-                    event_bus.broadcast(LogEvent(
-                        {'type':"Automation",
-                        'level':3, # None critical error
-                        'sequence': self.sequence_name, 
-                        'step': f" {self.step_name}",
-                        'description': f"Loco error - possibly disconnected {loco_id}"
-                        }
-                    ))
-                event_bus.publish(LocoEvent('api', {
-                    'command': 'speed_dir',
-                    'session': session_id,
-                    'speed': 0,
-                    'direction': loco.direction
-                    }))
+                # # get loco object for this step
+                # try:
+                #     loco = locos[loco_id]
+                #     session_id = loco.session
+                # except Exception as e:
+                #     #print ("Loco error - possibly disconnected")
+                #     event_bus.broadcast(LogEvent(
+                #         {'type':"Automation",
+                #         'level':3, # None critical error
+                #         'sequence': self.sequence_name, 
+                #         'step': f" {self.step_name}",
+                #         'description': f"Loco error - possibly disconnected {loco_id}"
+                #         }
+                #     ))
+                # event_bus.publish(LocoEvent('api', {
+                #     'command': 'speed_dir',
+                #     'session': session_id,
+                #     'speed': 0,
+                #     'direction': loco.direction
+                #     }))
 
-                #self.api.start_request(self.api.vlcb.loco_speeddir(self.control_loco.get_session(), self.control_loco.get_speeddir()))
+                # #self.api.start_request(self.api.vlcb.loco_speeddir(self.control_loco.get_session(), self.control_loco.get_speeddir()))
+            elif loco_command == "All Stop":
+                # All Stop = Emergency stop all locos
+                # For normal stop, set speed to 0 )
+                # Although stop has no direction
+                # need to know current direction to send correct speed / direction command
+                direction_value = loco.get_direction()
+                event_bus.publish(LocoEvent('api', {
+                    'command': 'All Stop',
+                    'session': session_id
+                    }
+            ))
+                event_bus.broadcast(LogEvent(
+                    {'type':"Automation",
+                    'level':6, # Info
+                    'sequence': self.sequence_name, 
+                    'step': f" {self.step_name}",
+                    'description': f"All Stop"
+                    }
+                ))
             else:
                 # TODO: remove this print when testing complete
                 # Still log to automation log events
@@ -435,7 +479,7 @@ class AutomationStep:
                     'level':3, # None critical error
                     'sequence': self.sequence_name, 
                     'step': f" {self.step_name}",
-                    'description': f"Loco error - possibly disconnected {loco_id}"
+                    'description': f"Unknown Loco command: {loco_command} for loco {loco_id}"
                     }
                 ))
 
