@@ -6,9 +6,10 @@ from pyvlcb import VLCBOpcode
 
 def setup_ui (self):
     # Set column width for first column to ensure data fits
-    #self.ui.consoleTable.setColumnWidth(0, 170)
-    #self.ui.consoleTable.setColumnWidth(2, 200)
-    pass
+    self.ui.vlcbTableView.setColumnWidth(0, 170)
+    self.ui.vlcbTableView.setColumnWidth(1, 90)
+    self.ui.vlcbTableView.setColumnWidth(2, 210)
+    self.ui.vlcbTableView.setColumnWidth(3, 80)
 
 # log_details is unformatted string
 # Extract details and store as:

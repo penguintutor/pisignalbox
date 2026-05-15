@@ -32,6 +32,14 @@ class ConsoleVLCBTableModel(QAbstractTableModel):
         if not index.isValid():
             return None
 
+        # Handle the alignment for specific columns
+        if role == Qt.ItemDataRole.TextAlignmentRole:
+            if index.column() in (1, 3):
+                return Qt.AlignmentFlag.AlignCenter
+            
+            # Default alignment for all other columns
+            return Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter
+
         # DisplayRole is triggered when the View asks for the text to display
         if role == Qt.ItemDataRole.DisplayRole:
             row = index.row()
