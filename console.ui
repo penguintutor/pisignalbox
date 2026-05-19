@@ -223,6 +223,9 @@
             <property name="text">
              <string>Scroll on</string>
             </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
            </widget>
           </item>
          </layout>
