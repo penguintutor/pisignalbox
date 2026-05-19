@@ -58,11 +58,12 @@ class ConsoleWindowUI(QMainWindow):
 
         # Connect auto-scroll signal to rowsInserted on vlcb_proxy_model
         self.vlcb_proxy_model.rowsInserted.connect(self.vlcb_scroll_if_enabled)
-        self.auto_proxy_model.rowsInserted.connect(self.vlcb_scroll_if_enabled)
+        self.auto_proxy_model.rowsInserted.connect(self.auto_scroll_if_enabled)
 
         # Connect checkboxes to models
         self.ui.noopCheckBox.toggled.connect(self.vlcb_proxy_model.set_show_keep_alive)
         self.ui.scrollCheckBox.toggled.connect(self.vlcb_jump_to_bottom_on_check)
+        self.ui.autoScrollCheckBox.toggled.connect(self.auto_jump_to_bottom_on_check)
         
         # Set column width for first column to ensure data fits
         #self.ui.consoleTable.setColumnWidth(0, 150)
@@ -73,7 +74,7 @@ class ConsoleWindowUI(QMainWindow):
         
         # Command shortcuts
         self.ui.commandSelect.currentIndexChanged.connect (self.command_changed)
-        self.ui.scrollCheckBox.toggled.connect (self.scroll_checkbox)
+        #self.ui.scrollCheckBox.toggled.connect (self.scroll_checkbox)
         self.ui.sendCommandButton.clicked.connect (self.send_command)
         self.ui.makeCommandButton.clicked.connect (self.make_command)
         self.ui.arg1Select.currentIndexChanged.connect (self.arg1_changed)
@@ -132,6 +133,7 @@ class ConsoleWindowUI(QMainWindow):
         """Instantly scrolls to bottom the moment the user checks the box."""
         if checked:
             self.ui.vlcbTableView.scrollToBottom()
+        ui_vlcb.scroll_checkbox(self)
 
 
     # used by automation view 
@@ -148,6 +150,7 @@ class ConsoleWindowUI(QMainWindow):
         """Instantly scrolls to bottom the moment the user checks the box."""
         if checked:
             self.ui.autoTableView.scrollToBottom()
+        ui_auto.scroll_checkbox(self)
 
     # Connectors to the ui files
     def command_changed(self):

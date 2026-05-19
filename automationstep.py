@@ -301,7 +301,7 @@ class AutomationStep:
                 ))
 
             if loco_command == "Function":
-                print ("Loco function - todo testing")
+                #print ("Loco function - todo testing")
 
                 func_index = run_data.get("function", "")
                 func_type = run_data.get("type", "trigger")
@@ -363,7 +363,7 @@ class AutomationStep:
                     }
                 ))                
             elif loco_command == "Set Speed":
-                print ("Set speed - implement here")
+                #print ("Set speed - implement here")
                 speed_value = run_data.get("speed", 1)
                 # Need to know current direction to send correct speed / direction command
                 direction_value = loco.get_direction()

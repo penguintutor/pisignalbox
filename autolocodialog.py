@@ -157,7 +157,7 @@ class AutoLocoDialog(QDialog):
                 # row is a dict of widgets
                 # Get loco object for this row
                 selected_loco = row["combo"].currentData()
-                print (f"Selected loco {selected_loco} acquired {selected_loco.is_acquired()}")
+                #print (f"Selected loco {selected_loco} acquired {selected_loco.is_acquired()}")
                 # if any are not acquired then set false
                 if not selected_loco.is_acquired():
                     all_assigned = False

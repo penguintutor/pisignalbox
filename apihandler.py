@@ -96,7 +96,7 @@ class ApiHandler(QObject):
                 else:
                     self.start_request(request_new)
             elif command == "speed_dir":
-                print ("Setting speed_dir")
+                #print ("Setting speed_dir")
                 self.start_request(self.vlcb.loco_speed_dir(
                     event.get_session_id(),
                     event.get_arg("speed"),

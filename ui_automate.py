@@ -39,7 +39,7 @@ def run_selected_sequence(self):
             loco_dict = {item: item for item in loco_list}
 
 
-        print (f"Starting sequence with locos {loco_dict}")
+        #print (f"Starting sequence with locos {loco_dict}")
         self.automation.run_sequence(selected_row, loco_dict)
     else:
         QMessageBox.warning(self, "Selection Error", "Please select a rule sequence to run.")

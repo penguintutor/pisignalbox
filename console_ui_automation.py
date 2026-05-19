@@ -176,8 +176,8 @@ def arg2_evid (self):
 
 # Update checkbox wording
 def scroll_checkbox (self):
-    if self.ui.scrollCheckBox.isChecked():
-        self.ui.scrollCheckBox.setText("Scroll on ")
+    if self.ui.autoScrollCheckBox.isChecked():
+        self.ui.autoScrollCheckBox.setText("Scroll on ")
     else:
-        self.ui.scrollCheckBox.setText("Scroll off")
+        self.ui.autoScrollCheckBox.setText("Scroll off")
     
