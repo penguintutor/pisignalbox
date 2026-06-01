@@ -493,52 +493,58 @@ class MainWindowUI(QMainWindow):
             return False
         
     # Import clicked on the menu - import assets (eg. loco file)
-    def import_file(self):
+    def import_file(self, checked=False):
         """ Handles import request
         Launches a QFileDialog and then performs import
         Triggered from menu (mainwindow.ui)
         """
-        file_dialog = QFileDialog(self,
-                        caption="Select Loco file",
-                        directory=self.dirs['locos'],
-                        filter="Data (*.json)",
-                        fileMode=QFileDialog.FileMode.ExistingFile
-                        )
+        try:
+            file_dialog = QFileDialog(self,
+                            caption="Select Loco file",
+                            directory=self.dirs['locos'],
+                            filter="Data (*.json)",
+                            fileMode=QFileDialog.FileMode.ExistingFile
+                            )
+            file_dialog.setOption(QFileDialog.Option.DontUseNativeDialog, True)
 
-        # Get filename
-        if file_dialog.exec():
-            selected_file = file_dialog.selectedFiles()[0]
+            # Get filename
+            if file_dialog.exec():
+                selected_file = file_dialog.selectedFiles()[0]
 
-            filename = os.path.basename(selected_file)
-            # Check it doesn't already exist
-            if (device_model.check_loco_filename(filename) == True):
-                QMessageBox.warning(
-                    self, 
-                    "File exists", # The title of the dialog
-                    f"Filename {filename} already exists. Please rename the file first." # The message content
-                )
-                return
-            
-            # Todo - is it a valid loco file - try loading as json and ensure it has loco_id as minimum
-            
-            # Is the file in the locosdir
-            if self.is_datadir(selected_file, 'locos'):
-                #print (f"{filename} in data directory")
-                new_path = selected_file
-            # if not and then copy (not it will overwrite existing, but already established it's not being loaded)
-            else:
-                # New path - includes filename
-                new_path = os.path.join(self.dirs['locos'], filename)
-                print (f"Copying {selected_file} to {new_path}")
-                shutil.copyfile (selected_file, new_path)
-                # Todo wrap above in try clause
-                #loco_filename = filename
-            
-            # Now load and add to the file
-            #print (f"Loading file {new_path}")
-            device_model.import_loco(filename)
-            device_model.save_locos()
-            self.updated_locos_signal.emit()
+                filename = os.path.basename(selected_file)
+                # Check it doesn't already exist
+                if (device_model.check_loco_filename(filename) == True):
+                    QMessageBox.warning(
+                        self, 
+                        "File exists", # The title of the dialog
+                        f"Filename {filename} already exists. Please rename the file first." # The message content
+                    )
+                    return
+                
+                # Todo - is it a valid loco file - try loading as json and ensure it has loco_id as minimum
+                
+                # Is the file in the locosdir
+                if self.is_datadir(selected_file, 'locos'):
+                    #print (f"{filename} in data directory")
+                    new_path = selected_file
+                # if not and then copy (not it will overwrite existing, but already established it's not being loaded)
+                else:
+                    # New path - includes filename
+                    new_path = os.path.join(self.dirs['locos'], filename)
+                    print (f"Copying {selected_file} to {new_path}")
+                    shutil.copyfile (selected_file, new_path)
+                    # Todo wrap above in try clause
+                    #loco_filename = filename
+                
+                # Now load and add to the file
+                #print (f"Loading file {new_path}")
+                device_model.import_loco(filename)
+                device_model.save_locos()
+                self.updated_locos_signal.emit()
+        except Exception as e:
+            # This will print the EXACT reason your app is crashing to the terminal
+            print(f"CRASH AVERTED! Error in import_file: {e}")
+            #traceback.print_exc()
 
     # Adds a variable to the AppVar class AND to the device_model
     # If variable already exists then returns false

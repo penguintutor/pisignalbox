@@ -11,6 +11,7 @@ from mainwindow import MainWindowUI
 from locowindow import LocoWindow
 from locodialog import LocoDialog
 
+os.environ["QT_QPA_PLATFORM"] = "xcb"
 
 # filenames are relative to data directory
 # by default that is basedir/data/
@@ -32,8 +33,10 @@ files = {
 # Allows settings to be sent through arguments
 settings = {}
 
-# Any ui / css files are considered non user configurable and are hardcoded
 
+
+
+# Any ui / css files are considered non user configurable and are hardcoded
 class App(QApplication):
     def __init__ (self, args):
         super().__init__()
@@ -105,6 +108,10 @@ def handle_focus_change(old_focus, new_focus):
                     # after raising that stop
                     break 
         
+
+import faulthandler
+faulthandler.enable()
+
 # Create QApplication instance
 # Already handled arguments so pass None
 app = App(None)
