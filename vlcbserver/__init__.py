@@ -1,10 +1,10 @@
-#import  vlcbserver
 from flask import Flask
 from flask_wtf.csrf import CSRFProtect
 import time
 import logging, os
 import random
 import string
+import secrets
 
 # Globals for passing information between threads
 # needs default settings
@@ -53,17 +53,7 @@ def get_data(start=0, last=None):
 # debug = True (include debug messages in log - eg Testing)
 # debug = False - minimum INFO messages are logged
 def create_app():
-    #pixelserver.auth_config_filename = auth_config_filename
-    #pixelserver.auth_users_filename = auth_users_filename
-    
-    if debug==False:
-        log_level = logging.INFO
-    else:
-        log_level = logging.DEBUG
-    
-#    start_logging (log_filename, log_level)
-    #vlcbserver.auth = ServerAuth(auth_config_filename, auth_users_filename)
-    
+   
     #if csrf_enable:
     csrf = CSRFProtect()
     app = Flask(
@@ -71,16 +61,11 @@ def create_app():
         template_folder="www"
         )
     # Create a secret_key to last whilst the program is running
-    app.secret_key = ''.join(random.choice(string.ascii_letters) for i in range(15))
-    #if csrf_enable:
+    # Generates a cryptographically secure random token in hexadecimal format
+    app.secret_key = secrets.token_hex(16)  # e.g., 'ca978112ca1bbdcafac231b39a23dc4d'
     csrf.init_app(app)
     register_blueprints(app)
     return app
-    
-#Turn on logging through systemd
-#def start_logging(log_filename, log_level=logging.INFO):
-#    logging.basicConfig(level=log_level, filename=log_filename, filemode='a', format='%(asctime)s %(levelname)-4s %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
-#    logging.info ("PixelServer application start")
     
 #Register routes as @requests
 def register_blueprints(app):
