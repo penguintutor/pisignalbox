@@ -41,10 +41,12 @@ class LayoutDialog(QDialog):
         #self.ui.messageLabel.setStyleSheet("color: red;")
         
         # Load the Layouts file to see what layouts are available
-        layouts_file = os.path.join(self.data_dir, self.layouts_file)
+        self.layouts_file = os.path.join(self.data_dir, self.layouts_file)
         self.all_layouts = Layouts(self.data_dir, self.layouts_file)
         # else print (f"No layouts file '{layouts_file}', using default layout")
         
+        print (f"All Layouts {self.all_layouts.layouts.items()}")
+
         # add the items to the menu
         # The title is what the user sees, but providing the filename as well allows that to be
         # retrieved from the combobox

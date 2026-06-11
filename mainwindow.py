@@ -83,12 +83,12 @@ class MainWindowUI(QMainWindow):
     # Are all relative to basedir
     # although some customisation of file names is allowed in configs
     # settings provides an option for command line arguments (not yet supported)
-    def __init__(self, dirs, files, settings={}):
+    def __init__(self, dirs, files, settings=None):
         super().__init__()
         self.debug = False
         
         # Command line arguments and directory settings
-        self.cmd_settings = settings
+        self.cmd_settings = settings or {}
         self.dirs = {} # dirs need to be updated with data_dir
         self.files = files
         
@@ -109,10 +109,6 @@ class MainWindowUI(QMainWindow):
         # Update all the dirs to add data_dir
         for key, value in dirs.items():
             self.dirs[key] = os.path.join(self.data_dir, value)
-
-        #self.automation = "Default"
-        #self.automation_file = os.path.join(self.dirs['automation'], "default.json")
-        #self.automation_sequences = []
         
         self.threadpool = QThreadPool()
         self.update_in_progress = False
@@ -295,7 +291,7 @@ class MainWindowUI(QMainWindow):
         self.control_loco = ControlLoco()
         event_bus.app_event_signal.connect(self.app_event)
         # automation_file
-        # Todo:
+        # FUTURE:
         # Need to determine which rules to load - this is default
         event_bus.load_rules(os.path.join(self.dirs['rules'], "default.json"))
         
@@ -331,8 +327,6 @@ class MainWindowUI(QMainWindow):
         ui_automate.run_selected_sequence(self)
     
     def gui_event (self, gui_event):
-        #print ("Gui event receieved {gui_event}")
-        # TODO - is name valid 
         gui_node = device_model.get_guiobject_name(gui_event.data.get('node'))
         if gui_node != None:
             gui_node.set_value(gui_event.data.get('value'))
@@ -382,7 +376,7 @@ class MainWindowUI(QMainWindow):
         """
         dialog = AddDeviceDialog()
         if dialog.exec():
-            # response = id, text
+            # the response is in the form id, text
             response = dialog.get_selected_values()
             # The first "text" is that it's a text style label (allows flexibility for future)
             self.railway.add_gui_device(response[0], response[1])
@@ -396,7 +390,7 @@ class MainWindowUI(QMainWindow):
         """
         dialog = AddLabelDialog(self.railway.gui_object_names())
         if dialog.exec():
-            # response = id, text
+            # the response is in the form id, text
             response = dialog.get_selected_values()
             #print(f"Selected value: {text}")
             # The first "text" is that it's a text style label (allows flexibility for future)
@@ -408,11 +402,9 @@ class MainWindowUI(QMainWindow):
 
         usually triggered from actionAddButton (mainwindow.ui)
         """
-        #print (f"Label {self.ui.layoutDisplayLabel}")
-        #print (f"Obj names {self.ui.layoutDisplayLabel.gui_object_names()}")
         dialog = AddButtonDialog(self.railway.gui_object_names())
         if dialog.exec():
-            # response = id, button_type
+            # # the response is in the form id, button_type
             response = dialog.get_selected_values()
             self.railway.add_button(response[0], response[1], {})
         
@@ -452,7 +444,7 @@ class MainWindowUI(QMainWindow):
                     self.ui.locoStatusLabel.setText ('Warning - address taken')
                     self.steal_dialog_signal.emit(loco_id)
             except Exception as e:
-                print (f"Acquire fail for a non existing loco {loco_id}")
+                print (f"Acquire fail for a non existing loco {loco_id} - {e}")
                 return
         elif app_event.action == "resetloco":
             # Only reset gui parts - already reset in controlloco
@@ -521,13 +513,11 @@ class MainWindowUI(QMainWindow):
                     )
                     return
                 
-                # Todo - is it a valid loco file - try loading as json and ensure it has loco_id as minimum
-                
                 # Is the file in the locosdir
                 if self.is_datadir(selected_file, 'locos'):
                     #print (f"{filename} in data directory")
                     new_path = selected_file
-                # if not and then copy (not it will overwrite existing, but already established it's not being loaded)
+                # if not then copy (note it will overwrite existing, but already established it's not being loaded)
                 else:
                     # New path - includes filename
                     new_path = os.path.join(self.dirs['locos'], filename)
@@ -731,7 +721,7 @@ class MainWindowUI(QMainWindow):
         ui_loco.loco_forward(self)
         
     def loco_reverse (self):
-        ui_loco
+        ui_loco.loco_reverse(self)
                 
     # Emergency stop - current loco
     # To reset need to set speed to 0 on the dial

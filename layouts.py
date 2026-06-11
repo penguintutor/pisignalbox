@@ -12,6 +12,7 @@ class Layouts():
         self.layouts = {}		# Dict key=filename, value=title
 
         filename = os.path.join(self.data_dir, self.layouts_file)
+        print (f"Filename {filename}")
         try:
             with open(filename, 'r') as data_file:
                 self.layouts = json.load(data_file)
