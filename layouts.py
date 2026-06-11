@@ -9,20 +9,20 @@ class Layouts():
     def __init__ (self, data_dir, layouts_file):
         self.data_dir = data_dir
         self.layouts_file = layouts_file
-        self.layouts = {}		# Dict key=filename, value=title
+        self.layouts_dict = {}		# Dict key=filename, value=title
 
         filename = os.path.join(self.data_dir, self.layouts_file)
         print (f"Filename {filename}")
         try:
             with open(filename, 'r') as data_file:
-                self.layouts = json.load(data_file)
-        except:
+                self.layouts_dict = json.load(data_file)
+        except OSError:
             print (f"No layout list '{filename}' creating new")
-            self.layouts = {}
+            self.layouts_dict = {}
             self.save_file()
             
     def add_layout (self, filename, title):
-        self.layouts[filename] = title
+        self.layouts_dict[filename] = title
         # Save
         self.save_file()
             
@@ -31,7 +31,7 @@ class Layouts():
         filename = os.path.join(self.data_dir, self.layouts_file)
         try:
             with open(filename, 'w') as data_file:
-                json.dump(self.layouts, data_file, indent=4)
+                json.dump(self.layouts_dict, data_file, indent=4)
         except Exception as e:
             print (f"Error saving layouts file {filename} {e}")
             

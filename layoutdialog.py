@@ -34,32 +34,28 @@ class LayoutDialog(QDialog):
         # This is where we store the selected - so that mainwindow can open it
         self.selected_layout = ""
         
-        # Set the saveButton as default - it will prompt if not given a new name
-        #self.ui.saveButton.setDefault(True)
-        # Set message text to blank but  red
-        #self.ui.messageLabel.setText("")
-        #self.ui.messageLabel.setStyleSheet("color: red;")
-        
         # Load the Layouts file to see what layouts are available
         self.layouts_file = os.path.join(self.data_dir, self.layouts_file)
         self.all_layouts = Layouts(self.data_dir, self.layouts_file)
-        # else print (f"No layouts file '{layouts_file}', using default layout")
-        
-        print (f"All Layouts {self.all_layouts.layouts.items()}")
 
         # add the items to the menu
         # The title is what the user sees, but providing the filename as well allows that to be
         # retrieved from the combobox
-        for filename, title in self.all_layouts.layouts.items():
+        for filename, title in self.all_layouts.layouts_dict.items():
             self.ui.layoutSelectBox.addItem(title, filename)
             
         # Set current layout
-        if len(self.all_layouts.layouts) > 0:
+        if len(self.all_layouts.layouts_dict) > 0:
             # Current layout is stored in settings
             current_layout_filename = self.settings.get_layout_filename()
-            # Convert it to title for combobox
-            current_layout_title = self.all_layouts.layouts[current_layout_filename]
-            self.ui.layoutSelectBox.setCurrentText(current_layout_title)
+            # If current_layout exists 
+            # (could be that settings.json has been set to a layout that isn't defined)
+            # Then set that to selected
+            if current_layout_filename in self.all_layouts.layouts_dict:
+                # Convert it to title for combobox
+                current_layout_title = self.all_layouts.layouts_dict[current_layout_filename]
+                self.ui.layoutSelectBox.setCurrentText(current_layout_title)
+            # Otherwise this will default to the first entry
         # If there were no layouts then set to the new tab
         else:
             self.switch_newtab ()
@@ -73,7 +69,7 @@ class LayoutDialog(QDialog):
         # If created a new layout save, updated selected and accept
         # Get title (check it's unique)
         new_title = self.ui.newLayoutTitleEdit.text()
-        if (new_title == "" or new_title in self.all_layouts.layouts.values()):
+        if (new_title == "" or new_title in self.all_layouts.layouts_dict.values()):
             QMessageBox.warning(
                 self, 
                 "Input Error", # The title of the dialog
