@@ -15,7 +15,7 @@ from eventbus import event_bus
 # These are provided as a list with each entry as a dict with the AutomationStep created in the init
 # Settings is used to pass the locos,
 class AutomationSequence (QRunnable):
-    def __init__(self, appvariables, title, steps, settings = {}, check_stop_func=None):
+    def __init__(self, appvariables, title, steps, settings = None, check_stop_func=None):
         #print (f"\n\nCreating AutomationSequence titled {title} with steps {steps} and settings {settings} and check_stop_func={check_stop_func}")
         super(AutomationSequence, self).__init__()
         # steps are provided as a list so save as list_steps, but then use self.steps when AutomationStep object created
@@ -24,7 +24,7 @@ class AutomationSequence (QRunnable):
         self.vars = appvariables
         self.title = title
         self.steps = []  # List of AutomationStep objects
-        self.settings = settings
+        self.settings = settings or {}
         #print (f"AutomationSequence {self.vars}")
         #self.num_locos = settings.get('num_locos', 0) # 0 to 3 locos required
         #self.vars = settings.get("appvar", {})

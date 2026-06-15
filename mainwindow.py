@@ -35,15 +35,15 @@ from automationmanagerdialog import AutomationManagerDialog
 from appvar import AppVar
 # UI is split into separate modules with wrappers to access them
 # This keeps the relevant code together
-import ui_layout as ui_layout
+#import ui_layout as ui_layout
+# UI code is split into Mixin classes so they can be placed in their own
+# package but access the MainWindow as though native to MainWindow
+from ui_layout import UILayoutMixin
 import ui_loco as ui_loco
 import ui_devices as ui_devices
 import ui_automate as ui_automate
 # Layout Display is from the loader to interact use
 # self.ui.layoutDisplayLabel
-
-loader = QUiLoader()
-loader.registerCustomWidget(LayoutDisplay)
 
 # Setup file paths
 basedir = os.path.dirname(__file__)
@@ -54,8 +54,7 @@ url = "http://127.0.0.1:5000/"
 
 read_rate = 200
 
-class MainWindowUI(QMainWindow):
-    
+class MainWindowUI(QMainWindow, UILayoutMixin):
     
     steal_dialog_signal = Signal(int)
     # Handle loco selection
@@ -86,6 +85,10 @@ class MainWindowUI(QMainWindow):
     def __init__(self, dirs, files, settings=None):
         super().__init__()
         self.debug = False
+
+        # Loader used to load the ui files
+        loader = QUiLoader()
+        loader.registerCustomWidget(LayoutDisplay)
         
         # Command line arguments and directory settings
         self.cmd_settings = settings or {}
@@ -550,7 +553,7 @@ class MainWindowUI(QMainWindow):
     # Override reiszeEvent
     def resizeEvent(self, event: QResizeEvent):
         #print ("Resize event called")
-        self._scale_image_to_fit()
+        self.scale_image_to_fit()
         super().resizeEvent(event) # Call the base class implementation
 
     def closeEvent(self, event):
@@ -588,57 +591,6 @@ class MainWindowUI(QMainWindow):
             if widget.isVisible():
                 print(f"Closing secondary window: {widget}")
                 widget.close()
-
-    ''' Wrappers for Layout UI module '''
-    # Some need loader,  and filename to be passed as the full path
-
-    def change_layout_dialog (self):
-        ui_layout.change_layout_dialog (self)
-
-    # Get a new image name then pass to the layoutDisplay
-    def change_layout_image_dialog (self):
-        ui_layout.change_layout_image_dialog(self)
-    
-    # Toggles between layout edit and control mode
-    # or provide mode to switch to that mode (control / edit)
-    def layout_edit (self, mode="toggle"):
-        ui_layout.layout_edit(self, mode)
-
-    def edit_dialog_layoutbutton (self):
-        ui_layout.edit_dialog_layoutbutton(self, loader, os.path.join(basedir, "editgbuttondialog.ui"))
-
-    def edit_dialog_guiobject (self):
-        ui_layout.edit_dialog_guiobject(self, loader, os.path.join(basedir, "editguidialog.ui"))
-
-    def button_type_change (self):
-        ui_layout.button_type_change(self)
-
-    def color_picker_label (self):
-        ui_layout.color_picker_label(self)
-
-    def color_picker_dialog(self, button_type):
-        ui_layout.color_picker_dialog(self, button_type)
-
-    def set_button_color(self, button, color):
-        ui_layout.set_button_color(self, button, color)
-
-    def edit_dialog_layoutlabel (self):
-        ui_layout.edit_dialog_layoutlabel(self, loader, os.path.join(basedir, "editglabeldialog.ui"))
-
-    # Note that _ is used in the filename for internal
-    # however when method moved to module name changed to scale_image_to_fit
-    def _scale_image_to_fit(self, min_size=None):
-        ui_layout.scale_image_to_fit(self, min_size)
-
-    # These are included in the layout ui model also included here
-    def color_picker_unknown (self):
-        self.color_picker_dialog ("unknown")
-        
-    def color_picker_on (self):
-        self.color_picker_dialog ("on")
-        
-    def color_picker_off (self):                                                                                                                                                                                                                                                                                                                                                                                                                                                     
-        self.color_picker_dialog ("off")
 
 
     ''' Wrappers for loco functions in ui_loco.py '''

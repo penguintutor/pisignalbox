@@ -76,7 +76,7 @@ def loco_change (self, index=0):
         self.loco_image = QPixmap(os.path.join(self.dirs['locos'], "default.png"))
     self.ui.locoImage.setPixmap(self.loco_image)
     # Scale the image to fit (include minimum size when first loading)
-    self._scale_image_to_fit(QSize(280, 180))
+    self.scale_image_to_fit(QSize(280, 180))
     if "summary" in self.control_loco.loco.loco_data:
         self.ui.locoInfoText.setText(self.control_loco.loco.loco_data['summary'])
     else:
