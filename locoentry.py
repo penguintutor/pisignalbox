@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
     QDialogButtonBox, QStyle) 
 from PySide6.QtGui import QPixmap, QIcon
 from PySide6.QtCore import Qt, QSize, Signal, QEvent
-from devicemodel import device_model
+from core import device_model
 
 
 # A simple class to represent a single row for a loco

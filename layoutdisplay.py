@@ -15,7 +15,7 @@ from layout import Layout
 from layoutlabel import LayoutLabel
 from layoutbutton import LayoutButton
 from guiobject import GuiObject
-from devicemodel import device_model
+from core import device_model
 
 
 class LayoutDisplay(QLabel):

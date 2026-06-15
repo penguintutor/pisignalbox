@@ -9,8 +9,7 @@ import time
 from PySide6.QtCore import QTimer, QSize, QPoint
 from PySide6.QtWidgets import QMenu, QDialog, QFileDialog, QMessageBox
 from PySide6.QtGui import QPixmap, QImage, QPalette, QColor, QFont, QResizeEvent
-from devicemodel import device_model
-from eventbus import event_bus
+from core import device_model, event_bus
 from guiobject import GuiObject
 from layoutobject import LayoutObject
 from layoutbutton import LayoutButton

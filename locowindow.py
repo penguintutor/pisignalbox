@@ -8,7 +8,7 @@ from PySide6.QtGui import QPixmap, QIcon
 from PySide6.QtCore import Qt, QSize
 from locoentry import LocoEntry
 from locodialog import LocoDialog
-from devicemodel import device_model 
+from core import device_model
 
 # parent is required (although could be set to None it should normally be mainwindow)
 # directory of filters and locos is required - but the filters and locos are loaded from device_model

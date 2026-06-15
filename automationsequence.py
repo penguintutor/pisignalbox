@@ -5,9 +5,8 @@ from automationstep import AutomationStep
 from automationrule import AutomationRule
 from appvar import AppVar
 from workersignals import WorkerSignals
-from devicemodel import device_model
 from logevent import LogEvent
-from eventbus import event_bus
+from core import device_model, event_bus
 
 
 # Automation routine, composed of multiple steps

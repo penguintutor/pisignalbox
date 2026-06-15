@@ -13,8 +13,7 @@ from PySide6.QtWidgets import QMenu, QDialog, QFileDialog, QMessageBox, QColorDi
 from PySide6.QtGui import QPixmap, QImage, QPalette, QColor, QFont, QResizeEvent
 from PySide6.QtUiTools import QUiLoader
 from pathlib import Path 
-from devicemodel import device_model
-from eventbus import event_bus
+from core import device_model, event_bus
 from imageexistdialog import ImageExistDialog
 from layoutdialog import LayoutDialog
 

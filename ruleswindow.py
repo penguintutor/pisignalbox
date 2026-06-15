@@ -11,14 +11,14 @@ from PySide6.QtWidgets import (
     QDialogButtonBox,
 )
 from PySide6.QtUiTools import QUiLoader
-from devicemodel import device_model
+from core import device_model, event_bus
 from ruledialog import RuleDialog
 from deviceevent import DeviceEvent
 from locoevent import LocoEvent
 from appevent import AppEvent
 from guievent import GuiEvent
 from timerevent import TimerEvent
-from eventbus import event_bus
+
 
 
 # Load the GUI resources.

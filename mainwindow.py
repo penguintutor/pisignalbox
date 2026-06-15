@@ -5,6 +5,7 @@ from PySide6.QtCore import QTimer, QCoreApplication, Signal, QThreadPool, Qt, QP
 from PySide6.QtWidgets import QApplication, QMainWindow, QAbstractItemView, QMenu, QLineEdit, QDialog, QColorDialog, QFileDialog, QMessageBox, QHeaderView
 from PySide6.QtGui import QPixmap, QImage, QPalette, QColor, QFont, QResizeEvent
 from PySide6.QtUiTools import QUiLoader
+from core import device_model, event_bus
 from settings import Settings
 from consolewindow import ConsoleWindowUI
 from layout import Layout
@@ -13,14 +14,9 @@ from layoutdisplay import LayoutDisplay
 from stealdialog import StealDialog
 from controlloco import ControlLoco
 from apihandler import ApiHandler
-from eventbus import event_bus
 from appevent import AppEvent
-from devicemodel import device_model
 from locowindow import LocoWindow
 from ruleswindow import RulesWindow
-from adddevicedialog import AddDeviceDialog
-from addlabeldialog import AddLabelDialog
-from addbuttondialog import AddButtonDialog
 from vlcbnode import VLCBNode
 from vlcbev import VLCBEv
 from guiobject import GuiObject
@@ -35,7 +31,7 @@ from automationmanagerdialog import AutomationManagerDialog
 from appvar import AppVar
 # UI code is split into Mixin classes so they can be placed in their own
 # package but access the MainWindow as though native to MainWindow
-from ui_layout import UILayoutMixin
+from ui_layout import UILayoutMixin, AddDeviceDialog, AddLabelDialog, AddButtonDialog
 from ui_loco import UILocoMixin
 from ui_devices import UIDevicesMixin
 from ui_automate import UIAutomateMixin

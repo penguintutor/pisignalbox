@@ -4,8 +4,7 @@ from PySide6.QtWidgets import (
     QLabel, QComboBox, QPushButton, QHBoxLayout, QWidget, QMessageBox
 )
 from PySide6.QtCore import Qt
-from devicemodel import device_model
-from eventbus import event_bus
+from core import device_model, event_bus
 
 class RuleDialog(QDialog):
     """

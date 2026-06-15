@@ -9,10 +9,10 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIntValidator
+from core import device_model
 from automationrule import AutomationRule
 from automationsequence import AutomationStep, AutomationSequence
 from automationdialogrows import AutomationDialogRows
-from devicemodel import device_model
 from locoevent import LocoEvent
 
 

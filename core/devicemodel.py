@@ -4,12 +4,12 @@ import os
 import json
 from PySide6.QtCore import Qt, QObject, Signal, Slot
 from PySide6.QtGui import QStandardItemModel, QStandardItem
+from core import event_bus
 from pyvlcb import VLCB
 from pyvlcb.utils import bytes_to_addr
 #from pyvlcb import VLCBOpcode
 from vlcbnode import VLCBNode
 from vlcbclient import VLCBClient
-from eventbus import EventBus, event_bus
 from locolist import LocoList
 from loco import Loco
 from deviceevent import DeviceEvent

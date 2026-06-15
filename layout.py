@@ -4,7 +4,7 @@
 import json
 import os
 from guiobject import GuiObject
-from devicemodel import device_model
+from core import device_model
 
 
 # Holds specific information about the layout

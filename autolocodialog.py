@@ -7,8 +7,7 @@ from PySide6.QtWidgets import (QDialog, QVBoxLayout, QFileDialog,
     QMessageBox, QTableWidget, QTableWidgetItem, QPushButton, 
     QHeaderView, QVBoxLayout, QGridLayout, QFrame, QLabel, QComboBox,
     QWidget, QDialogButtonBox)
-from devicemodel import device_model
-from eventbus import event_bus
+from core import device_model, event_bus
 from locoevent import LocoEvent
 from settings import Settings
 from layout import Layout

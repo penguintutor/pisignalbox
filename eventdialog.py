@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
     QPushButton,
     QDialogButtonBox,
 )
-from devicemodel import device_model
+from core import device_model
 
 class EventDialog(QDialog):
     def __init__(self, parent=None):

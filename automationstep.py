@@ -2,8 +2,8 @@ from PySide6.QtCore import QRunnable, Slot, Signal, QObject, QThread, QThreadPoo
 import time
 import json
 import threading
+from core import event_bus
 from locoevent import LocoEvent
-from eventbus import event_bus
 from automationrule import AutomationRule
 from appvar import AppVar
 from workersignals import WorkerSignals

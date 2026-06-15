@@ -2,7 +2,7 @@ import os
 from PySide6.QtCore import Qt, QTimer, QCoreApplication, Signal
 from PySide6.QtWidgets import QMainWindow, QTextBrowser, QTableWidget, QTableWidgetItem
 from PySide6.QtUiTools import QUiLoader
-from eventbus import EventBus, event_bus
+from core import event_bus
 from pyvlcb import VLCB
 from pyvlcb import VLCBOpcode
 from consolevlcbtablemodel import ConsoleVLCBTableModel

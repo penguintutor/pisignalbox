@@ -40,6 +40,17 @@ class EventBus(QObject):
     var_event_signal = Signal(VarEvent)
     log_event_signal = Signal(LogEvent)
     
+    # Map the Event Type to the STRING name of the signal
+    _route_map = {
+        AppEvent: "app_event_signal",
+        DeviceEvent: "device_event_signal",
+        GuiEvent: "gui_event_signal",
+        LocoEvent: "loco_event_signal",
+        TimerEvent: "timer_event_signal",
+        VarEvent: "var_event_signal",
+        LogEvent: "log_event_signal"
+    }
+
     # Is automation enabled. If not then don't apply rules.
     # If excessive calls (eg. excessive recursion) then stop automatically
     automation_enabled = True
@@ -50,7 +61,6 @@ class EventBus(QObject):
     # Store registered event forwarding rules
     # Each entry contains a list consisting of [event, action]
     event_rules = []
-
 
     # Map to Classes
     event_map = {
@@ -64,8 +74,10 @@ class EventBus(QObject):
         'Log': LogEvent
         }
 
+    # The _instance and __new__ ensure that this is always a singleton
+    # Technically not needed as long as always importing as event_bus
+    # but provides additional check
     _instance = None
-
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(EventBus, cls).__new__(cls)
@@ -88,20 +100,13 @@ class EventBus(QObject):
     # Broadcast signal
     def broadcast(self, event):
         # Broadcast the event
-        if isinstance(event, AppEvent):
-            self.app_event_signal.emit(event)
-        elif isinstance(event, GuiEvent):
-            self.gui_event_signal.emit(event)
-        elif isinstance(event, DeviceEvent):
-            self.device_event_signal.emit(event)
-        elif isinstance(event, LocoEvent):
-            self.loco_event_signal.emit(event)
-        elif isinstance(event, TimerEvent):
-            self.timer_event_signal.emit(event)
-        elif isinstance(event, VarEvent):
-            self.var_event_signal.emit(event)
-        elif isinstance(event, LogEvent):
-            self.log_event_signal.emit(event)
+        # Look up the string name of the target signal
+        signal_name = self._route_map.get(type(event))
+        
+        if signal_name:
+            # Use getattr(self, ...) to grab the BOUND signal, which has .emit()
+            target_signal = getattr(self, signal_name)
+            target_signal.emit(event)
         else:
             print(f"Warning: Unhandled event type published: {type(event)}")
         
