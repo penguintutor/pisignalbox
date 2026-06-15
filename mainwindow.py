@@ -33,13 +33,12 @@ from imageexistdialog import ImageExistDialog
 from automationmanager import AutomationManager
 from automationmanagerdialog import AutomationManagerDialog
 from appvar import AppVar
-# UI is split into separate modules with wrappers to access them
-# This keeps the relevant code together
-#import ui_layout as ui_layout
 # UI code is split into Mixin classes so they can be placed in their own
 # package but access the MainWindow as though native to MainWindow
 from ui_layout import UILayoutMixin
-import ui_loco as ui_loco
+from ui_loco import UILocoMixin
+
+# UI is split into separate modules with wrappers to access them
 import ui_devices as ui_devices
 import ui_automate as ui_automate
 # Layout Display is from the loader to interact use
@@ -54,7 +53,7 @@ url = "http://127.0.0.1:5000/"
 
 read_rate = 200
 
-class MainWindowUI(QMainWindow, UILayoutMixin):
+class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin):
     
     steal_dialog_signal = Signal(int)
     # Handle loco selection
@@ -272,7 +271,7 @@ class MainWindowUI(QMainWindow, UILayoutMixin):
         # Keep a list of what loco objects relate to which table entry
         self.loco_table_list = []
         self.loco_table_buttons = []
-        ui_loco.update_loco_table (self)
+        self.update_loco_table ()
         # Activated is based on user interaction (changing by code doesn't trigger)
         self.ui.locoComboBox.activated.connect(self.loco_change)
         self.ui.locoDial.valueChanged.connect(self.loco_change_speed)
@@ -593,96 +592,6 @@ class MainWindowUI(QMainWindow, UILayoutMixin):
                 widget.close()
 
 
-    ''' Wrappers for loco functions in ui_loco.py '''
-    
-    def steal_loco (self):
-        ui_loco.steal_loco(self)
-    
-    def share_loco (self):
-        ui_loco.share_loco(self)
-        
-    # Reset loco selection in GUI and remove references
-    def reset_loco (self):
-        ui_loco.reset_loco(self)
-        
-    # Extract GUI from reset_loco - so can be used from an app event
-    def reset_loco_gui (self):
-        ui_loco.reset_loco_gui(self)
-        
-    # When loco change requested through combobox
-    # or if loco removed from list in that case defaults to index=0 (Select Loco)
-    def loco_change (self, index=0):
-        ui_loco.loco_change(self, index)
-                
-    # Update function selected features
-    # When combobox / tab selected
-    def loco_function_selected (self):
-        ui_loco.loco_function_selected(self)
-        
-    # Button has been pressed
-    def loco_function_pressed (self):
-        ui_loco.loco_function_pressed(self)
-
-    # change value (if need to send multiple then set num_send to number of times
-    # Sent every 2 seconds (or change delay) - delay in seconds
-    def loco_func_change (self, func_index, value, num_send = 1, delay = 2):
-        ui_loco.loco_func_change(self, func_index, value, num_send, delay)
-    
-    # Sends on followed by off (typically 4 seconds later)
-    def loco_func_trigger (self, func_index, delay = 4):
-        ui_loco.loco_func_trigger(self, func_index, delay)
-    
-    # Update the functions list
-    # If index is not provided then use current
-    # otherrwise set to the index tab
-    def loco_change_functions (self, index=None):
-        ui_loco.loco_change_functions(self, index)
-        
-    # This is used based on the dial
-    def loco_change_speed (self, new_speed):
-        ui_loco.loco_change_speed(self, new_speed)
-            
-    # Updates the list of locos (both initial and when locos added / removed)
-    # Preserves list if already selected
-    def update_loco_list (self):
-        ui_loco.update_loco_list(self)
-
-    def steal_loco_dialog (self):
-        ui_loco.steal_loco_dialog(self)    
-
-    # Update the LCD display based on the speed
-    def update_lcd (self):
-       ui_loco.update_lcd(self)
-    
-    # Signal to indicate kalive needs to be checked
-    # start / stop as appropriate
-    def update_kalive (self):
-        #print ("Main Window update_kalive")
-        ui_loco.update_kalive(self)
-    
-    # Keep alive - called every 4 secs
-    # Add a keep alive to the send queue
-    def keep_alive (self):
-        #print ("Main window keep_alive")
-        ui_loco.keep_alive(self)
-            
-    def steal_loco_check (self):
-        ui_loco.steal_loco_check(self)
-        
-    def loco_forward (self):
-        ui_loco.loco_forward(self)
-        
-    def loco_reverse (self):
-        ui_loco.loco_reverse(self)
-                
-    # Emergency stop - current loco
-    # To reset need to set speed to 0 on the dial
-    def loco_stop (self, msg="STOP!"):
-        ui_loco.loco_stop(self, msg)
-        
-    # Emergency stop all
-    def loco_stop_all (self):
-        ui_loco.loco_stop_all(self)
 
     ''' Wrappers for Devices UI module '''
 
