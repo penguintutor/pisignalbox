@@ -38,11 +38,7 @@ from appvar import AppVar
 from ui_layout import UILayoutMixin
 from ui_loco import UILocoMixin
 from ui_devices import UIDevicesMixin
-
-# UI is split into separate modules with wrappers to access them
-import ui_automate as ui_automate
-# Layout Display is from the loader to interact use
-# self.ui.layoutDisplayLabel
+from ui_automate import UIAutomateMixin
 
 # Setup file paths
 basedir = os.path.dirname(__file__)
@@ -53,7 +49,7 @@ url = "http://127.0.0.1:5000/"
 
 read_rate = 200
 
-class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin, UIDevicesMixin):
+class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin, UIDevicesMixin, UIAutomateMixin):
     
     steal_dialog_signal = Signal(int)
     # Handle loco selection
@@ -323,11 +319,6 @@ class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin, UIDevicesMixin):
         #print (f"Sequence status update: {status_message}") 
         pass
 
-    def run_selected_sequence(self):
-        """Triggers the run process in the main window."""
-        # implementation in ui_automate
-        ui_automate.run_selected_sequence(self)
-    
     def gui_event (self, gui_event):
         gui_node = device_model.get_guiobject_name(gui_event.data.get('node'))
         if gui_node != None:
@@ -592,10 +583,3 @@ class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin, UIDevicesMixin):
                 widget.close()
 
 
-
-    ''' Wrappers for Automation UI module '''
-    def update_automation_list (self):
-        ui_automate.update_automation_list(self)
-
-
-    
