@@ -7,7 +7,6 @@ from PySide6.QtGui import QStandardItemModel, QStandardItem
 from core import event_bus
 from pyvlcb import VLCB
 from pyvlcb.utils import bytes_to_addr
-#from pyvlcb import VLCBOpcode
 from vlcbnode import VLCBNode
 from vlcbclient import VLCBClient
 from locolist import LocoList
@@ -136,88 +135,94 @@ class DeviceModel(QObject):
             if loco.session == session_id:
                 return loco
         return None
+    
+
+    def handle_error(self, error_data):
+        """Routes locomotive errors to their specific handler based on ErrCode."""
+        err_code = error_data.get('ErrCode')
         
-    def handle_error (self, error_data):
-        #print (f"Handling loco error: {error_data}")
-        #print (f"Current loco id: {self.get_id()} Status {self.get_status()} Acquiring {self.is_acquiring()}")
-        # Depending upon the error code the data may have different interpretations
-        # Stored as Byte1, Byte2, ErrCode - where Byte1,Byte2 may eqal AddrHigh_AddrLow, or
-        # may be Byte1 = Session ID, Byte 2 = 0
-        # So only check after looking at the ErrCode
-        #loco_id = data_entry['AddrHigh_AddrLow'] & 0x3FFF
-        # Check error code relates to the current loco
-        if error_data['ErrCode'] == 1:
-            # Loco stack full
-            # Only valid during acquiring status
-            loco_id = bytes_to_addr(error_data['Byte1'],error_data['Byte2']) & 0x3FFF
-            # get loco object
-            loco = self.loco_from_id(loco_id)
-            if loco == None:
-                # Not a loco we've requested (perhaps expired)
-                print ("Loco Error 1 - Not acquiring loco {loco_id} - ignoring error")
-                return
-            # set status - does not remove other values (eg. session)
-            loco.set_status("error")
-            # If from controller then inform controller to update
-            # Note that this is specific to controller 
-            if loco.acquired_by == "controller":
-                event_bus.publish(AppEvent({"action":"uitext", 'label': "locoStatusLabel", 'value': "Error - no sessions available", "loco_id": self.loco.loco_id}))
+        # Dispatch dictionary mapping error codes to handler functions
+        handlers = {
+            1: self._handle_err_stack_full,
+            2: self._handle_err_loco_taken,
+            8: self._handle_err_session_cancelled
+        }
+        
+        handler = handlers.get(err_code)
+        if handler:
+            handler(error_data)
+        elif self.debug:
+            print(f"Unhandled loco error code: {err_code} - Data: {error_data}")
 
-        # Already taken - option to steal or share
-        elif error_data['ErrCode'] == 2:
-            if self.debug:
-                print ("Error code 2 - loco taken")
-            loco_id = bytes_to_addr(error_data['Byte1'],error_data['Byte2']) & 0x3FFF
-            # get loco object
-            loco = self.loco_from_id(loco_id)
-            if loco == None:
-                # Not a loco we've requested (perhaps expired)
-                print ("Loco Error 2 - Not acquiring loco {loco_id} - ignoring error")
-                return
+    def _get_loco_from_bytes(self, byte1, byte2):
+        """Helper to extract loco ID and object from error bytes."""
+        loco_id = bytes_to_addr(byte1, byte2) & 0x3FFF
+        return loco_id, self.loco_from_id(loco_id)
+
+    def _handle_err_stack_full(self, error_data):
+        """Handles ErrCode 1: Loco stack full (only valid during acquiring)."""
+        loco_id, loco = self._get_loco_from_bytes(error_data['Byte1'], error_data['Byte2'])
+        
+        if loco is None:
+            print(f"Loco Error 1 - Not acquiring loco {loco_id} - ignoring error")
+            return
             
-            # It is our loco and we are trying to acquire - so allow acquire
-            # If it's controller that request then ask user whether to steal or share
+        loco.set_status("error")
+        
+        if loco.acquired_by == "controller":
+            event_bus.publish(AppEvent({
+                "action": "uitext", 
+                "label": "locoStatusLabel", 
+                "value": "Error - no sessions available", 
+                "loco_id": self.loco.loco_id
+            }))
+
+    def _handle_err_loco_taken(self, error_data):
+        """Handles ErrCode 2: Loco already taken."""
+        if self.debug:
+            print("Error code 2 - loco taken")
             
-            if loco.acquired_by != "controller":
-                # If not controller then autotomate / manual so request share
-                #self.api.start_request(self.api.vlcb.share_loco(loco_id)) 
-                event_bus.publish(LocoEvent('api', {
-                    'command': "share",
-                    'loco_id': loco_id
-                }))
-                # Update status to show share (gloc)
-                loco.set_status ("gloc")
-            # Broadcast regardless - controller update only if it's relevant
-            # if it is controller then the main window opens steal_dialog
-            event_bus.publish(AppEvent({"action": "locotaken", 'loco_id': loco_id}))
+        loco_id, loco = self._get_loco_from_bytes(error_data['Byte1'], error_data['Byte2'])
+        
+        if loco is None:
+            print(f"Loco Error 2 - Not acquiring loco {loco_id} - ignoring error")
+            return
+            
+        if loco.acquired_by != "controller":
+            event_bus.publish(LocoEvent('api', {
+                'command': "share",
+                'loco_id': loco_id
+            }))
+            loco.set_status("gloc")
+            
+        event_bus.publish(AppEvent({"action": "locotaken", 'loco_id': loco_id}))
 
-        elif error_data['ErrCode'] == 8:
-            # Session cancelled
-            # If we are trying to acquire a session then this could be us resetting other node
-            # or could be acquired by different controller
-            # byte 1 is now sessionid - byte2 is ignored - should be 00
-            session_id = int(error_data['Byte1'])
+    def _handle_err_session_cancelled(self, error_data):
+        """Handles ErrCode 8: Session cancelled."""
+        session_id = int(error_data['Byte1'])
+        
+        if self.debug:
+            print(f"Session cancel for session_id {session_id}")
+            
+        loco = self.loco_from_session(session_id)
+        
+        if loco is None:
             if self.debug:
-                print (f"Session cancel for session_id {session_id}")
-            loco = self.loco_from_session (session_id)
-            # If not an allocated session (perhaps duplicate after previous message) ignore
-            if loco == None:
-                if self.debug:
-                    print (f"Not a valid loco - ignoring")
-                return
+                print("Not a valid loco - ignoring")
+            return
 
-            if self.debug:
-                print (f"Session cancelled {session_id} for loco {loco_id}")
-            # This updates the loco 
-            loco.reset()
-            # Broadcast AppEvent (controller can ignore if not for control loco)
-            event_bus.publish(AppEvent({"action":"resetloco", 'loco_id': self.loco.loco_id}))
+        if self.debug:
+            # Fixed: loco_id was previously undefined here. Falling back to session_id.
+            print(f"Session cancelled {session_id} successfully.")
+            
+        loco.reset()
+        event_bus.publish(AppEvent({"action": "resetloco", 'loco_id': self.loco.loco_id}))
 
         
     # Enable / disable locos
     # Does not report back if successful (if already that state then just silently ignores)
     def enable_loco (self, filename):
-        if not filename in self.locos.enabled_locos:
+        if filename not in self.locos.enabled_locos:
             self.locos.enabled_locos.append(filename)
             
     def disable_loco (self, filename):
@@ -254,11 +259,9 @@ class DeviceModel(QObject):
             self.locos_dir = locos_path
         # If the LocoList is not initialized then we do that here
         if self.locos == None:
-            #full_path = os.path.join(self.data_dir, locos_filename)
             self.locos = LocoList (self.locos_dir, locos_filename)
         # If not then call load file against existing
         else:
-            #full_path = os.path.join(self.data_dir, locos_filename)
             self.locos.load_file (locos_filename)
             
     def import_loco (self, filename):
@@ -309,28 +312,23 @@ class DeviceModel(QObject):
     # Get list of nodes by names
     # Default return All types - including VLCB & Gui etc.
     # null_events determines whether to check if the nodes must have events
-    def get_nodes_names(self, type="all", null_events=True):
-        #print (f"Getting node names {type}")
-        #print (f"Nodes {self.nodes}")
-        #print (f"Keys {self.nodes.keys()}")
+    def get_nodes_names(self, node_type="all", null_events=True):
         node_list = []
-        # VLCB devices
-        if type=="all" or type=="VLCB":
-            for key in self.nodes.keys():
-                # If null_events is false and node has no events then skip
-                # Only check for null_events on VLCB - could do for other devices is preferred
-                if null_events == False:
-                    if self.nodes[key].numev > 0:
-                        node_list.append(self.nodes[key].name)
-                else:
-                    node_list.append(self.nodes[key].name)
-        # Gui devices
-        if type=="all" or type=="Gui":
-            for node in self.other_nodes['Gui']:
-                node_list.append(node.name)
-        return node_list
-    
 
+        # 1. Handle VLCB devices
+        if node_type in ("all", "VLCB"):
+            node_list.extend(
+                node.name for node in self.nodes.values() 
+                if null_events or node.numev > 0
+            )
+
+        # 2. Handle Gui devices
+        if node_type in ("all", "Gui"):
+            node_list.extend(
+                node.name for node in self.other_nodes['Gui']
+            )
+
+        return node_list
     
     # From name to key for DeviceEvents
     # Key is node_id so returning key will return node_id
@@ -419,7 +417,7 @@ class DeviceModel(QObject):
     # Add node if not exist - else returnFalse
     # Only used for devices - also see add_gui_node
     def add_node (self, node):
-        if not node in self.nodes.keys():
+        if node not in self.nodes.keys():
             self.nodes[node.node_id] = node
             # Also set name
             self.set_name (node.node_id, self.layout.node_name(node.node_id))
@@ -439,7 +437,7 @@ class DeviceModel(QObject):
         self.other_nodes['Gui'].append(gui_object)
 
     def set_name (self, node_id, name):
-        if not node_id in self.nodes.keys():
+        if node_id not in self.nodes.keys():
             return False
         # This must be through method and not directly editing name
         # so as to be updated in the QStandardItem
@@ -447,20 +445,20 @@ class DeviceModel(QObject):
         return True
 
     def set_numev (self, node_id, numev):
-        if not node_id in self.nodes.keys():
+        if node_id not in self.nodes.keys():
             return False
         self.nodes[node_id].set_numev(numev)
         return True
     
     def set_evspc (self, node_id, evspc):
-        if not node_id in self.nodes.keys():
+        if node_id not in self.nodes.keys():
             return False
         self.nodes[node_id].set_evspc(evspc)
         return True
     
     def add_ev(self, node_id, ev_id, en):
         #print (f"Adding EV {node_id}, {ev_id}, {en}")
-        if not node_id in self.nodes.keys():
+        if node_id not in self.nodes.keys():
             return False
         # Add the EV
         ev_node = self.nodes[node_id].add_ev(ev_id, en)
@@ -470,7 +468,6 @@ class DeviceModel(QObject):
         name = self.layout.ev_name(node_id, ev_id, en)
         self.update_ev(node_id, ev_id, "name", name)
         
-        
         return True
 
     def update_node (self, node_id, upd_dict):
@@ -478,13 +475,12 @@ class DeviceModel(QObject):
     
     # updates event, field is the field to update (eg. "name")
     def update_ev (self, node_id, ev_id, field, value):
-        if not node_id in self.nodes.keys():
+        if node_id not in self.nodes.keys():
             return False
         return self.nodes[node_id].update_ev(ev_id, field, value)
         
     
     def get_gui_node (self, node_id):
-    #    return self.nodes[node_id].gui_node
         return self.other_nodes["Gui"][node_id]
 
 

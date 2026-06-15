@@ -15,10 +15,7 @@ from logevent import LogEvent
 
 # The serialize_event function must be defined before it is used.
 def serialize_event(obj):
-    #print (f"Obj {obj}")
-    #print (f"Obj type {obj.__class__.__name__}")
     if isinstance(obj, Event):
-        #print ("Is instance")
         return obj.__dict__()
     print ("Trying to serialize from EventBus")
     raise TypeError(f'Object of type {obj.__class__.__name__} is not JSON serializable')
@@ -174,8 +171,7 @@ class EventBus(QObject):
 
         except Exception as e:
             # Could be new file
-            #print (f"File not found {self.rules_filename} - {e}")
-            print (f"File not found {self.rules_filename}")
+            print (f"File not found {self.rules_filename} - {e}")
         
 
     def save_rules (self):
