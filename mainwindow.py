@@ -37,9 +37,9 @@ from appvar import AppVar
 # package but access the MainWindow as though native to MainWindow
 from ui_layout import UILayoutMixin
 from ui_loco import UILocoMixin
+from ui_devices import UIDevicesMixin
 
 # UI is split into separate modules with wrappers to access them
-import ui_devices as ui_devices
 import ui_automate as ui_automate
 # Layout Display is from the loader to interact use
 # self.ui.layoutDisplayLabel
@@ -53,7 +53,7 @@ url = "http://127.0.0.1:5000/"
 
 read_rate = 200
 
-class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin):
+class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin, UIDevicesMixin):
     
     steal_dialog_signal = Signal(int)
     # Handle loco selection
@@ -592,48 +592,6 @@ class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin):
                 widget.close()
 
 
-
-    ''' Wrappers for Devices UI module '''
-
-    def tree_clicked_right(self, position: QPoint):
-        ui_devices.tree_clicked_right(self, position)
-
-    def tree_clicked(self, item):
-        ui_devices.tree_clicked(self, item)                                     
-
-    def update_table (self):
-        ui_devices.update_table(self)
-
-    def update_tree_selected (self, node_item):
-        ui_devices.update_tree_selected(self, node_item)
-
-    def update_node_buttons (self, on_text, off_text):
-        ui_devices.update_node_buttons(self, on_text, off_text)
-
-    def ev_clicked_off (self):
-        ui_devices.ev_clicked_off(self)
-
-    def ev_clicked_on (self):
-        ui_devices.ev_clicked_on(self)
-
-    def node_table_show_gui_node (self, node_item):
-        ui_devices.node_table_show_gui_node(self, node_item)
-
-    def node_table_show_gui_child (self, node_item):
-        ui_devices.node_table_show_gui_child(self, node_item)
-
-    def node_table_show_node (self, node_item):
-        ui_devices.node_table_show_node(self, node_item)
-
-    def node_table_show_ev (self, node_item):
-        ui_devices.node_table_show_ev(self, node_item)
-
-    # Used to add a device to the TreeView
-    # Needed to ensure this is run on the GUI thread
-    # First create QStandardItem on the api thread, then send signal
-    # to GUI thread with the parent and the child details
-    def add_to_tree (self, parent, child): 
-        ui_devices.add_to_tree(self, parent, child)
 
     ''' Wrappers for Automation UI module '''
     def update_automation_list (self):
