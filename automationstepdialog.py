@@ -10,6 +10,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIntValidator
 from core import device_model
+from loco import loco_manager
 from automationrule import AutomationRule
 from automationsequence import AutomationStep, AutomationSequence
 from automationdialogrows import AutomationDialogRows
@@ -203,7 +204,7 @@ class AutomationStepDialog(QDialog):
 
         # If changed then load loco list
         if self.current_row_value[1] != "Loco":
-            node_items = ["Select Loco"] + [device_model.key_to_name(i, "Loco") for i in range(1, self.num_locos_req + 1)] + ["Use DCC ID"]
+            node_items = ["Select Loco"] + [loco_manager.key_to_name(i, "Loco") for i in range(1, self.num_locos_req + 1)] + ["Use DCC ID"]
             self.rows.combo_add_items(2, node_items)
         self.current_row_value[1] = "Loco"
 
@@ -240,7 +241,7 @@ class AutomationStepDialog(QDialog):
             if self.load_progress == "load":
                 dccid = self.step['data'].get('dccid')
                 if dccid is not None:
-                    self.rows.set_lineedit_text(3, device_model.key_to_name(dccid, "Loco"))
+                    self.rows.set_lineedit_text(3, loco_manager.key_to_name(dccid, "Loco"))
         else:
             # A Loco ID is selected so show field label 
             # These say allocated at run time

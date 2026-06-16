@@ -5,7 +5,7 @@ import os
 from pyvlcb import VLCB, VLCBformat, VLCBopcode
 from loco import Loco
 from guiobject import GuiObject
-from devicemodel import device_model
+from core import device_model
 
 ## Test for VLCB library
 # Test that the OpCodes are formatted correctly (particular the format field)

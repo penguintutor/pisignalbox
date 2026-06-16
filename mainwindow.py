@@ -6,6 +6,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QAbstractItemView, QMen
 from PySide6.QtGui import QPixmap, QImage, QPalette, QColor, QFont, QResizeEvent
 from PySide6.QtUiTools import QUiLoader
 from core import device_model, event_bus
+from loco import loco_manager
 from settings import Settings
 from consolewindow import ConsoleWindowUI
 from layout import Layout
@@ -15,7 +16,7 @@ from stealdialog import StealDialog
 from controlloco import ControlLoco
 from apihandler import ApiHandler
 from appevent import AppEvent
-from locowindow import LocoWindow
+from loco import LocoWindow
 from ruleswindow import RulesWindow
 from vlcbnode import VLCBNode
 from vlcbev import VLCBEv
@@ -166,11 +167,11 @@ class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin, UIDevicesMixin, UIAu
         
          # Load all locos
         full_path_locos = os.path.join(self.data_dir, self.files['locos'])
-        device_model.load_locos (self.dirs['locos'], full_path_locos)
+        loco_manager.load_locos (self.dirs['locos'], full_path_locos)
         
         # Now set enabled locos from settings
         if 'enabledlocos' in self.settings.settings_dict:
-            device_model.enable_locos (self.settings.settings_dict['enabledlocos'])
+            loco_manager.enable_locos (self.settings.settings_dict['enabledlocos'])
         
         # Automation Manager class used to load / store the sequences
         self.automation = AutomationManager(self, self.threadpool, self.appvariables, self.dirs['automation'], "Default")
@@ -354,7 +355,7 @@ class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin, UIDevicesMixin, UIAu
         self.settings.save_settings()
     
     def get_enabled_locos (self):
-        return device_model.get_enabled_loco_filenames ()
+        return self.loco_manager.get_enabled_loco_filenames ()
     
     
     def add_device_dialog (self):
@@ -494,7 +495,7 @@ class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin, UIDevicesMixin, UIAu
 
                 filename = os.path.basename(selected_file)
                 # Check it doesn't already exist
-                if (device_model.check_loco_filename(filename) == True):
+                if (loco_manager.check_loco_filename(filename) == True):
                     QMessageBox.warning(
                         self, 
                         "File exists", # The title of the dialog
@@ -517,8 +518,8 @@ class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin, UIDevicesMixin, UIAu
                 
                 # Now load and add to the file
                 #print (f"Loading file {new_path}")
-                device_model.import_loco(filename)
-                device_model.save_locos()
+                loco_manager.import_loco(filename)
+                self.loco_manager.save_locos()
                 self.updated_locos_signal.emit()
         except Exception as e:
             # This will print the EXACT reason your app is crashing to the terminal

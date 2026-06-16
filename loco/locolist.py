@@ -6,7 +6,7 @@
 import os
 import json
 import errno
-from loco import Loco
+from .loco import Loco
 
 class LocoList:
     def __init__ (self, locos_dir, locos_file):

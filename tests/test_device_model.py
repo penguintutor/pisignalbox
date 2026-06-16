@@ -5,7 +5,8 @@ import os
 from pyvlcb import VLCB, VLCBformat, VLCBopcode
 from loco import Loco
 from guiobject import GuiObject
-from devicemodel import device_model
+from core import device_model
+from loco import loco_manager
                 
 ## Tests for DeviceModel
 # The DeviceModel is created as a singleton known as device_model
@@ -13,6 +14,9 @@ class TestDeviceModel(unittest.TestCase):
     def test_create(self):
         #print ("Testing device model")
         self.assertTrue(device_model != False)
+
+    def test_create_locomanager(self):
+        self.assertTrue(loco_manager != False)
         
     def test_load_locos (self):
         #print ("Test load locos")
@@ -20,9 +24,9 @@ class TestDeviceModel(unittest.TestCase):
         test_dir = os.path.join(basedir, "data")
         locos_file = os.path.join(test_dir, "locos.json")
         #print (f"Loading locos file {test_dir} : {locos_file}")
-        device_model.load_locos (test_dir, locos_file)
+        loco_manager.load_locos (test_dir, locos_file)
         #print ("Getting all locos")
-        all_locos = device_model.get_all_locos()
+        all_locos = loco_manager.get_all_locos()
         #print (f"Locos {all_locos}")
         #print (f"Loco 0 {all_locos[0].loco_name}")
         self.assertTrue(all_locos[0].loco_name == "5190 Prairie")

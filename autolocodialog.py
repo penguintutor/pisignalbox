@@ -8,6 +8,7 @@ from PySide6.QtWidgets import (QDialog, QVBoxLayout, QFileDialog,
     QHeaderView, QVBoxLayout, QGridLayout, QFrame, QLabel, QComboBox,
     QWidget, QDialogButtonBox)
 from core import device_model, event_bus
+from loco import loco_manager
 from locoevent import LocoEvent
 from settings import Settings
 from layout import Layout
@@ -31,7 +32,7 @@ class AutoLocoDialog(QDialog):
 
         # Data storage
         self.allocate_ids = [item for item in loco_list if item.startswith("ID ")]
-        self.all_locos = device_model.get_all_locos()
+        self.all_locos = loco_manager.get_all_locos()
         self.assignments = {} # Stores {row_index: selected_loco_object}
         
         # UI Storage to access widgets later
@@ -209,8 +210,8 @@ class AutoLocoDialog(QDialog):
                             # Don't need to check others if we've issued share for this loco already
                             break
                         else:
-                            print (f"Only share implemented see self.acquire_share")
-                except Exception as e:
+                            print ("Only share implemented see self.acquire_share")
+                except Exception:
                     #print (f"Acquire fail for a non automate loco {loco_id}")
                     return
 

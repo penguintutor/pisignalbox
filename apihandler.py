@@ -1,6 +1,7 @@
 from PySide6.QtCore import Qt, QTimer, QObject, QThreadPool, QRunnable
 from worker import Worker
 from core import device_model, event_bus
+from loco import loco_manager
 from locoevent import LocoEvent
 import time
 from pyvlcb import VLCB
@@ -44,10 +45,9 @@ class ApiHandler(QObject):
         #self.data_received = None
         
         # Get events from the event_bus
-        #event_bus.gui_event_signal.connect(self.gui_event)
         event_bus.device_event_signal.connect(self.vlcb_event)
         # Loco events can be sent to API if unable to access API class
-        # This is case if device_model is sending request  eg. if need to send gloc (share / steal)
+        # This is case if loco_manager is sending request  eg. if need to send gloc (share / steal)
         event_bus.loco_event_signal.connect(self.loco_event)
         
         # VLCB and node creation

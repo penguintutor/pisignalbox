@@ -10,9 +10,10 @@ from PySide6.QtCore import QTimer, QSize
 from PySide6.QtWidgets import QMenu, QDialog, QFileDialog, QMessageBox, QTableWidgetItem, QPushButton
 from PySide6.QtGui import QPixmap, QImage, QPalette, QColor, QFont, QResizeEvent
 # Delayed loading due to circular import
-#from core import device_model, event_bus
-from locodialog import LocoDialog
-from stealdialog import StealDialog
+from core import device_model, event_bus
+from .locomanager import loco_manager
+from .locodialog import LocoDialog
+from .stealdialog import StealDialog
 
 class UILocoMixin:
 
@@ -62,8 +63,7 @@ class UILocoMixin:
         loco_name = self.ui.locoComboBox.currentText()
 
         # Get the loco entry
-        from core import device_model
-        loco = device_model.get_loco_from_name (loco_name)
+        loco = loco_manager.get_loco_from_name (loco_name)
             
         # If don't get a loco then close
         if loco == None:
@@ -222,8 +222,7 @@ class UILocoMixin:
         # Readd the default - none selected
         self.ui.locoComboBox.addItem("Select Locomotive")
         # Add all the locos
-        from core import device_model
-        self.ui.locoComboBox.addItems(device_model.get_enabled_locos())
+        self.ui.locoComboBox.addItems(loco_manager.get_enabled_locos())
         
         # Set back to previous entry if still valid
         if current_loco_text:
@@ -239,11 +238,6 @@ class UILocoMixin:
         # Enable the signal
         self.ui.locoComboBox.blockSignals(False)
                 
-        # Returns the list of locos - using get name
-        #for loco_name in device_model.get_enabled_locos():
-        #    self.ui.locoComboBox.addItem(loco_name)
-        #for loco_name in self.railway.get_loco_names():
-        #    self.ui.locoComboBox.addItem(loco_name)
 
     def steal_loco_dialog (self):
         steal_dialog = StealDialog(self)
@@ -271,9 +265,7 @@ class UILocoMixin:
     # Signal to indicate kalive needs to be checked
     # start / stop as appropriate
     def update_kalive (self):
-        #if self.control_loco.is_active():
-        from core import device_model
-        if device_model.locos_active() > 0:
+        if loco_manager.locos_active() > 0:
             if not self.kalive_timer.isActive():
                 self.kalive_timer.start()
         elif self.kalive_timer.isActive():
@@ -285,8 +277,7 @@ class UILocoMixin:
         # Check we have a session to send a keep alive (ie. not in process of trying
         # to acquire a new loco
         # Check all locos 
-        from core import device_model
-        for loco in device_model.get_all_locos():
+        for loco in loco_manager.get_all_locos():
             if loco.is_active():
                 #print (f"Loco {loco.loco_id} is active")
                 self.api.start_request(self.api.vlcb.keep_alive(loco.get_session()))
@@ -336,8 +327,7 @@ class UILocoMixin:
 
     ''' Methods for loco list '''
     def update_loco_table (self):
-        from core import device_model
-        locos = device_model.get_all_locos()
+        locos = loco_manager.get_all_locos()
         # Reset table and remove buttons 
         self.ui.locoTable.setRowCount(0)
         self.loco_table_list = []

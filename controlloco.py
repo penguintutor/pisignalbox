@@ -7,6 +7,7 @@ from pyvlcb.utils import bytes_to_addr
 from loco import Loco
 from apihandler import ApiHandler
 from core import device_model, event_bus
+from loco import loco_manager
 from appevent import AppEvent
 from locoevent import LocoEvent
 
@@ -17,11 +18,10 @@ from locoevent import LocoEvent
 # perhaps decouple in future
 class ControlLoco:
     def __init__(self):
-        # Store a link to the loco (obtained from device_model)
+        # Store a link to the loco (obtained from loco_manager)
         # Refer to self.loco 
         self.loco = None
-        # loco moved to devicemodel
-        #event_bus.loco_event_signal.connect (self.event_trigger)
+        # loco moved to loco_manager
         self.debug = False
         
     def event_trigger (self, event):

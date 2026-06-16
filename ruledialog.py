@@ -6,6 +6,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from core import device_model, event_bus
 
+
 class RuleDialog(QDialog):
     """
     A dialog window for editing event details with a grid layout for selections.

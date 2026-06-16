@@ -8,8 +8,8 @@ from PySide6.QtWidgets import QApplication, QDialog, QFileDialog, QMessageBox
 from PySide6.QtCore import Qt, QPoint
 from PySide6.QtGui import QFont
 from mainwindow import MainWindowUI
-from locowindow import LocoWindow
-from locodialog import LocoDialog
+from loco import LocoWindow
+from loco import LocoDialog
 
 os.environ["QT_QPA_PLATFORM"] = "xcb"
 

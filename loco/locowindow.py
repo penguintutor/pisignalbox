@@ -6,12 +6,13 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
     QDialogButtonBox, QStyle, QComboBox, QMessageBox) 
 from PySide6.QtGui import QPixmap, QIcon
 from PySide6.QtCore import Qt, QSize
-from locoentry import LocoEntry
-from locodialog import LocoDialog
+from .locoentry import LocoEntry
+from .locodialog import LocoDialog
 from core import device_model
+from .locomanager import loco_manager
 
 # parent is required (although could be set to None it should normally be mainwindow)
-# directory of filters and locos is required - but the filters and locos are loaded from device_model
+# directory of filters and locos is required - but the filters and locos are loaded from loco_manager
 class LocoWindow(QMainWindow):
        
     def __init__(self, parent, locos_dir):
@@ -98,10 +99,8 @@ class LocoWindow(QMainWindow):
         # If this is "All" then show all locos
         selected = self.filter_selection_combo.currentText()
         if selected == "All locos":
-            # for all then iterate directly from device_model
-            #print (f"All locos {device_model.locos}"
-            all_locos = device_model.get_all_locos()
-            #print (f"All locos {all_locos}")
+            # for all then iterate directly from loco_manager
+            all_locos = loco_manager.get_all_locos()
             for loco in all_locos:
                 #print (f"Loco {loco.loco_name}")
                 image_path = os.path.join(self.locos_dir, loco.get_image_filename())
@@ -174,7 +173,7 @@ class LocoWindow(QMainWindow):
         data_dict = loco_dialog.to_dict()
         
 
-        # If filename is none then this is a new entry so create file and add to the device_model / locos.json etc.
+        # If filename is none then this is a new entry so create file and add to the loco_manager / locos.json etc.
         if filename == None:
             # Create a filename loco_id followed by class_id and name or classification
             filename = str(loco_dialog.loco_id)
@@ -192,20 +191,20 @@ class LocoWindow(QMainWindow):
             unique_filename = self.unique_loco_filename (safe_filename)
             
             # Create the loco entry
-            loco = device_model.add_loco(unique_filename, loco_dialog.loco_id)
+            loco = loco_manager.add_loco(unique_filename, loco_dialog.loco_id)
             loco.update_loco(data_dict)
             result = loco.save_file()
             # save locos file afterwards in case of problem creating
             if result == True:
-                device_model.save_locos()
+                loco_manager.save_locos()
             # Otherwise cleanup (but no need to remove any files)
             else:
                 print (f"Error tying to save file {safe_filename}")
-                device_model.remove_loco(safe_filename, delete=False)
+                loco_manager.remove_loco(safe_filename, delete=False)
         # If existing filename then just update exising file
         else:
             # get the current loco object (from filename)
-            loco = device_model.get_loco_from_filename(filename)
+            loco = loco_manager.get_loco_from_filename(filename)
             # If don't get loco then error (has file been deleted during edit)
             if loco == None:
                 print ("Error trying to retrieve / update loco {filename}")
@@ -244,7 +243,7 @@ class LocoWindow(QMainWindow):
         # Filename within LocoEntry is full path
         filename = os.path.basename(clicked_entry.filename)
         # Use filename as a unique entry to lookup loco
-        clicked_loco = device_model.get_loco_from_filename (filename)
+        clicked_loco = loco_manager.get_loco_from_filename (filename)
 
         # Assuming valid then launch edit dialog
         if clicked_loco != None:
