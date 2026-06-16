@@ -3,7 +3,7 @@
 # Todo in future add multiple layout files
 import json
 import os
-from guiobject import GuiObject
+from .guiobject import GuiObject
 from core import device_model
 
 

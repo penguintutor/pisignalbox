@@ -12,9 +12,9 @@ from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget, QMainW
 from PySide6.QtGui import QMouseEvent, QPixmap, QColor, QPainter, QFont, QPen, QBrush, QCursor, QImage
 from PySide6.QtCore import Qt, QPoint, QSize, QRect
 from layout import Layout
-from layoutlabel import LayoutLabel
-from layoutbutton import LayoutButton
-from guiobject import GuiObject
+from .layoutlabel import LayoutLabel
+from .layoutbutton import LayoutButton
+from .guiobject import GuiObject
 from core import device_model
 
 

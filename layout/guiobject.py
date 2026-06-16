@@ -5,8 +5,8 @@
 
 from PySide6.QtGui import QStandardItemModel, QStandardItem
 from core import event_bus
-from layoutlabel import LayoutLabel
-from layoutbutton import LayoutButton
+from .layoutlabel import LayoutLabel
+from .layoutbutton import LayoutButton
 from guievent import GuiEvent
 
 class GuiObject:

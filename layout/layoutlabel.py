@@ -10,7 +10,7 @@ from PySide6.QtGui import QStandardItemModel, QStandardItem
 from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget, QMainWindow
 from PySide6.QtGui import QMouseEvent, QPixmap, QColor, QPainter, QFont, QPen
 from PySide6.QtCore import Qt, QPoint, QSize
-from layoutobject import LayoutObject
+from .layoutobject import LayoutObject
 
 # for type="text" then settings must include "text":"Text to display"
 class LayoutLabel (LayoutObject):

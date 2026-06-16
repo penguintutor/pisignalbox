@@ -9,23 +9,16 @@ from core import device_model, event_bus
 from loco import loco_manager
 from settings import Settings
 from consolewindow import ConsoleWindowUI
-from layout import Layout
 from eventdialog import EventDialog
-from layoutdisplay import LayoutDisplay
-from stealdialog import StealDialog
+from layout import Layout, LayoutDisplay
+#from layout import GuiObject, Layout, Layouts, LayoutDisplay, LayoutDialog, LayoutObject, LayoutButton, LayoutLabel
 from controlloco import ControlLoco
 from apihandler import ApiHandler
 from appevent import AppEvent
-from loco import LocoWindow
+from loco import LocoWindow, StealDialog
 from ruleswindow import RulesWindow
 from vlcbnode import VLCBNode
 from vlcbev import VLCBEv
-from guiobject import GuiObject
-from layoutdialog import LayoutDialog
-from layouts import Layouts
-from layoutobject import LayoutObject
-from layoutbutton import LayoutButton
-from layoutlabel import LayoutLabel
 from imageexistdialog import ImageExistDialog
 from automationmanager import AutomationManager
 from automationmanagerdialog import AutomationManagerDialog

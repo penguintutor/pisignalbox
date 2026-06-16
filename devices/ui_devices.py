@@ -10,10 +10,8 @@ from PySide6.QtCore import QTimer, QSize, QPoint
 from PySide6.QtWidgets import QMenu, QDialog, QFileDialog, QMessageBox
 from PySide6.QtGui import QPixmap, QImage, QPalette, QColor, QFont, QResizeEvent
 from core import device_model, event_bus
-from guiobject import GuiObject
-from layoutobject import LayoutObject
-from layoutbutton import LayoutButton
-from layoutlabel import LayoutLabel
+from layout import GuiObject
+from layout import LayoutObject, LayoutButton, LayoutLabel
 from pyvlcb import VLCB
 from vlcbnode import VLCBNode
 from vlcbev import VLCBEv

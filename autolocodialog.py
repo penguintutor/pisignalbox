@@ -11,8 +11,7 @@ from core import device_model, event_bus
 from loco import loco_manager
 from locoevent import LocoEvent
 from settings import Settings
-from layout import Layout
-from layouts import Layouts
+from layout import Layout, layouts
 from loco import Loco
 
 

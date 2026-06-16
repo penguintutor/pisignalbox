@@ -8,8 +8,8 @@ from PySide6.QtWidgets import QApplication
 
 from pyvlcb import VLCB, VLCBformat, VLCBopcode
 from loco import Loco
-from guiobject import GuiObject
-from devicemodel import device_model
+from layout import GuiObject
+from core import device_model
 
 from automationrule import AutomationRule
 

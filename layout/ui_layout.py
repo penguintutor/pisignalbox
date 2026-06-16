@@ -15,7 +15,7 @@ from PySide6.QtUiTools import QUiLoader
 from pathlib import Path 
 from core import device_model, event_bus
 from imageexistdialog import ImageExistDialog
-from layoutdialog import LayoutDialog
+from .layoutdialog import LayoutDialog
 
 class UILayoutMixin:
 
