@@ -9,7 +9,8 @@ import time
 from PySide6.QtCore import QTimer, QSize
 from PySide6.QtWidgets import QMenu, QDialog, QFileDialog, QMessageBox, QTableWidgetItem, QPushButton
 from PySide6.QtGui import QPixmap, QImage, QPalette, QColor, QFont, QResizeEvent
-from core import device_model, event_bus
+# Delayed loading due to circular import
+#from core import device_model, event_bus
 from locodialog import LocoDialog
 from stealdialog import StealDialog
 
@@ -61,6 +62,7 @@ class UILocoMixin:
         loco_name = self.ui.locoComboBox.currentText()
 
         # Get the loco entry
+        from core import device_model
         loco = device_model.get_loco_from_name (loco_name)
             
         # If don't get a loco then close
@@ -220,6 +222,7 @@ class UILocoMixin:
         # Readd the default - none selected
         self.ui.locoComboBox.addItem("Select Locomotive")
         # Add all the locos
+        from core import device_model
         self.ui.locoComboBox.addItems(device_model.get_enabled_locos())
         
         # Set back to previous entry if still valid
@@ -269,6 +272,7 @@ class UILocoMixin:
     # start / stop as appropriate
     def update_kalive (self):
         #if self.control_loco.is_active():
+        from core import device_model
         if device_model.locos_active() > 0:
             if not self.kalive_timer.isActive():
                 self.kalive_timer.start()
@@ -281,6 +285,7 @@ class UILocoMixin:
         # Check we have a session to send a keep alive (ie. not in process of trying
         # to acquire a new loco
         # Check all locos 
+        from core import device_model
         for loco in device_model.get_all_locos():
             if loco.is_active():
                 #print (f"Loco {loco.loco_id} is active")
@@ -331,6 +336,7 @@ class UILocoMixin:
 
     ''' Methods for loco list '''
     def update_loco_table (self):
+        from core import device_model
         locos = device_model.get_all_locos()
         # Reset table and remove buttons 
         self.ui.locoTable.setRowCount(0)
