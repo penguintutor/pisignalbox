@@ -8,9 +8,7 @@ from loco import Loco
 from apihandler import ApiHandler
 from core import device_model, event_bus
 from loco import loco_manager
-from appevent import AppEvent
-from locoevent import LocoEvent
-
+from events import AppEvent, LocoEvent
 
 # Tracks and generates events(activities) against a loco
 # When we receive / send an event do we need to update devices and corresponding objects

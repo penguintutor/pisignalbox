@@ -1,7 +1,7 @@
 # Tracks events for variables
 # This allows monitoring for a variable being a certain value
 
-from event import Event
+from .event import Event
 
 # Indicates new variable created or change to existing varible
 # Dict should contain "name" "value" and "event_type" is new or change

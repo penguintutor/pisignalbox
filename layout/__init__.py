@@ -9,7 +9,6 @@ from .addlabeldialog import AddLabelDialog
 from .layoutbutton import LayoutButton
 from .layoutdialog import LayoutDialog
 from .layoutdisplay import LayoutDisplay
-#from .layoutevents import LayoutEvents
 from .layoutlabel import LayoutLabel
 from .layoutobject import LayoutObject
 from .guiobject import GuiObject

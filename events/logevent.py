@@ -17,7 +17,7 @@ Numerical CodeSeverity Description
 7 Debug Detailed info for troubleshooting. (Lowest Priority)
 """
 
-from event import Event
+from .event import Event
 
 class LogEvent (Event):
     def __init__(self, data_dict={}):

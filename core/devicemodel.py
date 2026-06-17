@@ -9,11 +9,7 @@ from pyvlcb import VLCB
 from pyvlcb.utils import bytes_to_addr
 from vlcbnode import VLCBNode
 from vlcbclient import VLCBClient
-from deviceevent import DeviceEvent
-from locoevent import LocoEvent
-from appevent import AppEvent
-from guievent import GuiEvent
-from timerevent import TimerEvent
+from events import DeviceEvent, LocoEvent, AppEvent, GuiEvent, TimerEvent
 
 
 # Many of the methods in there (particularly when related to self.locos)

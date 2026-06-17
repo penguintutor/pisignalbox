@@ -1,6 +1,6 @@
 # Tracks events against devices.
 # When we receive / send an event do we need to update devices and corresponding objects
-from event import Event
+from .event import Event
 
 # event_data is a dictionary of key values
 class DeviceEvent (Event):

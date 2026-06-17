@@ -4,7 +4,7 @@ import os
 
 from pyvlcb import VLCB, VLCBformat, VLCBopcode
 from loco import Loco
-from guiobject import GuiObject
+from events import GuiObject
 from core import device_model
 from loco import loco_manager
                 

@@ -7,7 +7,7 @@ from PySide6.QtGui import QStandardItemModel, QStandardItem
 from core import event_bus
 from .layoutlabel import LayoutLabel
 from .layoutbutton import LayoutButton
-from guievent import GuiEvent
+from events import GuiEvent
 
 class GuiObject:
     # object_type - eg. "point" (two buttons to select between), "toggle" (toggle can be used for lights etc. all buttons toggle)

@@ -18,11 +18,7 @@ project_root = os.path.join(current_dir, '..')
 sys.path.insert(0, project_root)
 
 # Import from application
-from deviceevent import DeviceEvent
-from appevent import AppEvent
-from guievent import GuiEvent
-from locoevent import LocoEvent
-from timerevent import TimerEvent
+from events import DeviceEvent, AppEvent, GuiEvent, LocoEvent, TimerEvent
 
 # A global QApplication instance is required for signal/slot testing
 app = QApplication.instance() or QApplication(sys.argv)
@@ -53,8 +49,8 @@ class TestEventBus(unittest.TestCase):
         # Instead, import the module 'eventbus' again and check
         # that the 'event_bus' instance from it is the same object
         # as the one we got in setUp. This proves it's a singleton.
-        import eventbus
-        bus_again = eventbus.event_bus
+        from core import event_bus
+        bus_again = event_bus.event_bus
         self.assertIs(self.bus, bus_again, "Imported event_bus should always be the same instance")
         self.assertIs(self.bus, event_bus, "Global event_bus should be the same as self.bus")
 

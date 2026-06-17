@@ -13,13 +13,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtUiTools import QUiLoader
 from core import device_model, event_bus
 from ruledialog import RuleDialog
-from deviceevent import DeviceEvent
-from locoevent import LocoEvent
-from appevent import AppEvent
-from guievent import GuiEvent
-from timerevent import TimerEvent
-
-
+from events import DeviceEvent, LocoEvent, AppEvent, GuiEvent, TimerEvent
 
 # Load the GUI resources.
 # These first need to be compiled from the .qrd file
@@ -27,7 +21,6 @@ from timerevent import TimerEvent
 import guiresources
 
 loader = QUiLoader()
-#loader.registerCustomWidget(LayoutDisplay)
 basedir = os.path.dirname(__file__)
 
 

@@ -11,10 +11,9 @@ from settings import Settings
 from consolewindow import ConsoleWindowUI
 from eventdialog import EventDialog
 from layout import Layout, LayoutDisplay
-#from layout import GuiObject, Layout, Layouts, LayoutDisplay, LayoutDialog, LayoutObject, LayoutButton, LayoutLabel
 from controlloco import ControlLoco
 from apihandler import ApiHandler
-from appevent import AppEvent
+from events import AppEvent
 from loco import LocoWindow, StealDialog
 from ruleswindow import RulesWindow
 from vlcbnode import VLCBNode

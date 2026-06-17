@@ -14,7 +14,7 @@ from loco import loco_manager
 from automationrule import AutomationRule
 from automationsequence import AutomationStep, AutomationSequence
 from automationdialogrows import AutomationDialogRows
-from locoevent import LocoEvent
+from events import LocoEvent
 
 
 # Dialog for creating automation step (eg. rule)

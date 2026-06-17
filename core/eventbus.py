@@ -4,14 +4,7 @@
 
 from PySide6.QtCore import Qt, QTimer, QObject, Signal, Slot
 import json
-from event import Event
-from deviceevent import DeviceEvent
-from appevent import AppEvent
-from guievent import GuiEvent
-from locoevent import LocoEvent
-from timerevent import TimerEvent
-from varevent import VarEvent
-from logevent import LogEvent
+from events import Event, DeviceEvent, AppEvent, GuiEvent, LocoEvent, TimerEvent, VarEvent, LogEvent
 
 # The serialize_event function must be defined before it is used.
 def serialize_event(obj):

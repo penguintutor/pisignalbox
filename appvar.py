@@ -1,6 +1,6 @@
 
 from core import device_model, event_bus
-from varevent import VarEvent
+from events import VarEvent
 
 # Always use getters and setters as they can update device_model and/or trigger events if required
 class AppVar():

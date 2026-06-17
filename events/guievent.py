@@ -4,7 +4,7 @@
 
 # 'name': self.name, 'value': self.state_value
 
-from event import Event
+from .event import Event
 
 class GuiEvent(Event):
     def __init__(self, data_dict):

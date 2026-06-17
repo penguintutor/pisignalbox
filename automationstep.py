@@ -3,12 +3,10 @@ import time
 import json
 import threading
 from core import event_bus
-from locoevent import LocoEvent
+from events import LocoEvent, LogEvent
 from automationrule import AutomationRule
 from appvar import AppVar
 from workersignals import WorkerSignals
-from logevent import LogEvent
-
 
 # Each step contains a rule commands or sequences
 # These are created from a dict and then extracted for the Automation Rule

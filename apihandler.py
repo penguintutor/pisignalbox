@@ -2,15 +2,13 @@ from PySide6.QtCore import Qt, QTimer, QObject, QThreadPool, QRunnable
 from worker import Worker
 from core import device_model, event_bus
 from loco import loco_manager
-from locoevent import LocoEvent
+from events import LocoEvent, GuiEvent, AppEvent, DeviceEvent
 import time
 from pyvlcb import VLCB
 from pyvlcb import VLCBOpcode
 from vlcbnode import VLCBNode
 from vlcbclient import VLCBClient
-from guievent import GuiEvent
-from appevent import AppEvent
-from deviceevent import DeviceEvent
+
 
 
 class ApiHandler(QObject):

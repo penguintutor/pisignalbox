@@ -3,7 +3,7 @@ from PySide6.QtWidgets import QMainWindow, QTextBrowser, QTableWidget, QTableWid
 from datetime import datetime
 from pyvlcb import VLCB
 from pyvlcb import VLCBOpcode
-from logevent import LogEvent
+from events import LogEvent
 
 
 def setup_ui (self):

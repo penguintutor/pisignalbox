@@ -1,7 +1,7 @@
 # Tracks events for app - open, close, update windows
 # Used to update api objects from events
 
-from event import Event
+from .event import Event
 
 class AppEvent (Event):
     def __init__(self, data_dict={}):

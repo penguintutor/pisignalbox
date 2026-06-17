@@ -5,7 +5,7 @@ from automationstep import AutomationStep
 from automationrule import AutomationRule
 from appvar import AppVar
 from workersignals import WorkerSignals
-from logevent import LogEvent
+from events import LogEvent
 from core import device_model, event_bus
 
 

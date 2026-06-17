@@ -9,11 +9,11 @@ from PySide6.QtWidgets import QApplication
 from pyvlcb import VLCB
 from pyvlcb import VLCBformat, VLCBopcode
 from loco import Loco
-from guiobject import GuiObject
-from devicemodel import device_model
+from layout import GuiObject
+from core import device_model
 
 from appvar import AppVar
-from varevent import VarEvent
+from events import VarEvent
 from automationsequence import AutomationSequence, AutomationStep
 from automationstepdialog import AutomationStepDialog
 from automationrule import AutomationRule
@@ -23,7 +23,7 @@ app = QApplication.instance() or QApplication(sys.argv)
 
 # Import the module to be tested
 # We specifically import the module-level singleton instance
-from eventbus import EventBus, serialize_event, deserialize_event, event_bus
+from core import serialize_event, deserialize_event, event_bus
 
 class MockWindow:
 

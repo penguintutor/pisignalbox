@@ -1,8 +1,8 @@
-""" from .event import Event
-from .app_event import AppEvent
-from .loco_event import LocoEvent
-from .timer_event import TimerEvent
-from .device_event import DeviceEvent
-from .gui_event import GuiEvent
-from .log_event import LogEvent
-from .var_event import VarEvent """
+from .event import Event
+from .appevent import AppEvent
+from .locoevent import LocoEvent
+from .timerevent import TimerEvent
+from .deviceevent import DeviceEvent
+from .guievent import GuiEvent
+from .logevent import LogEvent
+from .varevent import VarEvent
