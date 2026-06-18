@@ -18,6 +18,10 @@ class VLCBEv():
         self.en = en        # Stored value of the event (EN3 to EN0)
         self.gui_node = QStandardItem(f"EV {self.ev_id} : {self.name}")
         
+    # Return parent node_id
+    def get_node_id (self):
+        return self.node.node_id
+
     # Sets name and updates the GUI string
     def set_name (self, name):
         self.name = name

@@ -4,10 +4,12 @@ import sys, os
 os.environ["QT_LOGGING_RULES"] = "*.debug=false;"
 import argparse
 import time
+from pathlib import Path
 from PySide6.QtWidgets import QApplication, QDialog, QFileDialog, QMessageBox
 from PySide6.QtCore import Qt, QPoint
 from PySide6.QtGui import QFont
-from mainwindow import MainWindowUI
+import core.paths as app_paths
+from mainui import MainWindowUI
 from loco import LocoWindow
 from loco import LocoDialog
 
@@ -33,9 +35,6 @@ files = {
 # Allows settings to be sent through arguments
 settings = {}
 
-
-
-
 # Any ui / css files are considered non user configurable and are hardcoded
 class App(QApplication):
     def __init__ (self, args):
@@ -48,7 +47,7 @@ parser = argparse.ArgumentParser(
 
 # override data directory
 parser.add_argument (
-    '-d', '--datadir',		# short or long option
+    '-d', '--data_dir',		# short or long option
     type=str, 				# must be string
     default=None,			# Defaults to none
     metavar="<dirname>",	# usage message
@@ -64,15 +63,19 @@ parser.add_argument(
     )
 
 args = parser.parse_args()
-data_dir = args.datadir
+data_dir = args.data_dir
 if data_dir:
-    if os.path.isdir(data_dir):
-        # add to settings
-        settings['data_dir'] = data_dir
-        
+    override_path = Path(args.data_dir).resolve()
+    
+    # Keeping your defensive check: only override if the directory actually exists
+    if override_path.is_dir():
+        # Update the global path in the imported module!
+        app_paths.DATA_DIR = override_path
+        print(f"Data directory overridden to: {app_paths.DATA_DIR}")
     else:
-        print(f"Warning: Directory '{data_dir}' does not exist.")
-        # continue with defaults
+        # Fall back gracefully to the default we established in paths.py
+        print(f"Warning: Directory '{override_path}' does not exist.")
+        print(f"Falling back to default: {app_paths.DATA_DIR}")
 
 # Handle Mock Mode
 if args.mock:

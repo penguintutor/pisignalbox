@@ -1,12 +1,12 @@
 from PySide6.QtCore import Qt, QTimer, QObject, QThreadPool, QRunnable
 from worker import Worker
-from core import device_model, event_bus
+from core import event_bus
 from loco import loco_manager
 from events import LocoEvent, GuiEvent, AppEvent, DeviceEvent
 import time
 from pyvlcb import VLCB
 from pyvlcb import VLCBOpcode
-from vlcbnode import VLCBNode
+from device import device_manager, VLCBNode
 from vlcbclient import VLCBClient
 
 
@@ -30,7 +30,7 @@ class ApiHandler(QObject):
         # with the server it's referred to in this as self.server
         # Allow injection of a mock or alternate client for testing.
         self.server = server_client or VLCBClient(self.url)
-        
+
         # Add request to be sent next time timer expires
         #self.send_queue = []
         self.pc_can_id = 60      # CAN ID of CANUSB4
@@ -53,8 +53,6 @@ class ApiHandler(QObject):
         
     # Receives event from event_bus and issues start_request
     def vlcb_event (self, event):
-        #print (f"API Handler sending event {event}")
-        #print (f" Node ID {event.get_node_id()} Event ID {event.get_event_id()} Value {event.get_value()}")
         self.start_request(self.vlcb.accessory_command(event.get_node_id(), event.get_event(), event.get_value()))
 
     def loco_event (self, event):
@@ -308,52 +306,51 @@ class ApiHandler(QObject):
                 mode = "FLiM"
             else:
                 mode = "SLiM"
+
+
             # if we don't already have this device add it
-            if not device_model.node_exists(data_entry['NN']):
-                device_model.add_node(VLCBNode(data_entry['NN'], mode, vlcb_entry.can_id, data_entry['ManufId'], data_entry['ModId'] ,data_entry['Flags']))
-                # Add to Tree View
-                # todo review where / how node_model is updated
-                #self.mw.node_model.appendRow(device_model.get_gui_node(data_entry['NN']))
+            if not device_manager.node_exists(data_entry['NN']):
+                node_object = device_manager.add_node(VLCBNode(data_entry['NN'], mode, vlcb_entry.can_id, data_entry['ManufId'], data_entry['ModId'] ,data_entry['Flags']))
+
             else:
                 # Update existing entry
-                items_changed = device_model.update_node(data_entry['NN'], {'Mode': mode, 'ManfId': data_entry['ManufId'], 'ModId': data_entry['ModId'], 'Flags': data_entry['Flags']})
+                items_changed = device_manager.update_node(data_entry['NN'], {'Mode': mode, 'ManfId': data_entry['ManufId'], 'ModId': data_entry['ModId'], 'Flags': data_entry['Flags']})
                 # If no items changed then no need to check for further updates
                 if items_changed == 0:
                     return
-                # Node is updated as part of update_node - so next block of text not reqired
+
             # If this is new, or has changed then we can also get the number of events
             self.discover_evn (data_entry['NN'])
         elif ret_opcode == 'NUMEV':    # Number of configured events
             data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
             # If we don't already have this node then didn't see a PNN response - so likely error
-            if not device_model.node_exists(data_entry['NN']):
+            if not device_manager.node_exists(data_entry['NN']):
                 print (f"NUMV response from Unknown node {data_entry['NN']}")
                 return
             # Update node with evnum value
-            device_model.set_numev(data_entry['NN'], data_entry['NumEvents'])
-            #self.nodes[data_entry['NN']].set_numev(data_entry['NumEvents'])
+            device_manager.set_numev(data_entry['NN'], data_entry['NumEvents'])
         elif ret_opcode == 'EVNLF':    # Number of event space left in node
             data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
             # If we don't already have this node then didn't see a PNN response - so likely error
-            if not device_model.node_exists(data_entry['NN']):
+            if not device_manager.node_exists(data_entry['NN']):
                 print (f"EVNLF response from Unknown node {data_entry['NN']}")
                 return
             # Update node with evnum value
-            device_model.set_evspc(data_entry['NN'], data_entry['EVSPC'])
+            device_manager.set_evspc(data_entry['NN'], data_entry['EVSPC'])
             # Add a query for the next discovery stage - get a list of all the events
             self.discover_nerd (data_entry['NN'])
         elif ret_opcode == 'ENRSP':    # EV discovery
             data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
             # If we don't already have this node then didn't see a PNN response - so likely error
-            if not device_model.node_exists(data_entry['NN']):
+            if not device_manager.node_exists(data_entry['NN']):
                 # Most likely reason is connected to existing server with old entries
                 # So ignore unless debug
                 if self.debug:
                     print (f"ENRSP response from Unknown node {data_entry['NN']}")
                 return
             # Add event to node
-            device_model.add_ev(data_entry['NN'], data_entry['EnIndex'], data_entry['En3_0'])
-            #device_model.update_ev(data_entry['NN'], data_entry['EnIndex'], "name", self.mw.layout.ev_name(data_entry['NN'], data_entry['EnIndex'], data_entry['En3_0']))
+            device_manager.add_ev(data_entry['NN'], data_entry['EnIndex'], data_entry['En3_0'])
+
         # Indicates allocation of loco - need to verify this is expected
         elif ret_opcode == 'PLOC':
             data_entry = VLCBOpcode.parse_data(vlcb_entry.data)

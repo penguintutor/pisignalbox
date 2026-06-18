@@ -97,6 +97,8 @@ class LayoutDisplay(QLabel):
     def load_image (self):
         image_file = self.railway.get_layout_image()
         self.canvas = QPixmap(image_file)
+        if self.canvas.isNull():
+            print (f"Error Failed to load image {image_file}")
         
         # Initial pixmap size is incorrect - instead use approximation based on window size
         w = self.mainwindow.ui.size().width() - 330

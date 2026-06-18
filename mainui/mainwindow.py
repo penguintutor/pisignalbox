@@ -6,6 +6,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QAbstractItemView, QMen
 from PySide6.QtGui import QPixmap, QImage, QPalette, QColor, QFont, QResizeEvent
 from PySide6.QtUiTools import QUiLoader
 from core import device_model, event_bus
+import core.paths as app_paths
 from loco import loco_manager
 from settings import Settings
 from consolewindow import ConsoleWindowUI
@@ -16,8 +17,8 @@ from apihandler import ApiHandler
 from events import AppEvent
 from loco import LocoWindow, StealDialog
 from ruleswindow import RulesWindow
-from vlcbnode import VLCBNode
-from vlcbev import VLCBEv
+from device.vlcbnode import VLCBNode
+from device.vlcbev import VLCBEv
 from imageexistdialog import ImageExistDialog
 from automationmanager import AutomationManager
 from automationmanagerdialog import AutomationManagerDialog
@@ -26,8 +27,9 @@ from appvar import AppVar
 # package but access the MainWindow as though native to MainWindow
 from layout import UILayoutMixin, AddDeviceDialog, AddLabelDialog, AddButtonDialog
 from loco import UILocoMixin
-from devices import UIDevicesMixin
+#from device import UIDeviceMixin
 from automate import UIAutomateMixin
+from .systemexplorer import SystemExplorer
 
 # Setup file paths
 basedir = os.path.dirname(__file__)
@@ -35,10 +37,10 @@ basedir = os.path.dirname(__file__)
 app_title = "Pi SignalBox"
 
 url = "http://127.0.0.1:5000/"
-
+os.path.join(basedir, "data/")
 read_rate = 200
 
-class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin, UIDevicesMixin, UIAutomateMixin):
+class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin, UIAutomateMixin):
     
     steal_dialog_signal = Signal(int)
     # Handle loco selection
@@ -65,7 +67,7 @@ class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin, UIDevicesMixin, UIAu
     # files_dirs are passed from app - file structure is fixed
     # Are all relative to basedir
     # although some customisation of file names is allowed in configs
-    # settings provides an option for command line arguments (not yet supported)
+    # settings provides an option for command line arguments to the data dir
     def __init__(self, dirs, files, settings=None):
         super().__init__()
         self.debug = False
@@ -86,12 +88,8 @@ class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin, UIDevicesMixin, UIAu
         
         # All data files are relative to this directory
         # Default this is basedir/data
-        # Can be overridden by command line arguments
-        if 'data_dir' in self.cmd_settings:
-            # Already checked this is a directory
-            self.data_dir = self.cmd_settings['data_dir']
-        else:
-            self.data_dir = os.path.join(basedir, "data/")
+        # Get from paths
+        self.data_dir = app_paths.DATA_DIR
             
         # Update all the dirs to add data_dir
         for key, value in dirs.items():
@@ -193,7 +191,7 @@ class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin, UIDevicesMixin, UIAu
         # Gui signal
         event_bus.gui_event_signal.connect(self.gui_event)
         # Listen to device_model signal for treeview updates
-        device_model.add_node_signal.connect (self.add_to_tree)
+        #device_model.add_node_signal.connect (self.add_to_tree)
         # Save setings
         self.save_settings_signal.connect (self.save_settings)
         
@@ -230,15 +228,15 @@ class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin, UIDevicesMixin, UIAu
         self.ui.nodeTreeView.setEditTriggers(QAbstractItemView.NoEditTriggers)
         
         # Left click
-        self.ui.nodeTreeView.clicked.connect(self.tree_clicked)
+        #self.ui.nodeTreeView.clicked.connect(self.tree_clicked)
         # Right click - instead needs to use custom context policy
-        self.ui.nodeTreeView.setContextMenuPolicy(Qt.CustomContextMenu)
-        self.ui.nodeTreeView.customContextMenuRequested.connect(self.tree_clicked_right)
+        #self.ui.nodeTreeView.setContextMenuPolicy(Qt.CustomContextMenu)
+        #self.ui.nodeTreeView.customContextMenuRequested.connect(self.tree_clicked_right)
         
         
         # Event buttons
-        self.ui.evButtonOff.clicked.connect(self.ev_clicked_off)
-        self.ui.evButtonOn.clicked.connect(self.ev_clicked_on)
+        #self.ui.evButtonOff.clicked.connect(self.ev_clicked_off)
+        #self.ui.evButtonOn.clicked.connect(self.ev_clicked_on)
         
         # Last Node / Event that was selected - use for On/Off buttons
         self.selected_node = None
@@ -282,6 +280,9 @@ class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin, UIDevicesMixin, UIAu
         # Need to determine which rules to load - this is default
         event_bus.load_rules(os.path.join(self.dirs['rules'], "default.json"))
         
+
+        # Load the system_explorer for showing Nodes (devices & layout objects)
+        self.system_emplorer = SystemExplorer (self.ui.nodeTreeView)
         
         # Pass the layout details to LayoutDisplay to allow it to load other resources
         # Also pass safe so it can access mainwindow

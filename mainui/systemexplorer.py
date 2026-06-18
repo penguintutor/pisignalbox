@@ -1,22 +1,165 @@
-# UI Devices Package - as UIDevicesMixin
-# Included into MainWindow
-
-# Devices module for handling device operations for mainwindow
-# This includes the UI wrapper class for the device tree view
+# System Explorer provides the device tree view
+# called directly from MainWindowUI
 import os
 import sys
 import time
-from PySide6.QtCore import QTimer, QSize, QPoint
+from PySide6.QtCore import Qt, QTimer, QSize, QPoint
 from PySide6.QtWidgets import QMenu, QDialog, QFileDialog, QMessageBox
-from PySide6.QtGui import QPixmap, QImage, QPalette, QColor, QFont, QResizeEvent
+from PySide6.QtGui import QStandardItemModel, QStandardItem
 from core import device_model, event_bus
-from layout import GuiObject
-from layout import LayoutObject, LayoutButton, LayoutLabel
+from layout import GuiObject, LayoutObject, LayoutButton, LayoutLabel
 from pyvlcb import VLCB
-from vlcbnode import VLCBNode
-from vlcbev import VLCBEv
+from device import device_manager, VLCBNode, VLCBEv
+# This will replace device_model in future
+#from layout import layout_manager
 
-class UIDevicesMixin:
+# Note: hardware = vlcb (or device)
+# layout = GuiObject (and below)
+
+class SystemExplorer:
+    def __init__(self, tree_view_widget):
+        """
+        Takes the existing QTreeView from the MainWindow UI and takes control of it.
+        """
+        self.tree_view = tree_view_widget
+        
+        # Create the Model and attach it to the View
+        self.model = QStandardItemModel()
+        self.model.setHorizontalHeaderLabels(["Nodes"])
+        self.tree_view.setModel(self.model)
+        
+        # Fast-lookup registry mapping backend IDs to memory locations
+        # Format: { ("type", id1, id2...) : QStandardItem }
+        self._registry = {}
+        
+        # Initialize
+        self._build_backbone()
+        self.populate_initial_data()
+        self._wire_events()
+
+    def populate_initial_data(self):
+        """Fetches current data from managers at boot."""
+        # --- Hardware Pass ---
+        for node in device_manager.get_all_nodes():
+            self.add_hardware_node(node)
+            
+        # --- Layout Pass ---
+        # TODO Replace with layout_manager when implemented
+        #for layout_obj in layout_manager.get_all_objects():
+        for layout_obj in device_model.nodes.values():
+            self.add_layout_object(layout_obj)
+
+    def _build_backbone(self):
+        """Creates the permanent top-level categories."""
+        self.hardware_root = QStandardItem("VLCB Nodes")
+        self.hardware_root.setEditable(False)
+        
+        self.layout_root = QStandardItem("Layout Objects")
+        self.layout_root.setEditable(False)
+
+        self.model.appendRow(self.hardware_root)
+        self.model.appendRow(self.layout_root)
+        
+        # Expand roots by default
+        self.tree_view.expandAll()
+
+    def add_hardware_node(self, node):
+        print (f"System Explorer Adding hardware_node {node}")
+        """Creates a Node row and its EV children."""
+        # Create the Node Item using its built-in string representation
+        node_item = QStandardItem(str(node))
+        node_item.setEditable(False)
+        
+        # Stash the ID in the item so clself._registry.get(("node", event.node_id))icks can find it later
+        node_item.setData(("node", node.node_id), Qt.UserRole)
+        
+        # Save to registry for instant updates later
+        self._registry[("node", node.node_id)] = node_item
+        
+        # Loop through the Node's CBUS 'ev' objects and add as children
+        # Iterate over the values of the events dictionary to get the VLCBev objects
+        for ev in node.ev.values(): 
+            self._add_ev_to_node(node_item, node.node_id, ev)
+            
+        # Add the fully built Node (with its children) to the root category
+        self.hardware_root.appendRow(node_item)
+
+    def _add_ev_to_node(self, parent_node_item, node_id, ev):
+        """Helper to create child EV rows."""
+        # Assuming VLCBev has a __str__ method, otherwise use f"EV {ev.ev_id}: {ev.state}"
+        ev_item = QStandardItem(str(ev))
+        ev_item.setEditable(False)
+        ev_item.setData(("ev", node_id, ev.ev_id), Qt.UserRole)
+        
+        # Register the specific EV for fast updates using the string ev_id
+        self._registry[("ev", node_id, ev.ev_id)] = ev_item
+        
+        # Attach to the Node, not the root!
+        parent_node_item.appendRow(ev_item)
+
+    def add_layout_object(self, layout_obj):
+        """Creates a Layout object row."""
+        item = QStandardItem(f"{layout_obj.name}")
+        item.setEditable(False)
+        item.setData(("layout", layout_obj.id), Qt.UserRole)
+        self._registry[("layout", layout_obj.id)]
+        self.layout_root.appendRow(item)
+
+    # -------------------------------------------------------------------
+    # EVENT UPDATES
+    # -------------------------------------------------------------------
+    def _wire_events(self):
+        """Listen to the Event Bus for live changes."""
+        event_bus.node_updated_signal.connect(self.on_device_event)
+
+    def on_device_event(self, event):
+        """Updates the tree instantly when hardware changes."""
+        # Note: There is no delete there is currently no way to know
+        # if an device disappears 
+        # Isn't normally an issue as wouldn't normally remove
+        # a device during a running session
+        # Could consider either periodical check for active
+        # and/or a refresh which clears all entries and sends a new 
+        # discover
+        print (f"System explorer new event {event}")
+        
+        # If an entirely new node appeared on the network
+        if event.get_attr("action") == "new_node":
+            print (f"System explorer adding node {event}")
+            self.add_hardware_node(event.get_node_object())
+
+        elif event.get_attr("action") == "update_node":
+            # actual node from the event
+            node_object = event.get_node_object()
+            # node item from the treeview
+            node_item = self._registry.get(("node", node_object.get_node_id()))
+            # if already exists
+            if node_item:
+                node_item.setText(str(node_object))
+            # otherwise it's a new object (node_id changed)
+            else:
+                self.add_hardware_node(node_object)
+
+        elif event.get_attr("action") == "new_ev":
+            # To add a new_ev - first need to get it's parent node 
+            ev_object = event.get_ev_object()
+            parent_node_id = ev_object.get_node_id()
+            parent_item = self._registry.get(("node", parent_node_id))
+            self._add_ev_to_node(parent_item, parent_node_id, ev_object)
+
+            
+        # If an existing EV changed state (e.g., sensor triggered)
+        elif event.get_attr("action"):
+            # Instantly find the visual row using our registry cache and the string ev_id
+            ev_item = self._registry.get(("ev", event.node_id, event.ev_id))
+            
+            # If it exists, update the text! No searching required.
+            if ev_item:
+                # Assuming the event payload has the updated object or state string
+                ev_item.setText(str(event.ev_object))
+
+    ## TODO Legacy methods - need updating
+
             
     # Handle right click - need to get item from position
     def tree_clicked_right(self, position: QPoint):

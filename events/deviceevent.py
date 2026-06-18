@@ -7,11 +7,9 @@ class DeviceEvent (Event):
     def __init__(self, event_data):
         super().__init__()
         # Set type after parent constructor
-        #self.event_type = "Device"
         self.data = event_data
         self.data["event_type"] = "VLCB"
-        
-        
+
     # Uses getters to allow different data (eg. node vs node_id)
     # Node may be friendly name
     # If not node then return node_id instead
@@ -27,6 +25,14 @@ class DeviceEvent (Event):
     # Always node_id number
     def get_node_id (self):
         return self.data['node_id']
+    
+    # Some events include the node or ev object 
+    # Eg. New node
+    def get_node_object (self):
+        return self.data.get("node_object")
+    
+    def get_ev_object (self):
+        return self.data.get("ev_object")
     
     # could be id or friendly name
     def get_event (self):

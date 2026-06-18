@@ -29,6 +29,11 @@ class EventBus(QObject):
     timer_event_signal = Signal(TimerEvent)
     var_event_signal = Signal(VarEvent)
     log_event_signal = Signal(LogEvent)
+
+    # More specialised 
+    # Trigger when add / update an entry - from VLCB (Device)
+    node_updated_signal = Signal(DeviceEvent)
+
     
     # Map the Event Type to the STRING name of the signal
     _route_map = {

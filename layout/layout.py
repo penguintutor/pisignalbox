@@ -5,6 +5,7 @@ import json
 import os
 from .guiobject import GuiObject
 from core import device_model
+import core.paths as app_paths
 
 
 # Holds specific information about the layout
@@ -131,7 +132,7 @@ class Layout():
         if 'layoutimage' in self.layout_data:
             return os.path.join(self.layout_dir, self.layout_data['layoutimage'])
         else:
-            return os.path.join(os.path.dirname(__file__), "nolayout.png")
+            return os.path.join(app_paths.RESOURCES_DIR, "nolayout.png")
         
     def get_layout_objs_file (self):
         # Returns filename - file may not exist if this is new

@@ -2,11 +2,13 @@
 # Owned by MainWindow
 import os, sys
 import json
+import core.paths as app_paths
+from pathlib import Path 
 
 class Settings:
     def __init__ (self, parent, data_dir, setting_file):
         self.parent = parent
-        self.data_dir = data_dir
+        self.data_dir = app_paths.DATA_DIR
         self.setting_filename = setting_file
         self.settings_dict = {}
         

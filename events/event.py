@@ -5,12 +5,8 @@ import copy
 class Event:
     def __init__(self):
         # Set here but override in sub class
-        if not hasattr(self, 'data'):
-            self.data = {"event_type":"unknown"}
+        self.data = {"event_type":"unknown"}
 
-    # Update with new data
-    def update (self, new_data):
-        self.data = new_data
         
     # Allow event_type or get_type to allow consistancy
     def event_type(self):
@@ -29,12 +25,10 @@ class Event:
             return self.event_type
         else:
             print ("Event does not have an event_type")
+        self.start_request(self.vlcb.accessory_command(event.get_node_id(), event.get_event(), event.get_value()))
 
-    
-#     def serialize_event(self):
-#         if isinstance(self, Event):
-#             return self.__dict__
-#         raise TypeError(f'Object of type {self.__class__.__name__} is not JSON serializable')
+    def get_attr(self, attr):
+        return self.data.get(attr, False)
 
     # This is temporary whilst implementing different event types
     # each event type must implement to see if the event matches the current event

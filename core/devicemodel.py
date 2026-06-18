@@ -7,7 +7,7 @@ from PySide6.QtGui import QStandardItemModel, QStandardItem
 from core import event_bus
 from pyvlcb import VLCB
 from pyvlcb.utils import bytes_to_addr
-from vlcbnode import VLCBNode
+from device.vlcbnode import VLCBNode
 from vlcbclient import VLCBClient
 from events import DeviceEvent, LocoEvent, AppEvent, GuiEvent, TimerEvent
 

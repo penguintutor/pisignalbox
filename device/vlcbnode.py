@@ -5,7 +5,7 @@
 
 from PySide6.QtGui import QStandardItemModel, QStandardItem
 from time import time
-from vlcbev import VLCBEv
+from device.vlcbev import VLCBEv
 
 #ManufId,ModId,Flags
 # Stores Nodes defined / discovered
@@ -38,6 +38,8 @@ class VLCBNode():
         # Events are stored as a dictionary with the ev_id as the index
         self.ev = {}
         
+    def get_all_evs (self):
+        return self.ev.values()
         
     def get_ev_names (self):
         #print (f"Getting Ev Names from {self.name}")
