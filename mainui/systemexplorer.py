@@ -10,6 +10,7 @@ from core import device_model, event_bus
 from layout import GuiObject, LayoutObject, LayoutButton, LayoutLabel
 from pyvlcb import VLCB
 from device import device_manager, VLCBNode, VLCBEv
+from layout import layout_manager
 # This will replace device_model in future
 #from layout import layout_manager
 
@@ -45,9 +46,9 @@ class SystemExplorer:
             
         # --- Layout Pass ---
         # TODO Replace with layout_manager when implemented
-        #for layout_obj in layout_manager.get_all_objects():
-        for layout_obj in device_model.nodes.values():
-            self.add_layout_object(layout_obj)
+        for gui_obj in layout_manager.get_all_nodes():
+        #for layout_obj in device_model.nodes.values():
+            self.add_gui_node(gui_obj)
 
     def _build_backbone(self):
         """Creates the permanent top-level categories."""
@@ -84,6 +85,27 @@ class SystemExplorer:
         # Add the fully built Node (with its children) to the root category
         self.hardware_root.appendRow(node_item)
 
+    def add_gui_node(self, node):
+        print (f"System Explorer Adding gui node {node}")
+        """Creates a Node row and its children."""
+        # Create the Node Item using its built-in string representation
+        node_item = QStandardItem(str(node))
+        node_item.setEditable(False)
+        
+        # Stash the ID in the item so clself._registry.get(("node", event.node_id))icks can find it later
+        node_item.setData(("gui", node.node_id), Qt.UserRole)
+        
+        # Save to registry for instant updates later
+        self._registry[("gui", node.node_id)] = node_item
+        
+        # # Loop through the Node's CBUS 'ev' objects and add as children
+        # # Iterate over the values of the events dictionary to get the VLCBev objects
+        # for ev in node.ev.values(): 
+        #     self._add_ev_to_node(node_item, node.node_id, ev)
+            
+        # Add the fully built Node (with its children) to the root category
+        self.layout_root.appendRow(node_item)
+
     def _add_ev_to_node(self, parent_node_item, node_id, ev):
         """Helper to create child EV rows."""
         # Assuming VLCBev has a __str__ method, otherwise use f"EV {ev.ev_id}: {ev.state}"
@@ -97,13 +119,13 @@ class SystemExplorer:
         # Attach to the Node, not the root!
         parent_node_item.appendRow(ev_item)
 
-    def add_layout_object(self, layout_obj):
-        """Creates a Layout object row."""
-        item = QStandardItem(f"{layout_obj.name}")
-        item.setEditable(False)
-        item.setData(("layout", layout_obj.id), Qt.UserRole)
-        self._registry[("layout", layout_obj.id)]
-        self.layout_root.appendRow(item)
+    # def add_layout_object(self, layout_obj):
+    #     """Creates a Layout object row."""
+    #     item = QStandardItem(f"{layout_obj.name}")
+    #     item.setEditable(False)
+    #     item.setData(("layout", layout_obj.id), Qt.UserRole)
+    #     self._registry[("layout", layout_obj.id)]
+    #     self.layout_root.appendRow(item)
 
     # -------------------------------------------------------------------
     # EVENT UPDATES
@@ -111,6 +133,13 @@ class SystemExplorer:
     def _wire_events(self):
         """Listen to the Event Bus for live changes."""
         event_bus.node_updated_signal.connect(self.on_device_event)
+        # Same for gui objects - although less likely to be added in
+        # real time this avoids needing to handle new objects differently
+        print(f"Connecting to bus ID: {id(event_bus)}")
+        event_bus.layout_updated_signal.connect(self.on_layout_event)
+
+    def on_layout_event(self, event):
+        print (f"System explorer Layout event {event}")
 
     def on_device_event(self, event):
         """Updates the tree instantly when hardware changes."""
@@ -121,7 +150,7 @@ class SystemExplorer:
         # Could consider either periodical check for active
         # and/or a refresh which clears all entries and sends a new 
         # discover
-        print (f"System explorer new event {event}")
+        print (f"System explorer new device event {event}")
         
         # If an entirely new node appeared on the network
         if event.get_attr("action") == "new_node":

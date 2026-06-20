@@ -2,6 +2,7 @@
 # For example a point which has two buttons and a label
 # Also maintains state of device (as received by events) and updates
 # layout objects
+# Possibly renamed to GPanelObject
 
 from PySide6.QtGui import QStandardItemModel, QStandardItem
 from core import event_bus
@@ -32,14 +33,23 @@ class GuiObject:
         # if num_states is in the data_dict then overrides
         if 'num_states' in self.data:
             self.num_states = self.data['num_states']
+
+        # Uses a node_id for it's position in index 
+        # Doesn't natively have a node_id so one is created 
+        # dynamically when added to systemexplorer
+        self.node_id = None
             
         # Create a gui_node for displaying in QStandardItemModel
         # Read by device_model for inclusion in device tree
+        # TODO - remove this - it should be created in systemexplorer instead
         self.gui_node = QStandardItem(f"GUI {self.object_type} : {self.name}")
             
         self.buttons = []
         self.labels = []
         
+    def __str__ (self):
+        return f"{self.name}"
+
     # Default font saved on mainwindow - rather than needing to use singleton QApplication this can provide it
     def get_default_font (self):
         return self.parent.mainwindow.default_font

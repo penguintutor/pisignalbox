@@ -6,7 +6,7 @@ from automationrule import AutomationRule
 from appvar import AppVar
 from workersignals import WorkerSignals
 from events import LogEvent
-from core import device_model, event_bus
+from core import event_bus
 
 
 # Automation routine, composed of multiple steps
@@ -53,7 +53,7 @@ class AutomationSequence (QRunnable):
             # If it's a label then add to dict of labels
             if step_data['type'] == "Label":
                 self.labels[step_data['data'].get('labelid')] = i
-            ## Variables need to be added through automationmanager to use the mainwindow and so be included in device_model
+            ## Variables need to be added through automationmanager to use the mainwindow and so be included in managers
             self.steps.append(AutomationStep(self.title, self.vars, step_data['type'], step_data['name'], step_data, check_stop_func=self.check_stop))
 
     def get_locos (self):

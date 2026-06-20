@@ -60,6 +60,13 @@ class VLCBNode():
         self.name = name
         self.update_gui_node_string()
 
+    # Getters - make it easier to ask for get_name and get_node_id
+    def get_name (self):
+        return self.name
+    
+    def get_node_id (self):
+        return self.node_id
+
     # Check if item is this node (or a child of this node)
     # Returns None (if not found)
     #### Or list with node_id, ev_id (or 0 if top level)

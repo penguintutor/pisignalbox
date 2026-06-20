@@ -1,8 +1,8 @@
 
-from core import device_model, event_bus
+from core import event_bus
 from events import VarEvent
 
-# Always use getters and setters as they can update device_model and/or trigger events if required
+# Always use getters and setters as they can update model and/or trigger events if required
 class AppVar():
     def __init__ (self, varsignal):
         #print ("Creating AppVar")

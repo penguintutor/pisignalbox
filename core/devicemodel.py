@@ -204,12 +204,12 @@ class DeviceModel(QObject):
         return False
     
     # Add GUI node - initially just add to tree view
-    def add_gui_node (self, gui_object):
-        # Adds this to the top level of the tree view
-        # child nodes are added through the gui_object as child on gui_node
-        self.node_model.appendRow(gui_object.get_gui_node())
-        # Add the entire gui_object to other_nodes
-        self.other_nodes['Gui'].append(gui_object)
+    # def add_gui_node (self, gui_object):
+    #     # Adds this to the top level of the tree view
+    #     # child nodes are added through the gui_object as child on gui_node
+    #     self.node_model.appendRow(gui_object.get_gui_node())
+    #     # Add the entire gui_object to other_nodes
+    #     self.other_nodes['Gui'].append(gui_object)
 
     def set_name (self, node_id, name):
         if node_id not in self.nodes.keys():

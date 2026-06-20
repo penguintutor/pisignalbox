@@ -25,7 +25,7 @@ class Event:
             return self.event_type
         else:
             print ("Event does not have an event_type")
-        self.start_request(self.vlcb.accessory_command(event.get_node_id(), event.get_event(), event.get_value()))
+        #self.start_request(self.vlcb.accessory_command(event.get_node_id(), event.get_event(), event.get_value()))
 
     def get_attr(self, attr):
         return self.data.get(attr, False)

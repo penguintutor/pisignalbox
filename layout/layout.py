@@ -6,6 +6,7 @@ import os
 from .guiobject import GuiObject
 from core import device_model
 import core.paths as app_paths
+from .layoutmanager import layout_manager
 
 
 # Holds specific information about the layout
@@ -79,7 +80,7 @@ class Layout():
         self.guiobjects.append(GuiObject(self, device_type, device_name, {}))
         # Add to node tree
         #print (f"Adding to node tree {self.railway.guiobjects[-1].name}")
-        device_model.add_gui_node(self.guiobjects[-1])
+        layout_manager.add_gui_node(self.guiobjects[-1])
         
     # Labels and buttons are added to guiobjects 
     # Here pos is optional so it's moved to the end

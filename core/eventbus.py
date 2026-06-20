@@ -33,6 +33,7 @@ class EventBus(QObject):
     # More specialised 
     # Trigger when add / update an entry - from VLCB (Device)
     node_updated_signal = Signal(DeviceEvent)
+    layout_updated_signal = Signal(GuiEvent)
 
     
     # Map the Event Type to the STRING name of the signal

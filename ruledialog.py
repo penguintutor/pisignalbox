@@ -5,6 +5,8 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 from core import device_model, event_bus
+from device import device_manager
+from layout import layout_manager
 
 
 class RuleDialog(QDialog):
@@ -157,12 +159,14 @@ class RuleDialog(QDialog):
         if selected_type == None or selected_type == "Select Type":
             nodes = ["NA"]
         else:
-            #node_type = device_model.name_to_key(selected_type)
             # If User Interface - convert to Gui
-            if selected_type == "User Interface":
-                selected_type = "Gui"
-            nodes = device_model.get_nodes_names(selected_type)
+            if selected_type == "VLCB":
+                nodes = device_manager.get_nodes_names()
+            elif selected_type == "User Interface" or selected_type == "Gui":
+                nodes = layout_manager.get_nodes_names()
             # If there are no devices of this type
+            else:
+                device_model.get_nodes_names(selected_type)
             if nodes == []:
                 nodes = ["NA"]
         # Don't say select if there are none to select
@@ -178,11 +182,10 @@ class RuleDialog(QDialog):
         if selected_type == None or selected_type == "Select Type":
             nodes = ["NA"]
         else:
-            #node_type = device_model.name_to_key(selected_type)
             # If User Interface - convert to Gui
             if selected_type == "User Interface":
                 selected_type = "Gui"
-            nodes = device_model.get_nodes_names(selected_type)
+            nodes = device_manager.get_nodes_names(selected_type)
             # If there are no devices of this type
             if nodes == []:
                 nodes = ["NA"]
@@ -197,11 +200,10 @@ class RuleDialog(QDialog):
         # Should always have a type if this has an option, but check anyway
         if selected_type == None or selected_type == "Select Type":
             return
-        else:
-            #node_type = device_model.name_to_key(selected_type)
+
             # If User Interface - convert to Gui
-            if selected_type == "User Interface":
-                selected_type = "Gui"
+            #if selected_type == "User Interface":
+            #    selected_type = "Gui"
         #print (f"Updating event combo {index}")
         self.selection_comboboxes["row2_col0"].clear()
         # Updates the event_combo based on the selected node.
@@ -210,8 +212,12 @@ class RuleDialog(QDialog):
             events = ["NA"]
         else:
             # convert to node_key
-            node_key = device_model.name_to_key(selected_node, selected_type)
-            events = device_model.get_events(node_key, selected_type)
+            if selected_type == "VLCB":
+                node_key = device_manager.name_to_key(selected_node)
+                events = device_manager.get_events(node_key)
+            elif selected_type == "User Interface" or selected_type == "Gui":
+                node_key = layout_manager.name_to_key(selected_node)
+                events = layout_manager.get_events(node_key)
             if events == []:
                 events = ["NA"]
         if events != ["NA"]:
@@ -238,11 +244,11 @@ class RuleDialog(QDialog):
         # Should always have a type if this has an option, but check anyway
         if selected_type == None or selected_type == "Select Type":
             return
-        else:
+        #else:
             #node_type = device_model.name_to_key(selected_type)
             # If User Interface - convert to Gui
-            if selected_type == "User Interface":
-                selected_type = "Gui"
+            #if selected_type == "User Interface":
+            #    selected_type = "Gui"
         #print (f"Updating event combo {index}")
         self.selection_comboboxes["row2_col1"].clear()
         # Updates the event_combo based on the selected node.
@@ -251,8 +257,13 @@ class RuleDialog(QDialog):
             events = ["NA"]
         else:
             # convert to node_key
-            node_key = device_model.name_to_key(selected_node, selected_type)
-            events = device_model.get_events(node_key, selected_type)
+            if selected_type == "VLCB":
+                node_key = device_manager.name_to_key(selected_node)
+                events = device_manager.get_events(node_key)
+            elif selected_type == "User Interface" or selected_type == "Gui":
+                node_key = layout_manager.name_to_key(selected_node)
+                events = layout_manager.get_events(node_key)
+
             if events == []:
                 events = ["NA"]
         if events != ["NA"]:

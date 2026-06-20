@@ -18,23 +18,7 @@ from events import DeviceEvent, LocoEvent, AppEvent, GuiEvent, TimerEvent
 # the primary interface to decouple from LocoList etc.
 
 class DeviceManager(QObject):
-    # This signal is internal to the model or for ViewModels to subscribe to
-    # to react to state changes in the core data.
-    # model_updated = Signal(str) # Emits device_id when its state changes
     
-    # Map to Classes
-    event_map = {
-        'VLCB': DeviceEvent,		# This should be used in preference to Device
-        'Device': DeviceEvent,
-        'Loco': LocoEvent,
-        'App': AppEvent,
-        'Gui': GuiEvent,
-        'Timer': TimerEvent
-        }
-    
-    # Used to update treeview on gui thread
-    #add_node_signal = Signal(QStandardItem, QStandardItem)
-    # moved to event_bus
 
     def __init__(self):
         super().__init__()
@@ -106,11 +90,11 @@ class DeviceManager(QObject):
     
     # Add node if not exist - else returnFalse
     # Only used for devices - also see add_gui_node
-    def add_node (self, node):
-        if node not in self.nodes.keys():
-            self.nodes[node.node_id] = node
+    def add_node (self, node_id):
+        if node_id not in self.nodes.keys():
+            self.nodes[node_id.node_id] = node_id
             # Also set name
-            self.set_name (node.node_id, f"Temp Node Name: {node.node_id}")
+            self.set_name (node_id.node_id, f"Temp Node Name: {node_id.node_id}")
             
             # Add the node to the top level of the qtreeview
             # child nodes are added through the node as child on gui_node
@@ -118,7 +102,7 @@ class DeviceManager(QObject):
             #self.node_model.appendRow(self.nodes[node.node_id].get_gui_node())
             event_bus.node_updated_signal.emit (DeviceEvent({
                 "action": "new_node",
-                "node_object": self.nodes[node.node_id]
+                "node_object": self.nodes[node_id.node_id]
             }))
             return True
         return False

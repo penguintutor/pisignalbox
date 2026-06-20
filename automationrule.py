@@ -1,6 +1,6 @@
 import os
 import copy
-from core import device_model, event_bus
+from core import event_bus
 
 # Automation rule determines the actions
 
@@ -17,18 +17,7 @@ from core import device_model, event_bus
 # Done when the sequence is first activated (eg. request from user)
 # Flow is not included in the rule - that must be done at a higher level
 class AutomationRule:
-    
-# The event_map is taken from device_model.event_map
-#     event_map = {
-#         'VLCB': DeviceEvent,		# This should be used in preference to Device
-#         'Device': DeviceEvent,
-#         'Loco': LocoEvent,
-#         'App': AppEvent,
-#         'Gui': GuiEvent,
-#         'Timer': TimerEvent
-#         }
-    
-    
+       
     
     def __init__ (self, rule_name, rule_type, data):
         self.rule_name = rule_name
@@ -38,7 +27,7 @@ class AutomationRule:
         # Create the corresponding event
         if rule_type == "VLCB" or rule_type == "Device" or rule_type == "App":
             #print (f"Triggering event for {self}")
-            self.event = device_model.event_map[self.rule_type](self.data)
+            self.event = event_bus.event_map[self.rule_type](self.data)
         elif rule_type == "Var":
             if "event" not in data:
                 print ("No var event found - has AppVar been passed to the sequence?")

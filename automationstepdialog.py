@@ -10,6 +10,8 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIntValidator
 from core import device_model
+from device import device_manager
+from layout import layout_manager
 from loco import loco_manager
 from automationrule import AutomationRule
 from automationsequence import AutomationStep, AutomationSequence
@@ -135,7 +137,7 @@ class AutomationStepDialog(QDialog):
         # if  current type has changed then generate node list
         #print (f"Current_row _values {self.current_row_value}")
         if self.current_row_value[1] != "VLCB":
-            node_items = ["Select Node"] + device_model.get_nodes_names("VLCB", null_events=False)
+            node_items = ["Select Node"] + device_manager.get_nodes_names("VLCB", null_events=False)
             # if no nodes then just show NA
             if node_items == ["Select Node"]:
                 node_items = ["NA"]
@@ -146,10 +148,10 @@ class AutomationStepDialog(QDialog):
         # If loading then set
         if self.load_progress == "load":
             # Set row 2 (node) based on loaded step
-            self.rows.set_combo_text(2, device_model.key_to_name(self.step['data'].get('node_id'), "VLCB"))
+            self.rows.set_combo_text(2, device_manager.key_to_name(self.step['data'].get('node_id'), "VLCB"))
 
         # Node selection is populated - check for a value
-        selected_node = device_model.name_to_key(self.rows.get_combo_text(2), "VLCB")
+        selected_node = device_manager.name_to_key(self.rows.get_combo_text(2), "VLCB")
         # If this was new and not loaded or moved back to "Select Node" then return here - need to select node first
         if selected_node == None or selected_node == "Select Node" or selected_node == "NA":
             self.current_row_value[2] = "Select Node"
@@ -162,7 +164,7 @@ class AutomationStepDialog(QDialog):
         self.rows.show_hide_row(3, True, "Event:")
         if self.current_row_value[2] != selected_node:
             # node is different to current - so update event list
-            event_items = ["Select Event"] + device_model.get_events(selected_node, "VLCB")    
+            event_items = ["Select Event"] + device_manager.get_events(selected_node, "VLCB")    
             if event_items == ["Select Event"]:
                 event_items = ["NA"]
             self.rows.combo_add_items(3, event_items)
@@ -170,7 +172,7 @@ class AutomationStepDialog(QDialog):
             
         if self.load_progress == "load":
             # Set based on loaded step
-            self.rows.set_combo_text(3, device_model.key_to_name(self.step['data'].get('event'), "VLCB"))
+            self.rows.set_combo_text(3, device_manager.key_to_name(self.step['data'].get('event'), "VLCB"))
                 
         # Read in row 3 (event) and check for change
         selected_event = self.rows.get_combo_text(3)
@@ -214,7 +216,6 @@ class AutomationStepDialog(QDialog):
             locoid = self.step['data'].get('locoid')
             if locoid is not None:
                 # Locid is already as a string
-                # self.rows.set_combo_text(2, device_model.key_to_name(locoid, "Loco"))
                 self.rows.set_combo_text(2, locoid)
             # There should be only one of locoid and dccid if both then locoid takes precedence
             # If dccid then set to Use DCC ID which will load if appropriate
@@ -299,7 +300,7 @@ class AutomationStepDialog(QDialog):
         
         # if  current type has changed then generate node list
         if self.current_row_value[1] != "Gui":
-            node_items = ["Select Node"] + device_model.get_nodes_names("Gui", null_events=False)
+            node_items = ["Select Node"] + layout_manager.get_nodes_names("Gui", null_events=False)
             # if no nodes then just show NA
             if node_items == ["Select Node"]:
                 node_items = ["NA"]
@@ -309,10 +310,10 @@ class AutomationStepDialog(QDialog):
 
         if self.load_progress == "load":
             # Set based on loaded step
-            self.rows.set_combo_text(2, device_model.key_to_name(self.step['data'].get('node_id'), "Gui"))
+            self.rows.set_combo_text(2, device_manager.key_to_name(self.step['data'].get('node_id'), "Gui"))
 
         # Node selection is populated - check for a value
-        selected_node = device_model.name_to_key(self.rows.get_combo_text(2), "Gui")
+        selected_node = layout_manager.name_to_key(self.rows.get_combo_text(2))
         # If this was new and not loaded or moved back to "Select Node" then return here - need to select node first
         if selected_node == None or selected_node == "Select Node" or selected_node == "NA":
             self.current_row_value[2] = "Select Node"
@@ -324,13 +325,13 @@ class AutomationStepDialog(QDialog):
         self.rows.show_hide_row(3, True, "Action:")
         if selected_node != self.current_row_value[2]:
             # node is different to current - so update action list
-            action_items = ["Select Action"] + device_model.get_events(selected_node, "Gui")    
+            action_items = ["Select Action"] + layout_manager.get_events(selected_node, "Gui")    
             if action_items == ["Select Action"]:
                 action_items = ["NA"]
             self.rows.combo_add_items(3, action_items)
 
         if self.load_progress == "load":
-            self.rows.set_combo_text(3, device_model.key_to_name(self.step['data'].get('event'), "Gui"))
+            self.rows.set_combo_text(3, layout_manager.key_to_name(self.step['data'].get('event'), "Gui"))
 
         self.current_row_value[2] = selected_node
         
@@ -759,7 +760,7 @@ class AutomationStepDialog(QDialog):
         if node == None or node == "Select Node" or node == "NA":
             QMessageBox.warning(self, "Invalid Node", "Please select a valid node.")
             return None
-        data_dict['node_id'] = device_model.name_to_key(node)
+        data_dict['node_id'] = device_manager.name_to_key(node)
         event = self.rows.get_combo_text(3) 
         if event == None or event == "Select Event" or event == "NA":
             QMessageBox.warning(self, "Invalid Event", "Please select a valid event.")
@@ -827,7 +828,7 @@ class AutomationStepDialog(QDialog):
         if node == None or node == "Select Node" or node == "NA":
             QMessageBox.warning(self, "Invalid Node", "Please select a valid node.")
             return None
-        data_dict['node_id'] = device_model.name_to_key(node)
+        data_dict['node_id'] = layout_manager.name_to_key(node)
         action = self.rows.get_combo_text(3) 
         if action == None or action == "Select Action" or action == "NA":
             QMessageBox.warning(self, "Invalid Action", "Please select a valid action.")

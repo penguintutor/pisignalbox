@@ -6,7 +6,7 @@ from pyvlcb import VLCB
 from pyvlcb.utils import bytes_to_addr
 from loco import Loco
 from apihandler import ApiHandler
-from core import device_model, event_bus
+from core import event_bus
 from loco import loco_manager
 from events import AppEvent, LocoEvent
 

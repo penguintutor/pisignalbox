@@ -9,19 +9,13 @@ from PySide6.QtWidgets import (
     QPushButton,
     QDialogButtonBox,
 )
-from core import device_model
+from device import device_manager
 
 class EventDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Event Selection")
         self.setGeometry(200, 200, 300, 150)
-
-#         self.data = {
-#             "Node A": ["Event 1A", "Event 2A", "Event 3A"],
-#             "Node B": ["Event 1B", "Event 2B"],
-#             "Node C": ["Event 1C", "Event 2C", "Event 3C", "Event 4C"],
-#         }
 
         self.init_ui()
 
@@ -34,7 +28,7 @@ class EventDialog(QDialog):
         node_label = QLabel("Select Node:")
         self.node_combo = QComboBox()
         self.node_combo.addItem("None")
-        self.node_combo.addItems(device_model.get_nodes_names())
+        self.node_combo.addItems(device_manager.get_nodes_names())
         node_layout.addWidget(node_label)
         node_layout.addWidget(self.node_combo)
         main_layout.addLayout(node_layout)
@@ -67,8 +61,8 @@ class EventDialog(QDialog):
         if selected_node == "None":
             events = "NA"
         else:
-            node_key = device_model.name_to_key(selected_node)
-            events = device_model.get_events(node_key)
+            node_key = device_manager.name_to_key(selected_node)
+            events = device_manager.get_events(node_key)
         self.event_combo.clear()
         self.event_combo.addItems(events)
 

@@ -136,49 +136,19 @@ class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin, UIAutomateMixin):
         # get_variable(variable_name), set_variable(variable_name, new_value), inc_variable(variable_name, inc_amount)
         self.appvariables = AppVar(self.var_signal)
         
+
         # Load the settings file here
         self.settings = Settings(self, self.data_dir, self.files['settings'])
-        
-        ## Add Layouts file - Moved to LayoutDialog - only required when managing
+
         
         self.ui = loader.load(os.path.join(basedir, "mainwindow.ui"), None)
         self.setWindowTitle(app_title)
         self.loco_window = None
         self.rules_window = None
         
-        # Load the Current Layout file from settings
-        # Layout provides background image and
-        # can also be used for giving real names to certain items
-        # Needs to come after self.ui is loaded
-        # Variable is named railway to avoid potential conflict if named layout
-        self.railway = Layout(self, self.dirs['layouts'], self.settings.get_layout_filename())
-        # pass the layout to the devicemodel
-        device_model.set_layout(self.railway)
-        
-         # Load all locos
-        full_path_locos = os.path.join(self.data_dir, self.files['locos'])
-        loco_manager.load_locos (self.dirs['locos'], full_path_locos)
-        
-        # Now set enabled locos from settings
-        if 'enabledlocos' in self.settings.settings_dict:
-            loco_manager.enable_locos (self.settings.settings_dict['enabledlocos'])
-        
-        # Automation Manager class used to load / store the sequences
-        self.automation = AutomationManager(self, self.threadpool, self.appvariables, self.dirs['automation'], "Default")
-        # Load the default automation
-        self.automation.load()
-        # Add any variables from the sequences to the appvariables
-        auto_vars = self.automation.get_variables()
-        for var in auto_vars:
-            #print (f"Adding variable {var} to AppVar from AutomationManager")
-            self.add_variable (var, "", False)
 
-        self.automation.global_status.connect(self.update_sequence_status)
-
-        # Add automation list 
-        self.update_automation_list()
-
-        self.ui.automationRunButton.clicked.connect(self.run_selected_sequence)
+        self._load_assets ()
+        self._initialise_automation ()
         
         # Signals
         self.steal_dialog_signal.connect (self.steal_loco_dialog)
@@ -280,10 +250,6 @@ class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin, UIAutomateMixin):
         # Need to determine which rules to load - this is default
         event_bus.load_rules(os.path.join(self.dirs['rules'], "default.json"))
         
-
-        # Load the system_explorer for showing Nodes (devices & layout objects)
-        self.system_emplorer = SystemExplorer (self.ui.nodeTreeView)
-        
         # Pass the layout details to LayoutDisplay to allow it to load other resources
         # Also pass safe so it can access mainwindow
         self.ui.layoutDisplayLabel.set_layout(self, self.railway)
@@ -292,17 +258,62 @@ class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin, UIAutomateMixin):
         
         # Update LCD - used to set '-' at start
         self.update_lcd()
+
         
         self.setCentralWidget(self.ui)
         self.ui.nodeTreeView.show()
         self.show()
         self.create_console()
-        
+
+        # Load the system_explorer for showing Nodes (devices & layout objects)
+        self.system_explorer = SystemExplorer (self.ui.nodeTreeView)
+
+
         # Status of the http connection
         self.status = "Not connected"
                           
         # Initial discover request
         self.api.discover()
+
+
+    # Loads and sets up the railway (Layout) and loading locos etc.
+    # This needs to be delayed to allow Gui components to be setup frst
+    # eg. SystemExplorer
+    def _load_assets (self):
+        # Load the Current Layout file from settings
+        # Layout provides background image and
+        # can also be used for giving real names to certain items
+        # Needs to come after self.ui is loaded
+        # Variable is named railway to avoid potential conflict if named layout
+        self.railway = Layout(self, self.dirs['layouts'], self.settings.get_layout_filename())
+        # pass the layout to the devicemodel
+        device_model.set_layout(self.railway)
+        
+         # Load all locos
+        full_path_locos = os.path.join(self.data_dir, self.files['locos'])
+        loco_manager.load_locos (self.dirs['locos'], full_path_locos)
+        
+        # Now set enabled locos from settings
+        if 'enabledlocos' in self.settings.settings_dict:
+            loco_manager.enable_locos (self.settings.settings_dict['enabledlocos'])
+
+    def _initialise_automation (self):
+        # Automation Manager class used to load / store the sequences
+        self.automation = AutomationManager(self, self.threadpool, self.appvariables, self.dirs['automation'], "Default")
+        # Load the default automation
+        self.automation.load()
+        # Add any variables from the sequences to the appvariables
+        auto_vars = self.automation.get_variables()
+        for var in auto_vars:
+            #print (f"Adding variable {var} to AppVar from AutomationManager")
+            self.add_variable (var, "", False)
+
+        self.automation.global_status.connect(self.update_sequence_status)
+
+        # Add automation list 
+        self.update_automation_list()
+
+        self.ui.automationRunButton.clicked.connect(self.run_selected_sequence)
 
     # TODO: handle sequence status updates
     def update_sequence_status (self, status_message):

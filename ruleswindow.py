@@ -152,8 +152,8 @@ class RulesWindow(QMainWindow):
 #            for key, value in selected_data.items():
 #                print(f"  {key}: {value}")
             # Convert response (dict in selected_data) into event objects
-            event_instance = device_model.event_map[event_details['type']] (event_dict)
-            action_instance = device_model.event_map[action_details['type']] (action_dict)
+            event_instance = event_bus.event_map[event_details['type']] (event_dict)
+            action_instance = event_bus.event_map[action_details['type']] (action_dict)
             #print (f"Adding {event_instance} : {action_instance}")
             # temp is there a problem with action_instance?
             event_bus.add_rule(event_instance, action_instance)
