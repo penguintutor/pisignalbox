@@ -65,7 +65,6 @@ class SystemExplorer:
         self.tree_view.expandAll()
 
     def add_hardware_node(self, node):
-        print (f"System Explorer Adding hardware_node {node}")
         """Creates a Node row and its EV children."""
         # Create the Node Item using its built-in string representation
         node_item = QStandardItem(str(node))
@@ -86,7 +85,6 @@ class SystemExplorer:
         self.hardware_root.appendRow(node_item)
 
     def add_gui_node(self, node):
-        print (f"System Explorer Adding gui node {node}")
         """Creates a Node row and its children."""
         # Create the Node Item using its built-in string representation
         node_item = QStandardItem(str(node))
@@ -119,14 +117,6 @@ class SystemExplorer:
         # Attach to the Node, not the root!
         parent_node_item.appendRow(ev_item)
 
-    # def add_layout_object(self, layout_obj):
-    #     """Creates a Layout object row."""
-    #     item = QStandardItem(f"{layout_obj.name}")
-    #     item.setEditable(False)
-    #     item.setData(("layout", layout_obj.id), Qt.UserRole)
-    #     self._registry[("layout", layout_obj.id)]
-    #     self.layout_root.appendRow(item)
-
     # -------------------------------------------------------------------
     # EVENT UPDATES
     # -------------------------------------------------------------------
@@ -135,11 +125,27 @@ class SystemExplorer:
         event_bus.node_updated_signal.connect(self.on_device_event)
         # Same for gui objects - although less likely to be added in
         # real time this avoids needing to handle new objects differently
-        print(f"Connecting to bus ID: {id(event_bus)}")
         event_bus.layout_updated_signal.connect(self.on_layout_event)
 
     def on_layout_event(self, event):
-        print (f"System explorer Layout event {event}")
+        # Note no delete at the moment 
+        # May need to add if add delete node object
+
+        # If an entirely new node added to the gui
+        if event.get_attr("action") == "new_node":
+            self.add_gui_node(event.get_node_object())
+
+        elif event.get_attr("action") == "update_node":
+            # actual node from the event
+            node_object = event.get_node_object()
+            # node item from the treeview
+            node_item = self._registry.get(("gui", node_object.get_node_id()))
+            # if already exists
+            if node_item:
+                node_item.setText(str(node_object))
+            # otherwise it's a new object (node_id changed)
+            else:
+                self.add_gui_node(node_object)
 
     def on_device_event(self, event):
         """Updates the tree instantly when hardware changes."""
@@ -150,11 +156,9 @@ class SystemExplorer:
         # Could consider either periodical check for active
         # and/or a refresh which clears all entries and sends a new 
         # discover
-        print (f"System explorer new device event {event}")
         
         # If an entirely new node appeared on the network
         if event.get_attr("action") == "new_node":
-            print (f"System explorer adding node {event}")
             self.add_hardware_node(event.get_node_object())
 
         elif event.get_attr("action") == "update_node":
@@ -178,7 +182,7 @@ class SystemExplorer:
 
             
         # If an existing EV changed state (e.g., sensor triggered)
-        elif event.get_attr("action"):
+        elif event.get_attr("action") == "update_ev":
             # Instantly find the visual row using our registry cache and the string ev_id
             ev_item = self._registry.get(("ev", event.node_id, event.ev_id))
             

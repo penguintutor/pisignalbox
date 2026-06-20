@@ -132,9 +132,8 @@ class LayoutManager(QObject):
     #         return True
     #     return False
 
-    # Add GUI node - calls add_node - kept for compatibility
+    # Add GUI node - passes gui_object to add
     def add_gui_node (self, gui_object):
-        print (f"Layout Manager Adding node {gui_object}")
         # If already has a node_id then already added
         if gui_object.node_id != None:
             print (f"Warning guid_node already exists {gui_object}")
@@ -142,8 +141,10 @@ class LayoutManager(QObject):
         # Get node_id in a thread safe way
         gui_object.node_id = next(self.node_index) - 1
         self.nodes[gui_object.node_id] = gui_object
-        print ("Layout Manager Emitting signal")
-        print(f"Emitting on bus ID: {id(event_bus)}")
+        # Note that if this is added before systemmanager then 
+        # the signal does not go anywhere - instead loaded by 
+        # Initial object scan. This is here is subsequent updates are
+        # made to the GUI that need to be updated in the tree etc.
         event_bus.layout_updated_signal.emit (GuiEvent({
             "action": "new_node",
             "node_object": gui_object
