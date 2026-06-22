@@ -61,6 +61,9 @@ class LayoutLabel (LayoutObject):
             
         self.gui_node = None
 
+    def __str__ (self):
+        return f"Label {self.get_name()}"
+
     # Sets the button_type
     # If lowercase (default) then sets to lowercase, otherwise keep case
     def set_type_str (self, new_type, lowercase=True):

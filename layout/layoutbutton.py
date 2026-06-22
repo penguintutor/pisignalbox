@@ -61,6 +61,10 @@ class LayoutButton (LayoutObject):
         else:
             self.value = 0
         
+
+    def __str__ (self):
+        return f"Button {self.get_name()}"
+
     # Sets the button_type
     # If lowercase (default) then sets to lowercase, otherwise keep case
     def set_type_str (self, new_type, lowercase=True):
@@ -77,11 +81,6 @@ class LayoutButton (LayoutObject):
     def activate (self):
         index = self.get_index()
         self.parent.activate("LayoutButton", index)
-        
-    # What action does this have
-    # Button is normally Activate, label is Toggle
-    #def get_action_type (self):
-    #    return "Activate"
         
     # Capitalize set to True to capitalize first letter (used for user friendly)
     def get_type_str (self, capitalize=False):

@@ -45,9 +45,7 @@ class SystemExplorer:
             self.add_hardware_node(node)
             
         # --- Layout Pass ---
-        # TODO Replace with layout_manager when implemented
         for gui_obj in layout_manager.get_all_nodes():
-        #for layout_obj in device_model.nodes.values():
             self.add_gui_node(gui_obj)
 
     def _build_backbone(self):
@@ -96,13 +94,29 @@ class SystemExplorer:
         # Save to registry for instant updates later
         self._registry[("gui", node.node_id)] = node_item
         
-        # # Loop through the Node's CBUS 'ev' objects and add as children
+        # # Loop through the Node's Labels and Button objects and add as children
         # # Iterate over the values of the events dictionary to get the VLCBev objects
-        # for ev in node.ev.values(): 
-        #     self._add_ev_to_node(node_item, node.node_id, ev)
+        child_objs = node.get_children_dict()
+        for (child_type, child_idx), child_obj in child_objs.items():
+             self._add_child_to_gui_node(node_item, node.node_id, child_obj, (child_type, child_idx))
             
         # Add the fully built Node (with its children) to the root category
         self.layout_root.appendRow(node_item)
+
+    # Also need obj type (button / label)
+    def _add_child_to_gui_node(self, parent_node_item, node_id, child_obj, idx):
+        """Helper to create child rows."""
+        # Assuming Button and Label objects have a __str__ method
+
+        obj_item = QStandardItem(str(child_obj))
+        obj_item.setEditable(False)
+        obj_item.setData(("gui_child", node_id, idx), Qt.UserRole)
+        
+        # Register the specific EV for fast updates using the string ev_id
+        self._registry[("gui_child", node_id, idx)] = child_obj
+        
+        # Attach to the Node, not the root!
+        parent_node_item.appendRow(obj_item)
 
     def _add_ev_to_node(self, parent_node_item, node_id, ev):
         """Helper to create child EV rows."""
@@ -126,6 +140,15 @@ class SystemExplorer:
         # Same for gui objects - although less likely to be added in
         # real time this avoids needing to handle new objects differently
         event_bus.layout_updated_signal.connect(self.on_layout_event)
+
+        """Handle clicks of the QTreeView"""
+
+        # Enable custom context menus for right-clicks
+        self.tree_view.setContextMenuPolicy(Qt.CustomContextMenu)
+        
+        # Connect Signals
+        self.tree_view.clicked.connect(self._on_left_click)
+        self.tree_view.customContextMenuRequested.connect(self._on_right_click)
 
     def on_layout_event(self, event):
         # Note no delete at the moment 
@@ -191,11 +214,25 @@ class SystemExplorer:
                 # Assuming the event payload has the updated object or state string
                 ev_item.setText(str(event.ev_object))
 
-    ## TODO Legacy methods - need updating
+    ## Handle clicks
 
+    def _get_id_from_index(self, index):
+        """Helper to safely extract the custom ID from a QModelIndex."""
+        if not index.isValid():
+            return None
             
-    # Handle right click - need to get item from position
-    def tree_clicked_right(self, position: QPoint):
+        # Get the QStandardItem from the model
+        item = self.model.itemFromIndex(index)
+        if not item:
+            return None
+            
+        # Retrieve the custom tuple we stored earlier
+        return item.data(Qt.UserRole)
+            
+    ## Handle right click - need to get item from position
+    #def tree_clicked_right(self, position: QPoint):
+    def _on_right_click (self, position: QPoint):
+        return
         item = self.ui.nodeTreeView.indexAt(position)
         # Ignore if no item clicked
         if not item.isValid():
@@ -226,9 +263,16 @@ class SystemExplorer:
             elif type(self.selected_node) is LayoutLabel:
                 self.edit_dialog_layoutlabel()
 
-    def tree_clicked(self, item):
-        node_item = device_model.node_model.itemFromIndex(item)
-        self.update_tree_selected (node_item)
+    def _on_left_click(self, index):
+        if not index.isValid():
+            return None
+        
+        # Get the QStandardItem from the model
+        item = self.model.itemFromIndex(index)
+        if not item:
+            return None
+        
+        self.update_tree_selected (item)
 
 
     # Updates tree based on current selected_node (if any)

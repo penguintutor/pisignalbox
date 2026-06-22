@@ -49,6 +49,12 @@ class GuiObject:
         
     def __str__ (self):
         return f"{self.name}"
+    
+    # Return all children uses the button  labels list position as an index (like ev_id)
+    def get_children_dict(self):
+        child_objs = {("button", i): btn for i, btn in enumerate(self.buttons)}
+        child_objs.update({("label", i): lbl for i, lbl in enumerate(self.labels)})
+        return child_objs
 
     # Default font saved on mainwindow - rather than needing to use singleton QApplication this can provide it
     def get_default_font (self):
