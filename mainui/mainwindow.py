@@ -205,11 +205,12 @@ class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin, UIAutomateMixin):
         
         
         # Event buttons
-        #self.ui.evButtonOff.clicked.connect(self.ev_clicked_off)
-        #self.ui.evButtonOn.clicked.connect(self.ev_clicked_on)
+        #self.ui.evButtonOff.clicked.connect(self.system_explorer.ev_clicked_off)
+        #self.ui.evButtonOn.clicked.connect(self.system_explorer.ev_clicked_on)
         
         # Last Node / Event that was selected - use for On/Off buttons
-        self.selected_node = None
+        #self.selected_node = None
+        # This is now handled within the SystemExplorer
         
         # Update other GUI components
         # Add locos to menu
@@ -324,7 +325,7 @@ class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin, UIAutomateMixin):
         gui_node = device_model.get_guiobject_name(gui_event.data.get('node'))
         if gui_node != None:
             gui_node.set_value(gui_event.data.get('value'))
-        self.update_table()
+        self.system_explorer.update_table()
 
     # Edit events associations between different objects
     def loco_manager (self):

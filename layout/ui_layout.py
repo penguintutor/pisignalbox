@@ -129,11 +129,11 @@ class UILayoutMixin:
             # When switching back to control from edit then save config
             self.railway.save_file()
 
-    def edit_dialog_layoutbutton (self):
+    def edit_dialog_layoutbutton (self, selected_node):
         """ Dialog for creating and editing Layout Buttons
         """
         # Current object - for easy ref
-        button = self.selected_node
+        button = selected_node
         gui_obj = button.parent
         # Load the dialog
         loader = QUiLoader()
@@ -218,11 +218,11 @@ class UILayoutMixin:
 
 
     ## Setup Dialog for appropriate object type
-    def edit_dialog_guiobject (self):
+    def edit_dialog_guiobject (self, selected_node):
         """ Setup dialog for add / edit GUI object  (device)
         """
         # Current object - for easy ref
-        gui_obj = self.selected_node
+        gui_obj = selected_node
         # Load the dialog
         loader = QUiLoader()
         filepath = Path(__file__).parent / "editguidialog.ui"
@@ -313,11 +313,11 @@ class UILayoutMixin:
         # Ensure the background auto-fills to show the palette change
         button.setAutoFillBackground(True)
 
-    def edit_dialog_layoutlabel (self):
+    def edit_dialog_layoutlabel (self, selected_node):
         """ Add / edit Layout Labels
         """
         # Current object - for easy ref
-        label = self.selected_node
+        label = selected_node
         gui_obj = label.parent
         # Load the dialog
         loader = QUiLoader()

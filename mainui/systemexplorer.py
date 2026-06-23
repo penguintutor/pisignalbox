@@ -23,6 +23,7 @@ class SystemExplorer:
         Takes the existing QTreeView from the MainWindow UI and takes control of it.
         """
         self.parent = parent
+        self.api = self.parent.api
         # Also add self.ui - to make it clearer when accessing the main gui including the treeview
         self.ui = self.parent.ui
         self.tree_view = self.parent.ui.nodeTreeView
@@ -163,6 +164,10 @@ class SystemExplorer:
         self.tree_view.clicked.connect(self._on_left_click)
         self.tree_view.customContextMenuRequested.connect(self._on_right_click)
 
+        # Register to Event buttons from ui
+        self.ui.evButtonOff.clicked.connect(self.ev_clicked_off)
+        self.ui.evButtonOn.clicked.connect(self.ev_clicked_on)
+
     def on_layout_event(self, event):
         # Note no delete at the moment 
         # May need to add if add delete node object
@@ -246,23 +251,24 @@ class SystemExplorer:
     ## Handle right click - need to get item from position
     #def tree_clicked_right(self, position: QPoint):
     def _on_right_click (self, position: QPoint):
-        print ("Right click")
-        return
-        item = self.ui.nodeTreeView.indexAt(position)
-        # Ignore if no item clicked
-        if not item.isValid():
-            return
-        #print (f"Item {item} - Data {item.data()}")
-        # Update the node table view
-        node_item = device_model.node_model.itemFromIndex(item)
-        self._tree_item_selected(node_item)
-        
+
+        # Get the idnex position of the object
+        index = self.tree_view.indexAt(position)
+        # If not on an object then ignore
+        if not index.isValid():
+            return None
+
+        # Right click starts by emulating a left click (ie select object)
+        # Then add right-click pop-up menu
+        self._on_left_click(index)
+
+        # Note the left click action also updates self.selected_node
+        # which is needed later
+
         # Create a context Menu
         menu = QMenu()
         # different menu depending upon node type
-        #print (f"Node {node_item.text()}")
-        #print (f"Selected {self.selected_node}")
-        if self.selected_node.device_type == "Gui":
+        if isinstance(self.selected_node, GuiObject) or isinstance(self.selected_node, LayoutObject):
             edit_action = menu.addAction("Edit")
         else:
             edit_action = None
@@ -271,12 +277,13 @@ class SystemExplorer:
         if selected_action == edit_action:
             # Which type of node is this?
             #print (f"Selected node is {type(self.selected_node)}")
-            if type(self.selected_node) is GuiObject:
-                self.edit_dialog_guiobject()
-            elif type(self.selected_node) is LayoutButton:
-                self.edit_dialog_layoutbutton()
-            elif type(self.selected_node) is LayoutLabel:
-                self.edit_dialog_layoutlabel()
+            # Methods to launch the edit are in main window / ui_layout Mixin
+            if isinstance(self.selected_node, GuiObject):
+                self.parent.edit_dialog_guiobject(self.selected_node)
+            elif isinstance(self.selected_node, LayoutButton):
+                self.parent.edit_dialog_layoutbutton(self.selected_node)
+            elif isinstance(self.selected_node, LayoutLabel):
+                self.parent.edit_dialog_layoutlabel(self.selected_node)
 
     def _on_left_click(self, index):
         # Reset the current selected node

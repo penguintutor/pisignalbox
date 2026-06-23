@@ -37,7 +37,7 @@ class DeviceEvent (Event):
     
     # Always node_id number
     def get_node_id (self):
-        if node_id in self.data:
+        if "node_id" in self.data:
             return self.data['node_id']
         elif 'node_object' in self.data:
             return self.data["node_object"].get_node_id()
