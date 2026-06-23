@@ -266,7 +266,7 @@ class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin, UIAutomateMixin):
         self.create_console()
 
         # Load the system_explorer for showing Nodes (devices & layout objects)
-        self.system_explorer = SystemExplorer (self.ui.nodeTreeView)
+        self.system_explorer = SystemExplorer (self)
 
 
         # Status of the http connection

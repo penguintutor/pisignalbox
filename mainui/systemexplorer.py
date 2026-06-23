@@ -18,20 +18,29 @@ from layout import layout_manager
 # layout = GuiObject (and below)
 
 class SystemExplorer:
-    def __init__(self, tree_view_widget):
+    def __init__(self, parent):
         """
         Takes the existing QTreeView from the MainWindow UI and takes control of it.
         """
-        self.tree_view = tree_view_widget
+        self.parent = parent
+        # Also add self.ui - to make it clearer when accessing the main gui including the treeview
+        self.ui = self.parent.ui
+        self.tree_view = self.parent.ui.nodeTreeView
         
         # Create the Model and attach it to the View
         self.model = QStandardItemModel()
         self.model.setHorizontalHeaderLabels(["Nodes"])
         self.tree_view.setModel(self.model)
+
+        # Current selected node
+        self.selected_node = None
         
         # Fast-lookup registry mapping backend IDs to memory locations
+        # first for ui object (QStandardItem, other for object)
         # Format: { ("type", id1, id2...) : QStandardItem }
-        self._registry = {}
+        self._ui_registry = {}
+        # Format: { ("type", id1, id2...) : object }
+        self._obj_registry = {}
         
         # Initialize
         self._build_backbone()
@@ -72,7 +81,8 @@ class SystemExplorer:
         node_item.setData(("node", node.node_id), Qt.UserRole)
         
         # Save to registry for instant updates later
-        self._registry[("node", node.node_id)] = node_item
+        self._ui_registry[("node", node.node_id)] = node_item
+        self._obj_registry[("node", node.node_id)] = node
         
         # Loop through the Node's CBUS 'ev' objects and add as children
         # Iterate over the values of the events dictionary to get the VLCBev objects
@@ -92,7 +102,8 @@ class SystemExplorer:
         node_item.setData(("gui", node.node_id), Qt.UserRole)
         
         # Save to registry for instant updates later
-        self._registry[("gui", node.node_id)] = node_item
+        self._ui_registry[("gui", node.node_id)] = node_item
+        self._obj_registry[("gui", node.node_id)] = node
         
         # # Loop through the Node's Labels and Button objects and add as children
         # # Iterate over the values of the events dictionary to get the VLCBev objects
@@ -113,7 +124,8 @@ class SystemExplorer:
         obj_item.setData(("gui_child", node_id, idx), Qt.UserRole)
         
         # Register the specific EV for fast updates using the string ev_id
-        self._registry[("gui_child", node_id, idx)] = child_obj
+        self._ui_registry[("gui_child", node_id, idx)] = obj_item
+        self._obj_registry[("gui_child", node_id, idx)] = child_obj
         
         # Attach to the Node, not the root!
         parent_node_item.appendRow(obj_item)
@@ -126,7 +138,8 @@ class SystemExplorer:
         ev_item.setData(("ev", node_id, ev.ev_id), Qt.UserRole)
         
         # Register the specific EV for fast updates using the string ev_id
-        self._registry[("ev", node_id, ev.ev_id)] = ev_item
+        self._obj_registry[("ev", node_id, ev.ev_id)] = ev_item
+        self._obj_registry[("ev", node_id, ev.ev_id)] = ev
         
         # Attach to the Node, not the root!
         parent_node_item.appendRow(ev_item)
@@ -162,7 +175,7 @@ class SystemExplorer:
             # actual node from the event
             node_object = event.get_node_object()
             # node item from the treeview
-            node_item = self._registry.get(("gui", node_object.get_node_id()))
+            node_item = self._ui_registry.get(("gui", node_object.get_node_id()))
             # if already exists
             if node_item:
                 node_item.setText(str(node_object))
@@ -188,7 +201,7 @@ class SystemExplorer:
             # actual node from the event
             node_object = event.get_node_object()
             # node item from the treeview
-            node_item = self._registry.get(("node", node_object.get_node_id()))
+            node_item = self._ui_registry.get(("node", node_object.get_node_id()))
             # if already exists
             if node_item:
                 node_item.setText(str(node_object))
@@ -200,14 +213,14 @@ class SystemExplorer:
             # To add a new_ev - first need to get it's parent node 
             ev_object = event.get_ev_object()
             parent_node_id = ev_object.get_node_id()
-            parent_item = self._registry.get(("node", parent_node_id))
+            parent_item = self._ui_registry.get(("node", parent_node_id))
             self._add_ev_to_node(parent_item, parent_node_id, ev_object)
 
             
         # If an existing EV changed state (e.g., sensor triggered)
         elif event.get_attr("action") == "update_ev":
             # Instantly find the visual row using our registry cache and the string ev_id
-            ev_item = self._registry.get(("ev", event.node_id, event.ev_id))
+            ev_item = self._ui_registry.get(("ev", event.node_id, event.ev_id))
             
             # If it exists, update the text! No searching required.
             if ev_item:
@@ -216,22 +229,24 @@ class SystemExplorer:
 
     ## Handle clicks
 
-    def _get_id_from_index(self, index):
-        """Helper to safely extract the custom ID from a QModelIndex."""
-        if not index.isValid():
-            return None
+    # def _get_id_from_index(self, index):
+    #     """Helper to safely extract the custom ID from a QModelIndex."""
+    #     if not index.isValid():
+    #         return None
             
-        # Get the QStandardItem from the model
-        item = self.model.itemFromIndex(index)
-        if not item:
-            return None
+    #     # Get the QStandardItem from the model
+    #     item = self.model.itemFromIndex(index)
+    #     if not item:
+    #         return None
             
-        # Retrieve the custom tuple we stored earlier
-        return item.data(Qt.UserRole)
+    #     # Retrieve the custom tuple we stored earlier
+    #     return item.data(Qt.UserRole)
+
             
     ## Handle right click - need to get item from position
     #def tree_clicked_right(self, position: QPoint):
     def _on_right_click (self, position: QPoint):
+        print ("Right click")
         return
         item = self.ui.nodeTreeView.indexAt(position)
         # Ignore if no item clicked
@@ -240,7 +255,7 @@ class SystemExplorer:
         #print (f"Item {item} - Data {item.data()}")
         # Update the node table view
         node_item = device_model.node_model.itemFromIndex(item)
-        self.update_tree_selected (node_item)
+        self._tree_item_selected(node_item)
         
         # Create a context Menu
         menu = QMenu()
@@ -264,6 +279,8 @@ class SystemExplorer:
                 self.edit_dialog_layoutlabel()
 
     def _on_left_click(self, index):
+        # Reset the current selected node
+        self.selected_node = None
         if not index.isValid():
             return None
         
@@ -271,8 +288,13 @@ class SystemExplorer:
         item = self.model.itemFromIndex(index)
         if not item:
             return None
-        
-        self.update_tree_selected (item)
+        lookup_key = item.data(Qt.UserRole)
+                
+        # Get the actual object (not the ui QStandardItem)
+        self.selected_node = self._obj_registry.get(lookup_key)
+
+        # Update the table view
+        self.update_table()
 
 
     # Updates tree based on current selected_node (if any)
@@ -281,72 +303,74 @@ class SystemExplorer:
         if self.selected_node == None:
             return
         # If gui / layout object
-        if self.selected_node.device_type == "Gui":
-            if isinstance(self.selected_node, GuiObject):
-                self.node_table_show_gui_node(self.selected_node)
-                # If num states < 2 then no button
-                if self.selected_node.num_states < 2:
-                    self.update_node_buttons (None, None)
-                # If exactly 2 then toggle button
-                elif self.selected_node.num_states == 2:
-                    self.update_node_buttons ("Toggle", None)
-                # If more than 2 then up / down
-                else:
-                    self.update_node_buttons ("Prev", "Next")
-            # Otherwise it's a layoutobject (button / label)
-            else:
-                # new item for child is [parent, type, pos]
-                self.node_table_show_gui_child(self.selected_node)
-                # Typically GUI children will say Toggle (for a label), or value for a button
-                self.update_node_buttons (self.selected_node.get_action_type(), None)
-        elif self.selected_node.device_type == "VLCB":
-            if type(self.selected_node) is VLCBNode:
-                self.node_table_show_node(self.selected_node)
+        if isinstance(self.selected_node, GuiObject):
+            self.node_table_show_gui_node(self.selected_node)
+            # If num states < 2 then no button
+            if self.selected_node.num_states < 2:
                 self.update_node_buttons (None, None)
-            # or if it's a ev
+            # If exactly 2 then toggle button
+            elif self.selected_node.num_states == 2:
+                self.update_node_buttons ("Toggle", None)
+            # If more than 2 then up / down
             else:
-                self.node_table_show_ev(self.selected_node)
-                self.update_node_buttons ("On", "Off")
+                self.update_node_buttons ("Prev", "Next")
+        # Or it's a layoutobject (button / label)
+        elif isinstance(self.selected_node, LayoutObject):
+            # new item for child is [parent, type, pos]
+            self.node_table_show_gui_child(self.selected_node)
+            # Typically GUI children will say Toggle (for a label), or value for a button
+            self.update_node_buttons (self.selected_node.get_action_type(), None)
+        elif isinstance(self.selected_node, VLCBNode):
+            self.node_table_show_node(self.selected_node)
+            self.update_node_buttons (None, None)
+        # or if it's a ev
+        elif isinstance(self.selected_node, VLCBEv):
+            self.node_table_show_ev(self.selected_node)
+            self.update_node_buttons ("On", "Off")
+        else:
+            print (f"System Explorer - update table - unknown node type {type(self.selected_node)}")
 
 
-    def update_tree_selected(self, node_item):
-        self.selected_node = None
+    # def _tree_item_selected (self, node_item):")
+    #     self.selected_node = None
         
-        # Cleanly resolve the node and top-level strings
-        node_string = node_item.text()
-        parent_item = node_item.parent()
-        top_string = parent_item.text() if parent_item else node_string
+    #     # Cleanly resolve the node and top-level strings
+    #     node_string = node_item.text()
+    #     parent_item = node_item.parent()
+    #     top_string = parent_item.text() if parent_item else node_string
 
-        # Route to the appropriate handler
-        if top_string.startswith("GUI"):
-            self._set_gui_selected_node(node_item)
-        else:
-            self._handle_standard_node(node_item, node_string)
+    #     print (f"str {node_string}, parent {parent_item}, top {top_string}")
 
-        self.update_table()
+    #     # Route to the appropriate handler
+    #     if top_string.startswith("GUI"):
+    #         self._set_gui_selected_node(node_item)
+    #     else:
+    #         self._handle_standard_node(node_item, node_string)
 
-    def _set_gui_selected_node(self, node_item):
-        """Helper to find and set a GUI specific node."""
-        for gui_node in device_model.other_nodes['Gui']:
-            new_item = gui_node.check_item(node_item)
-            if new_item is not None:
-                self.selected_node = new_item
-                break  # Stop searching once we find the match
+    #     self.update_table()
+
+    # def _set_gui_selected_node(self, node_item):
+    #     """Helper to find and set a GUI specific node."""
+    #     for gui_node in device_model.other_nodes['Gui']:
+    #         new_item = gui_node.check_item(node_item)
+    #         if new_item is not None:
+    #             self.selected_node = new_item
+    #             break  # Stop searching once we find the match
                 
-    def _handle_standard_node(self, node_item, node_string):
-        """Helper to handle standard nodes and their associated UI button states."""
-        # Use a tuple to cleanly check for multiple prefixes at once
-        if node_string.startswith(("CANCAB", "CANCMD")):
-            self.update_node_buttons(None, None)
-        else:
-            self.update_node_buttons("On", "Off")
+    # def _handle_standard_node(self, node_item, node_string):
+    #     """Helper to handle standard nodes and their associated UI button states."""
+    #     # Use a tuple to cleanly check for multiple prefixes at once
+    #     if node_string.startswith(("CANCAB", "CANCMD")):
+    #         self.update_node_buttons(None, None)
+    #     else:
+    #         self.update_node_buttons("On", "Off")
             
-        # Check device_model for the node
-        for key, node in device_model.nodes.items():
-            new_item = node.check_item(node_item)
-            if new_item is not None:
-                self.selected_node = new_item
-                break  # Stop searching once we find the match
+    #     # Check device_model for the node
+    #     for key, node in device_model.nodes.items():
+    #         new_item = node.check_item(node_item)
+    #         if new_item is not None:
+    #             self.selected_node = new_item
+    #             break  # Stop searching once we find the match
 
     # Updates the two node buttons at the bottom of the table
     # These are known as evButtonOff & evButtonOn, but may also be used by
