@@ -54,6 +54,15 @@ The current layout is defined in settings and loaded from MainWindow based on th
 - guiobjects (eg. points / labels)
 - layoutimage (image file stored in the layouts directory)
 
+#### Buttons and labels
+settings dict can contain:
+
+* click_type (eg. value / toggle / none)
+* size (size of button)
+* value (initial value)
+* index (optional position of the button etc. - used to allow different position to list entry position)
+
+
 
 ## Locos directory
 The Locos consist of a .json file based on loco_id, class_id and name or classification
