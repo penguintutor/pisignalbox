@@ -197,12 +197,7 @@ class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin, UIAutomateMixin):
         self.ui.nodeTreeView.setModel(device_model.node_model)
         self.ui.nodeTreeView.setEditTriggers(QAbstractItemView.NoEditTriggers)
         
-        # Left click
-        #self.ui.nodeTreeView.clicked.connect(self.tree_clicked)
-        # Right click - instead needs to use custom context policy
-        #self.ui.nodeTreeView.setContextMenuPolicy(Qt.CustomContextMenu)
-        #self.ui.nodeTreeView.customContextMenuRequested.connect(self.tree_clicked_right)
-        
+        # Tree View buttons moved to system_explorer
         
         # Event buttons
         #self.ui.evButtonOff.clicked.connect(self.system_explorer.ev_clicked_off)

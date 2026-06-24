@@ -58,8 +58,7 @@ class LayoutLabel (LayoutObject):
         else:
             self.font_color = "#000000"
         # Click enabled removed - use click_type = "none" to disable
-            
-        self.gui_node = None
+
 
     def __str__ (self):
         return f"Label {self.get_name()}"

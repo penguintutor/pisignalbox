@@ -25,6 +25,41 @@ class LayoutObject:
         # device_type exists over all types - inc Gui / VLCB etc.
         # all layout objects are device_type Gui
         self.device_type = "Gui"
+
+        # These are variables needed for all objects
+        # Set to None / undefined here and allow override in 
+        # child objects
+        # Some objects (eg. LayoutLabel) don't need to use them
+        # but still available so must be defined
+        self.gui_node = None
+        self.value = 0  # Undefined state
+        # position in the sequence (ie. it's value)
+        # This is not currently used, but can be added in future
+        self.index = None
+
+        
+
+    def set_value_status (self, new_value, node_pos=None):
+        """ Set value of self.value. If this object has an index
+        that is used to compare against the set value to see if it's on 
+        or off. If not then node_pos is the pos in the index and that is 
+        used instead. If it's not possible to determine then go back to 
+        0 = undefined."""
+        # If we know our index position then compre to that
+        # allows out-of sequence button values
+        if self.index != None:
+            # If new_value is our index then 1 = on, else 2 = off
+            # +1 because value 0 = undefined
+            self.value = 1 if new_value == self.index + 1 else 2
+        # If not then compare against the position in the list
+        elif node_pos != None:
+            # +1 because value 0 = undefined
+            self.value = 1 if new_value == node_pos + 1 else 2
+        # If not just set to undefined
+        else:
+            self.value = 0
+
+
         
     # What action does this have
     # Button is normally Value, label is Toggle
@@ -65,20 +100,24 @@ class LayoutObject:
     # not to be confused with activate which calls parent class on this object
     # perform required action (eg. set / toggle and return value)
     def activate_value (self, current_value, num_states):
-        #print (f"Value is {current_value, num_states}, click type {self.click_type}")
+        print (f"Layout Object Value is {current_value, num_states}, click type {self.click_type}")
         if self.click_type == "none":
             return current_value
         elif self.click_type == "toggle":
             new_value = current_value + 1
             if new_value > num_states:
                 new_value = 1
+                # Set the object value (eg. button / label)
+                #self.value = new_value
             return new_value
         elif self.click_type == "value":
             # If click value not set then get it
             if self.click_value == None:
                 self.click_value = self.get_index() + 1
+            # Set the object value (eg. button / label)
+            #self.value = self.click_value
             return self.click_value
-            
+        
         # temp just return current - not yet handled
         print (f"activate_value not handled for click type {self.click_type}")
         return current_value

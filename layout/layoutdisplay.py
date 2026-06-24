@@ -128,7 +128,11 @@ class LayoutDisplay(QLabel):
         self.adjustSize()
 
 
+    # Handle mouse clicks on the LayoutDisplay
+    # This overrides the standard mouse press event
+    # to detect when a mouse is pressed (left or right)
     def mousePressEvent(self, event: QMouseEvent):
+        print ("LayoutDisplay mousePressEvent")
         if self.mode == "edit":
             self.editMousePress (event)
         else:
@@ -141,13 +145,14 @@ class LayoutDisplay(QLabel):
             click_pos = self.pixel_to_percent(mouse_pos)
             # Test all buttons for click, if multiple hit then use one closest
             self.selected = self.nearestToClick(click_pos)
+            print (f"LayoutDisplay Selected {self.selected}")
             if self.selected == None:
                 return
             #print (f"{self.selected}")
             self.selected.controlButtonClick()
-            #print(f"Mouse Left Clicked at: {self.last_mouse_pos.x()}, {self.last_mouse_pos.y()}")
+            print(f"LayoutDisplay Mouse Left Clicked at: {event.position().x()}, {event.position().y()}")
         elif event.button() == Qt.MouseButton.RightButton:
-            #print(f"Mouse Right Clicked at: {event.position().x()}, {event.position().y()}")
+            print(f"LayoutDisplay Mouse Right Clicked at: {event.position().x()}, {event.position().y()}")
             pass
     
     # Mouse press in edit mode

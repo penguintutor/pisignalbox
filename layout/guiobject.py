@@ -83,28 +83,24 @@ class GuiObject:
         
     # Set value from an event
     # Includes own events or triggers from elsewhere
-    def set_value (self, value):
-        self.state_value = value
-        # Update elements
-        for i in range (0, len(self.buttons)):
-            # If unknown state then set to unknown
-            if self.state_value == 0:
-                self.buttons[i].value = 0
-            # If this value then set to 1
-            elif self.state_value == i + 1:
-                self.buttons[i].value = 1
-            # Otherwise set to off
-            else:
-                self.buttons[i].value = 2
-        # Table is updated in mainwindow - based on GuiEvent
-        # print (f"Value set to {self.state_value}")
+    def set_value_children (self):
+        ## Note set_value_status in LayoutObjects includes additional features
+        # and can also set label (future improvement)
+        #self.state_value = value
+
+        for i in range (self.num_states):
+            # check we have another button
+            if i < len(self.buttons):
+                self.buttons[i].set_value_status(self.state_value, i)
+            if i < len(self.labels):
+                self.labels[i].set_value_status(self.state_value, i)
         
         
     # Activate can be called from the GUI (eg node tree)
     # or from a child object
     # Update self and then send a GuiEvent
     def activate (self, click_type = "GuiObject", index=0 ):
-        #print (f"Current {self.state_value} - Activating object {click_type} {index}")
+        print (f"GuiObject Current {self.state_value} - Activating object {click_type} {index}")
         # If it's a gui and we have more than 2 states then 0 = prev, 1 = next
         if click_type == "GuiObject":
             if self.num_states > 2 and index == 0:
@@ -115,7 +111,7 @@ class GuiObject:
                 self.state_value += 1
                 if self.state_value > self.num_states:
                     self.state_value = self.num_states
-            # Otherwise it's a toggle
+            # Otherwise it's a  (ttoggle
             else:
                 # If state value unknown then set to 1
                 if self.state_value == 0:
@@ -133,8 +129,12 @@ class GuiObject:
         elif click_type == "LayoutButton":
             #self.state_value = index + 1
             self.state_value = self.buttons[index].activate_value(self.state_value, self.num_states)
-            
-        #print (f"Now {self.state_value}")
+
+        print (f"GuiObject Now {self.state_value}")
+        # Update all child nodes values
+        ## Todo set a sensible value
+        self.set_value_children()
+
  
         # Create and send GUI event
         #event_bus.publish(GuiEvent({'name': self.name, 'value': self.state_value}))

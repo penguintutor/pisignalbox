@@ -58,8 +58,13 @@ class LayoutButton (LayoutObject):
         # value is 0 (not known), 1 = on, 2 = off
         if ('value' in settings.keys()):
             self.value = settings['value']
-        else:
-            self.value = 0
+        # If not then takes default 0 from constructor
+        # Index is used if we want an out-of-sequence button operation
+        # If this is implemented then may need to consider setting for
+        # all buttons on a GuiObject
+        if ('index' in settings.keys()):
+            self.index = settings['index']
+
         
 
     def __str__ (self):
@@ -155,7 +160,8 @@ class LayoutButton (LayoutObject):
         return [width, height]
            
     def draw (self, painter):
-        #print (f"Drawing button {self.button_type} at {self.pixel_pos()} size {self.pixel_size()} value {self.value}")
+#        if self.value != 0:
+#            print (f"Layout Button Drawing button {self.button_type} at {self.pixel_pos()} size {self.pixel_size()} value {self.value}")
         # There are only 3 colours by default, if value is larger than number of colours
         # then use unknown colour
         color_val = self.value
