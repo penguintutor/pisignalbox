@@ -27,7 +27,6 @@ class LayoutDisplay(QLabel):
         self.railway = None		# Railway is the layout class - known as railway for consistancy with mw and avoid conflict with layout
         
         self.setMouseTracking(True)  # Enable mouse tracking even when no button is pressed
-        #self.last_mouse_pos = QPoint()
         
         # Is an object selected (for dragging etc.)
         self.selected = None
@@ -132,7 +131,6 @@ class LayoutDisplay(QLabel):
     # This overrides the standard mouse press event
     # to detect when a mouse is pressed (left or right)
     def mousePressEvent(self, event: QMouseEvent):
-        print ("LayoutDisplay mousePressEvent")
         if self.mode == "edit":
             self.editMousePress (event)
         else:
@@ -145,14 +143,10 @@ class LayoutDisplay(QLabel):
             click_pos = self.pixel_to_percent(mouse_pos)
             # Test all buttons for click, if multiple hit then use one closest
             self.selected = self.nearestToClick(click_pos)
-            print (f"LayoutDisplay Selected {self.selected}")
             if self.selected == None:
                 return
-            #print (f"{self.selected}")
             self.selected.controlButtonClick()
-            print(f"LayoutDisplay Mouse Left Clicked at: {event.position().x()}, {event.position().y()}")
         elif event.button() == Qt.MouseButton.RightButton:
-            print(f"LayoutDisplay Mouse Right Clicked at: {event.position().x()}, {event.position().y()}")
             pass
     
     # Mouse press in edit mode
@@ -163,7 +157,6 @@ class LayoutDisplay(QLabel):
             # Check for close button before any other objects
             # There is a risk that an object is placed under and cannot be moved
             # in that case the window will need to be resized so that the object can be seen
-            #print (f"Mouse {mouse_pos}, Click {click_pos}")
             # Uses mouse_pos as that relates to rect 
             if self.close_button_rect.contains (mouse_pos):
                 # Calls mainwindow - so as to reset menus etc
@@ -172,10 +165,7 @@ class LayoutDisplay(QLabel):
             self.selected = self.nearestToClick(click_pos)
             if self.selected == None:
                 return
-            #print (f"Selected {self.selected}")
-            #print(f"Mouse Left Clicked at: {mouse_pos.x()}, {mouse_pos.y()}")
         elif event.button() == Qt.MouseButton.RightButton:
-            #print(f"Mouse Right Clicked at: {event.position().x()}, {event.position().y()}")
             pass
         
     # Find nearest object to click that is touched
@@ -220,8 +210,6 @@ class LayoutDisplay(QLabel):
                 self.selected.pos = new_pos
         else:
             # You can also detect mouse movement without a button pressed (hovering)
-            # if self.hasMouseTracking():
-            #     print(f"Mouse Hovering at: {event.position().x()}, {event.position().y()}")
             pass # Or do something if you want to track mouse position without dragging
 
     def mouseReleaseEvent(self, event: QMouseEvent):
@@ -230,12 +218,9 @@ class LayoutDisplay(QLabel):
             self.selected = None
             self.cursor.setShape(Qt.ArrowCursor)
             self.setCursor(self.cursor)
-            #print(f"Mouse Left Released at: {event.position().x()}, {event.position().y()}")
 
     def mouseDoubleClickEvent(self, event: QMouseEvent):
         pass
-        #if event.button() == Qt.MouseButton.LeftButton:
-        #    print(f"Mouse Left Double Clicked at: {event.position().x()}, {event.position().y()}")
 
     # Convert pixels to percentage
     # by default (rel=False) then calculates based on absolute position
@@ -255,12 +240,7 @@ class LayoutDisplay(QLabel):
         # subtract height1/2 height difference if not relative
         ## canvas size and image_size report the same value
         ## calling adjustSize() has positioned the image to the top - so this is no longer needed
-#         if rel==False:
-#             print (f"Label size {label_size.width()} {label_size.height()}")
-#             print (f"Image size {image_size.width()} {image_size.height()}")
-#             height_diff = label_size.height() - image_size.height()
-#             if height_diff > 0:
-#                 y_val -= int(height_diff/2)
+
         # now have actual pos within the image pixmap (if not relative)
         # calculate as a percentage of image_size
         x_percent = (x_val / image_size.width()) * 100

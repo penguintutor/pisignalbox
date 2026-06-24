@@ -130,7 +130,6 @@ class LayoutLabel (LayoutObject):
         return self.parent.labels.index(self)
     
     def draw (self, painter):
-        #print (f"Parent {self.parent} PP {self.layout_disp}")
         if self.label_type == "text":
             
             # In future could check for font override in settings
@@ -140,15 +139,15 @@ class LayoutLabel (LayoutObject):
             text_rect = font_metrics.boundingRect(self.settings['text'])
             # note that the standard drawText uses the baseline for y (ie. bottom of standar letters)
             # but to be consistant with the buttons need it to be top right - so translate
-            #print (f"Text size {text_rect.width()} x {text_rect.height()}")
+            
             # first get size as a percentage - rel=True needed for size or relative values
             self.size = self.layout_disp.pixel_to_percent([text_rect.width(), text_rect.height()], rel=True)
             # Ascent is like height but doesn't include below the baseline - eg g / q etc.)
             # convert it to percent, but only interested in the y value
-            #print (f"Ascent actual {font_metrics.ascent()}")
+            
             percent_null_ascent = self.layout_disp.pixel_to_percent([0, font_metrics.ascent()], rel=True)
             ascent = percent_null_ascent[1]
-            #print (f"Pos y {self.pos[1]}, ascent {ascent}")
+            
             # get a new y with offset (still percentage)
             draw_text_y = self.pos[1] + ascent
             # Set color
@@ -166,7 +165,6 @@ class LayoutLabel (LayoutObject):
     # note that distance is still scalar distance from center - even if more to one side (distance from center)
     # click_pos is a percentage - same as dimensions of label
     def is_hit (self, click_pos):
-        #print (f"Checking for click {click_pos}, Label {self.pos}, size {self.size}")
         # check for hit first
         if (
             click_pos[0] >= self.pos[0] and

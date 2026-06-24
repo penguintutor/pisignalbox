@@ -100,7 +100,6 @@ class GuiObject:
     # or from a child object
     # Update self and then send a GuiEvent
     def activate (self, click_type = "GuiObject", index=0 ):
-        print (f"GuiObject Current {self.state_value} - Activating object {click_type} {index}")
         # If it's a gui and we have more than 2 states then 0 = prev, 1 = next
         if click_type == "GuiObject":
             if self.num_states > 2 and index == 0:
@@ -122,17 +121,11 @@ class GuiObject:
         # Label (if enabled) is cyclic next button
         elif click_type == "LayoutLabel":
             self.state_value = self.labels[index].activate_value(self.state_value, self.num_states)
-            #self.state_value += 1
-            #if self.state_value > self.num_states:
-            #    self.state_value = 1
         # Button - set value to button index + 1 (giving button1 / button2 etc.)
         elif click_type == "LayoutButton":
-            #self.state_value = index + 1
             self.state_value = self.buttons[index].activate_value(self.state_value, self.num_states)
 
-        print (f"GuiObject Now {self.state_value}")
         # Update all child nodes values
-        ## Todo set a sensible value
         self.set_value_children()
 
  
@@ -141,13 +134,11 @@ class GuiObject:
         event_bus.publish(GuiEvent({'node': self.name, 'value': self.state_value}))
         
     def get_ev_names (self):
-        #print (f"Getting evs for {self.name}")
         list_names = []
         for label in self.labels:
             list_names.append(label.get_long_name())
         for button in self.buttons:
             list_names.append(button.get_long_name())
-        #print (f"Returning {list_names}")
         return list_names
         
     def get_gui_node (self):
@@ -159,7 +150,6 @@ class GuiObject:
     def check_item (self, item):
         # Is it this gui obj
         if self.gui_node == item:
-            #print (f"This node {self.name}")
             return (self)
         # Is it a button
         for i in range (0, len(self.buttons)):
@@ -196,7 +186,6 @@ class GuiObject:
         return data_list
     
     def nearestToClick(self, click_pos, types="all"):
-        #print (f"Checking object {self} for nearest {click_pos}")
         nearest_object = None
         # set distance to a value far beyond any reasonable range (1000)
         # saves needing to test for a null value
@@ -204,7 +193,6 @@ class GuiObject:
         if types == "button" or types=="all":
             for button in self.buttons:
                 hit_test = button.is_hit(click_pos)
-                #print (f"Button {hit_test}")
                 # determine closest (ignore any < 0)
                 if hit_test >=0 and hit_test < nearest_distance:
                     nearest_object = button
@@ -212,7 +200,6 @@ class GuiObject:
         if types == "label" or types=="all":
             for label in self.labels:
                 hit_test = label.is_hit(click_pos)
-                #print (f"Label {hit_test}")
                 # determine closest (ignore any < 0)
                 if hit_test >=0 and hit_test < nearest_distance:
                     nearest_object = label

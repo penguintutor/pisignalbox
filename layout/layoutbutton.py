@@ -28,7 +28,6 @@ from .layoutobject import LayoutObject
 
 class LayoutButton (LayoutObject):
     def __init__ (self, parent, pos, button_type, settings = {}):
-        #print (f"Button Parent {parent}, pos {pos}, type {button_type}, settings {settings}")
         super().__init__(parent, pos)
         self.button_type = button_type
         # Colours unknown, on, off
@@ -129,7 +128,6 @@ class LayoutButton (LayoutObject):
     # return -1 if not a hit, or distance if it is
     def is_hit (self, click_pos):
         distance = self.distance (click_pos)
-        #print (f"Click pos {click_pos}, obj pos {self.pos}, distance {distance}, size {self.scalar_size()}")
         if distance <= self.scalar_size():
             return distance
         else:
@@ -160,8 +158,6 @@ class LayoutButton (LayoutObject):
         return [width, height]
            
     def draw (self, painter):
-#        if self.value != 0:
-#            print (f"Layout Button Drawing button {self.button_type} at {self.pixel_pos()} size {self.pixel_size()} value {self.value}")
         # There are only 3 colours by default, if value is larger than number of colours
         # then use unknown colour
         color_val = self.value
