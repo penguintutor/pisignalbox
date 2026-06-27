@@ -5,8 +5,8 @@ import threading
 from core import event_bus
 from events import LocoEvent, LogEvent
 from automationrule import AutomationRule
-from appvar import AppVar
-from workersignals import WorkerSignals
+from core import WorkerSignals
+from core import global_app_vars
 
 # Each step contains a rule commands or sequences
 # These are created from a dict and then extracted for the Automation Rule
@@ -17,13 +17,13 @@ class AutomationStep:
     # all other parameters are included in settings
     # rule is not normally provided - unless loading from json
     # Only used if this has an instance of AutomationRule
-    def __init__(self, sequence_name, appvariables, step_type, step_name, data={}, rule=None, check_stop_func=None):
+    def __init__(self, sequence_name, step_type, step_name, data={}, rule=None, check_stop_func=None):
         #print (f"\n\nCreating step type {step_type} with {data} rule {rule}")
         self.sequence_name = sequence_name # Name of parent sequence (creator)
         self.step_type = step_type
         self.step_name = step_name
         self.data = data
-        self.vars = appvariables
+        #self.vars = appvariables
         self.rule = rule # Only used if this has an instance of AutomationRule
         self.check_stop = check_stop_func   # Used if the step takes a long time to run (eg. wait)
         
@@ -69,7 +69,7 @@ class AutomationStep:
                     ))
                     continue
                 # If the value doesn't exist then it will be None
-                run_data[key] = self.vars.get_variable(var_name)
+                run_data[key] = global_app_vars.get_variable(var_name)
             else:
                 run_data[key] = value
         # If a substitution has been made then temporarily add it to the dict
@@ -86,7 +86,7 @@ class AutomationStep:
             app_command = run_data.get("command", "")
             if app_command == "Set Variable":
                 # check we have an appvar
-                if self.vars == None:
+                if global_app_vars == None:
                     #print ("Warning: Attempt to set a variable with no AppVar configured")
                     event_bus.broadcast(LogEvent(
                         {'type':"Automation",
@@ -99,7 +99,7 @@ class AutomationStep:
                     return
                 var_name = run_data.get("variable", "")
                 var_value = run_data.get("value", "")
-                self.vars.set_variable(var_name, var_value)
+                global_app_vars.set_variable(var_name, var_value)
                 event_bus.broadcast(LogEvent(
                     {'type':"Automation",
                     'level':7, # Debug
@@ -111,7 +111,7 @@ class AutomationStep:
                 
             elif app_command == "Increment Variable":
                 # check we have an appvar
-                if self.vars == None:
+                if global_app_vars == None:
                     #print ("Warning: Attempt to increment a variable with no AppVar configured")
                     event_bus.broadcast(LogEvent(
                         {'type':"Automation",
@@ -124,7 +124,7 @@ class AutomationStep:
                     return
                 var_name = run_data.get("variable", "")
                 inc_value = run_data.get("value", 1)
-                self.vars.inc_variable(var_name, inc_value)
+                global_app_vars.inc_variable(var_name, inc_value)
             elif app_command == "Notify User":
                 message = run_data.get("message", "")
                 blocking = run_data.get("blocking", "True")
@@ -216,7 +216,7 @@ class AutomationStep:
         # or "inc" - allows increase without needing to query current value
         elif self.step_type == "Var":
             # check we have an appvar
-            if self.vars == None:
+            if global_app_vars == None:
                 event_bus.broadcast(LogEvent(
                     {'type':"Automation",
                     'level':3, # None critical error
@@ -235,7 +235,7 @@ class AutomationStep:
                     'description': f"Set variable {run_data['varname']} to {run_data['value']}"
                     }
                 ))
-                self.vars.set_variable(run_data["varname"], run_data["value"])
+                global_app_vars.set_variable(run_data["varname"], run_data["value"])
             elif run_data["action"] == "inc":
                 # value is optional for inc - default to 1
                 event_bus.broadcast(LogEvent(
@@ -246,7 +246,7 @@ class AutomationStep:
                     'description': f"Increment variable {run_data['varname']} by {run_data.get('value', 1)}"
                     }
                 ))
-                self.vars.inc_variable(run_data["varname"], run_data.get("value",1))
+                global_app_vars.inc_variable(run_data["varname"], run_data.get("value",1))
         elif self.step_type == "Wait":
             # default 1 second
             delay_time = self.data.get("time", 1)
@@ -494,7 +494,7 @@ class AutomationStep:
         #print (f"Data {self.data['data']}")
         if 'data' in self.data and 'variable' in self.data['data'] and 'value' in self.data['data']:
             var_name = self.data['data'].get("variable", "")
-            value1 = self.vars.get_variable(var_name)
+            value1 = global_app_vars.get_variable(var_name)
             value2 = self.data['data'].get("value", "")
             # if both value1 and value2 are valid then put into run_data
             if value1 != None and value2 != None:
@@ -520,7 +520,7 @@ class AutomationStep:
         # this will remove any values already in value1 and value2
         if 'data' in self.data and 'variable' in self.data['data'] and 'value' in self.data['data']:
             var_name = self.data['data'].get("variable", "")
-            value1 = self.vars.get_variable(var_name)
+            value1 = global_app_vars.get_variable(var_name)
             value2 = self.data['data'].get("value", "")
             # if both value1 and value2 are valid then put into run_data
             if value1 != None and value2 != None:

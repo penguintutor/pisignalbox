@@ -6,7 +6,7 @@ from PySide6.QtCore import QObject, Signal
 from PySide6.QtTest import QSignalSpy
 from PySide6.QtWidgets import QApplication
 
-from appvar import AppVar
+from core.appvar import AppVar
 from events import VarEvent
 from automationsequence import AutomationSequence, AutomationStep
 from automationstepdialog import AutomationStepDialog

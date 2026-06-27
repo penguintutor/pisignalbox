@@ -17,6 +17,7 @@ from automationrule import AutomationRule
 from automationsequence import AutomationStep, AutomationSequence
 from automationdialogrows import AutomationDialogRows
 from events import LocoEvent
+from core import global_app_vars
 
 
 # Dialog for creating automation step (eg. rule)
@@ -435,9 +436,9 @@ class AutomationStepDialog(QDialog):
             # Check variable name is not ""
             if variable_name != None and variable_name != "":
                 # If variable doesn't exist then add
-                if self.mainwindow.appvariables.is_variable(variable_name) != True:
+                if global_app_vars.is_variable(variable_name) != True:
                     # Create the variable but do not give it a value - as that will only be when automation run
-                    self.mainwindow.add_variable(variable_name, "", False)    
+                    global_app_vars.add_variable(variable_name, "", False)    
                     # Reload the combo list 
                     variable_list = ["Select Variable"] + device_model.get_variable_names() + ["New Variable"]
                     self.rows.combo_add_items(3, variable_list)
@@ -458,7 +459,7 @@ class AutomationStepDialog(QDialog):
             self.rows.show_hide_row(3, True, "Variable name:")
             #print ("Launching add variable dialog")
             new_variable = self.create_variable_dialog()
-            if new_variable != None and new_variable != "" and self.mainwindow.appvariables.is_variable(new_variable) != True:
+            if new_variable != None and new_variable != "" and global_app_vars.is_variable(new_variable) != True:
                 # Create new variable by setting value to ""
                 self.mainwindow.add_variable(new_variable, "", False)
                 # Update menu

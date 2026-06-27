@@ -6,7 +6,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QAbstractItemView, QMen
 from PySide6.QtGui import QPixmap, QImage, QPalette, QColor, QFont, QResizeEvent
 from PySide6.QtUiTools import QUiLoader
 import core.paths as app_paths
-from core import device_model, event_bus
+from core import event_bus
 from loco import loco_manager
 from trackview import track_view_manager
 from settings import Settings
@@ -16,16 +16,18 @@ from eventdialog import EventDialog
 from layout import Layout
 from trackview import TrackViewDisplay
 from controlloco import ControlLoco
-from apihandler import ApiHandler
+from core import ApiHandler
 from events import AppEvent
 from loco import LocoWindow, StealDialog
 from ruleswindow import RulesWindow
-from device.vlcbnode import VLCBNode
-from device.vlcbev import VLCBEv
+#from device.vlcbnode import VLCBNode
+#from device.vlcbev import VLCBEv
+from device import device_manager
 from imageexistdialog import ImageExistDialog
 from automationmanager import AutomationManager
 from automationmanagerdialog import AutomationManagerDialog
-from appvar import AppVar
+from core import global_app_vars
+#from core.appvar import AppVar
 # UI code is split into Mixin classes so they can be placed in their own
 # package but access the MainWindow as though native to MainWindow
 from trackview import UITrackViewMixin, AddDeviceDialog, AddLabelDialog, AddButtonDialog
@@ -132,12 +134,13 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin):
         # Variables are global across the app, but can prefix with specific automation
         # to avoid conflicts eg. "engshed1_variable1"
         # Note that the actual variables are not stored in the device_model but they do need
-        # Added there for lookup by menus etc. but all updates are via the self.appvariables
+        # Added there for lookup by menus etc. but all updates are via the global_app_vars
         # which are then in the AppVar class
         # should be set using the following methods (in mainwindow.appvariables) so that they are also reflected here
         # and can also trigger events.
         # get_variable(variable_name), set_variable(variable_name, new_value), inc_variable(variable_name, inc_amount)
-        self.appvariables = AppVar(self.var_signal)
+        #self.appvariables = AppVar(self.var_signal)
+
         
 
         # Load the settings file here
@@ -197,7 +200,8 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin):
         # Tree view
         #self.node_model = device_model.node_model
         #self.node_model.setHorizontalHeaderLabels(['Nodes'])
-        self.ui.nodeTreeView.setModel(device_model.node_model)
+        # Todo this should have been removed with device_manager
+        #self.ui.nodeTreeView.setModel(device_model.node_model)
         self.ui.nodeTreeView.setEditTriggers(QAbstractItemView.NoEditTriggers)
         
         # Tree View buttons moved to system_explorer
@@ -288,7 +292,7 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin):
         # Variable is named railway to avoid potential conflict if named layout
         self.layout = Layout(self, self.dirs['layouts'], self.settings.get_layout_filename())
         # pass the layout to the devicemodel
-        device_model.set_layout(self.layout)
+        #device_model.set_layout(self.layout)
         
          # Load all locos
         full_path_locos = os.path.join(self.data_dir, self.files['locos'])
@@ -300,14 +304,14 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin):
 
     def _initialise_automation (self):
         # Automation Manager class used to load / store the sequences
-        self.automation = AutomationManager(self, self.threadpool, self.appvariables, self.dirs['automation'], "Default")
+        self.automation = AutomationManager(self, self.threadpool, self.dirs['automation'], "Default")
         # Load the default automation
         self.automation.load()
         # Add any variables from the sequences to the appvariables
         auto_vars = self.automation.get_variables()
         for var in auto_vars:
             #print (f"Adding variable {var} to AppVar from AutomationManager")
-            self.add_variable (var, "", False)
+            global_app_vars.add_variable (var, "", False)
 
         self.automation.global_status.connect(self.update_sequence_status)
 
@@ -322,9 +326,9 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin):
         pass
 
     def gui_event (self, gui_event):
-        gui_node = device_model.get_trackviewnode_name(gui_event.data.get('node'))
+        gui_node = track_view_manager.get_track_view_node_from_name(gui_event.data.get('node'))
         if gui_node != None:
-            gui_node.set_value(gui_event.data.get('value'))
+            gui_node.set_state_value(gui_event.data.get('value'))
         self.system_explorer.update_table()
 
     # Edit events associations between different objects
@@ -534,13 +538,15 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin):
     # Adds a variable to the AppVar class AND to the device_model
     # If variable already exists then returns false
     # event is whether to broadcast
-    def add_variable (self, variable_name, value="", event=True):
-        # Check if variable exists
-        if self.appvariables.is_variable(variable_name):
-            return False
-        self.appvariables.set_variable(variable_name, value, event)
-        device_model.add_variable(variable_name)
-        return True
+    ### moved to the global_app_vars
+    # def add_variable (self, variable_name, value="", event=True):
+    #     # Check if variable exists
+    #     if global_app_vars.is_variable(variable_name):
+    #         return False
+    #     global_app_vars.set_variable(variable_name, value, event)
+    #     #device_model.add_variable(variable_name)
+    #     device_manager.add_variable(variable_name)
+    #     return True
     
     # Override reiszeEvent
     def resizeEvent(self, event: QResizeEvent):

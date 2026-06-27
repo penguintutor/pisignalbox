@@ -56,13 +56,9 @@ class TrackViewManager(QObject):
 
     # Return Gui object matching name
     # Or return None
-    def get_trackviewnode_name (self, name):
-        for node in self.nodes:
-            if node.name == name:
-                return node
-        return None
+    def get_track_view_node_from_name (self, name):
+        return self.active_layout.get_node_from_name(name)
         
-
                 
     # Get list of nodes by names
     # null_events determines whether to check if the nodes must have events

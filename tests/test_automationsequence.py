@@ -12,7 +12,7 @@ from loco import Loco
 from trackview import TrackViewNode
 from core import device_model
 
-from appvar import AppVar
+from core.appvar import AppVar
 from events import VarEvent
 from automationsequence import AutomationSequence, AutomationStep
 from automationstepdialog import AutomationStepDialog

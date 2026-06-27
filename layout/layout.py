@@ -164,6 +164,12 @@ class Layout():
     def set_layout_image (self, filename):
         self.layout_data['layoutimage'] = filename
         self.save_file()
+
+    def get_node_from_name (self, name):
+        for node in self.track_view_nodes:
+            if node.name == name:
+                return node
+        return None
         
         
     def get_layout_image (self):

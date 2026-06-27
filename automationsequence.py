@@ -3,10 +3,11 @@ import time
 import json
 from automationstep import AutomationStep
 from automationrule import AutomationRule
-from appvar import AppVar
-from workersignals import WorkerSignals
+from core import WorkerSignals
 from events import LogEvent
 from core import event_bus
+# If need global_app_vars (tends to be in the step)
+from core import global_app_vars
 
 
 # Automation routine, composed of multiple steps
@@ -14,13 +15,13 @@ from core import event_bus
 # These are provided as a list with each entry as a dict with the AutomationStep created in the init
 # Settings is used to pass the locos,
 class AutomationSequence (QRunnable):
-    def __init__(self, appvariables, title, steps, settings = None, check_stop_func=None):
+    def __init__(self, title, steps, settings = None, check_stop_func=None):
         #print (f"\n\nCreating AutomationSequence titled {title} with steps {steps} and settings {settings} and check_stop_func={check_stop_func}")
         super(AutomationSequence, self).__init__()
         # steps are provided as a list so save as list_steps, but then use self.steps when AutomationStep object created
         list_steps = steps
         #self.mainwindow = mainwindow
-        self.vars = appvariables
+        #self.vars = appvariables
         self.title = title
         self.steps = []  # List of AutomationStep objects
         self.settings = settings or {}
@@ -54,7 +55,7 @@ class AutomationSequence (QRunnable):
             if step_data['type'] == "Label":
                 self.labels[step_data['data'].get('labelid')] = i
             ## Variables need to be added through automationmanager to use the mainwindow and so be included in managers
-            self.steps.append(AutomationStep(self.title, self.vars, step_data['type'], step_data['name'], step_data, check_stop_func=self.check_stop))
+            self.steps.append(AutomationStep(self.title, step_data['type'], step_data['name'], step_data, check_stop_func=self.check_stop))
 
     def get_locos (self):
         """ Get a list of all locos in the sequence
@@ -236,13 +237,12 @@ class AutomationSequence (QRunnable):
         return json.dumps(self.to_dict(), indent=4)
 
     @classmethod
-    def from_dict(cls, d: dict, appvariables=None, check_stop_func=None):
+    def from_dict(cls, d: dict, check_stop_func=None):
         """Create AutomationSequence from dict."""
         #print (f"Loading AutomationSequence from dict {check_stop_func}")
         #steps = [AutomationStep.from_dict(s, self) for s in d.get("steps", [])]
         steps = d.get("steps", [])
         return cls(
-            appvariables=appvariables,
             title=d.get("title", ""),
             steps=steps,
             settings=d.get("settings", {}),
@@ -252,11 +252,11 @@ class AutomationSequence (QRunnable):
     #def __init__(self, mainwindow, title, list_steps, settings = {}):
     # from json also needs mainwindow - pass as optional argument
     @classmethod
-    def from_json(cls, json_str: str, appvariables=None, check_stop_func=None):
+    def from_json(cls, json_str: str, check_stop_func=None):
         print (f"Loading AutomationSequence from JSON")
         """Deserialize JSON string to AutomationSequence."""
         d = json.loads(json_str)
-        return cls.from_dict(d, appvariables, check_stop_func=check_stop_func)
+        return cls.from_dict(d, check_stop_func=check_stop_func)
 
 
     def __repr__(self):

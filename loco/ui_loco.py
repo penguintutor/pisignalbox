@@ -10,7 +10,7 @@ from PySide6.QtCore import QTimer, QSize
 from PySide6.QtWidgets import QMenu, QDialog, QFileDialog, QMessageBox, QTableWidgetItem, QPushButton
 from PySide6.QtGui import QPixmap, QImage, QPalette, QColor, QFont, QResizeEvent
 # Delayed loading due to circular import
-from core import device_model, event_bus
+from core import event_bus
 from .locomanager import loco_manager
 from .locodialog import LocoDialog
 from .stealdialog import StealDialog

@@ -1,7 +1,7 @@
 from PySide6.QtCore import Qt, QTimer, QObject, QThreadPool, QRunnable
-from worker import Worker
-from core import event_bus
-from loco import loco_manager
+from .worker import Worker
+from .eventbus import event_bus
+#from loco import loco_manager
 from events import LocoEvent, GuiEvent, AppEvent, DeviceEvent
 import time
 from pyvlcb import VLCB
