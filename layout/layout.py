@@ -106,7 +106,9 @@ class Layout():
             
                 
     def add_track_view_node (self, device_type, device_name):
-        self.track_view_nodes.append(TrackViewNode(self, device_type, device_name, {}))
+        # WARNING: the id for the track_view_node must match the index position in the list
+        # If anything to remove elements then must update all subsequent ids
+        self.track_view_nodes.append(TrackViewNode(self, device_type, device_name, len(self.track_view_nodes), {}))
         # Add to node tree
         #print (f"Adding to node tree {self.layout.trackviewnodes[-1].name}")
         #track_view_manager.add_gui_node(self.track_view_nodes[-1])

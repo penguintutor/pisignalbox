@@ -15,7 +15,8 @@ from events import GuiEvent
 
 class TrackViewNode:
     # object_type - eg. "point" (two buttons to select between), "toggle" (toggle can be used for lights etc. all buttons toggle)
-    def __init__(self, parent, node_type, name, data_dict):
+    # id is added as a required field, uses the list position from layout
+    def __init__(self, parent, node_type, name, id, data_dict):
         ### parent is the gui object (Layout Display)
         # parent is now layout - which has variable mainwindow to get to the mainwindow
         # which is passed to TrackViewNodes
@@ -38,9 +39,9 @@ class TrackViewNode:
             self.num_states = self.data['num_states']
 
         # Uses a node_id for it's position in index 
-        # Doesn't natively have a node_id so one is created 
-        # dynamically when added to systemexplorer
-        self.node_id = None
+        # Taken from the position in the list in layout
+        # WARNING: if position in list changes then needs to be updated
+        self.node_id = id
             
         # Create a gui_node for displaying in QStandardItemModel
         # Read by device_model for inclusion in device tree

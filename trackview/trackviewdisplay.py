@@ -66,13 +66,6 @@ class TrackViewDisplay(QLabel):
         brush.setStyle(Qt.SolidPattern)
         painter.setBrush(brush)
         
-        ######## TODO
-        ## TODO
-        ######## TODO
-        # Temp disabled showing the elements to establish relationships 
-        # and get the QTreeView working correctly first
-        # Return to HERE to reenable the display view
-
         for object in self.layout.track_view_nodes:
             object.paint(painter)
             
