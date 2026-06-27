@@ -1,25 +1,28 @@
-# GuiObject - this is a collection of GUI elements (layoutobjects) that can be controlled together
+# TrackViewNode - this is a collection of GUI elements (TrackView objects) that can be controlled together
 # For example a point which has two buttons and a label
 # Also maintains state of device (as received by events) and updates
-# layout objects
-# Possibly renamed to GPanelObject
+# TrackViewElements
+
+# Note that this is tied to the Gui as a ViewModel (from the Model-View-ViewModel or MVVM pattern)
+# It also has an alternative view using QStandardItems which are created
+# within the system_explorer class
 
 from PySide6.QtGui import QStandardItemModel, QStandardItem
 from core import event_bus
-from .layoutlabel import LayoutLabel
-from .layoutbutton import LayoutButton
+from .trackviewlabel import TrackViewLabel
+from .trackviewbutton import TrackViewButton
 from events import GuiEvent
 
-class GuiObject:
+class TrackViewNode:
     # object_type - eg. "point" (two buttons to select between), "toggle" (toggle can be used for lights etc. all buttons toggle)
-    def __init__(self, parent, object_type, name, data_dict):
+    def __init__(self, parent, node_type, name, data_dict):
         ### parent is the gui object (Layout Display)
         # parent is now layout - which has variable mainwindow to get to the mainwindow
-        # which is passed to LayoutObjects
+        # which is passed to TrackViewNodes
         self.parent = parent
-        self.object_type = object_type
+        self.node_type = node_type
         # device_type exists over all types - inc Gui / VLCB etc.
-        self.device_type = "Gui"
+        self.device_type = "TrackView"
         self.name = name 
         self.data = data_dict
         # state is used to track the state of the object
@@ -42,7 +45,7 @@ class GuiObject:
         # Create a gui_node for displaying in QStandardItemModel
         # Read by device_model for inclusion in device tree
         # TODO - remove this - it should be created in systemexplorer instead
-        self.gui_node = QStandardItem(f"GUI {self.object_type} : {self.name}")
+        #self.gui_node = QStandardItem(f"GUI {self.object_type} : {self.name}")
             
         self.buttons = []
         self.labels = []
@@ -63,7 +66,7 @@ class GuiObject:
     # If changing name then must use this to update QStandardItem
     def set_name (self, new_name):
         self.name = new_name
-        self.gui_node.setText(f"GUI {self.object_type} : {self.name}")
+        #self.gui_node.setText(f"GUI {self.object_type} : {self.name}")
         
     # Sets the device_type
     # If lowercase (default) then sets to lowercase, otherwise keep case
@@ -73,7 +76,7 @@ class GuiObject:
         else:
             self.object_type = new_type
         # Also update the qstandarditem
-        self.gui_node.setText(f"GUI {self.object_type} : {self.name}")
+        #self.gui_node.setText(f"GUI {self.object_type} : {self.name}")
         
     # Gets object type as a string (option to capitalize first letter - as used in menus)
     def get_type_str (self, capitalize=False):
@@ -84,7 +87,7 @@ class GuiObject:
     # Set value from an event
     # Includes own events or triggers from elsewhere
     def set_value_children (self):
-        ## Note set_value_status in LayoutObjects includes additional features
+        ## Note set_value_status in TrackViewNodes includes additional features
         # and can also set label (future improvement)
         #self.state_value = value
 
@@ -99,9 +102,9 @@ class GuiObject:
     # Activate can be called from the GUI (eg node tree)
     # or from a child object
     # Update self and then send a GuiEvent
-    def activate (self, click_type = "GuiObject", index=0 ):
+    def activate (self, click_type = "TrackViewNode", index=0 ):
         # If it's a gui and we have more than 2 states then 0 = prev, 1 = next
-        if click_type == "GuiObject":
+        if click_type == "TrackViewNode":
             if self.num_states > 2 and index == 0:
                 self.state_value -= 1
                 if self.state_value < 1:
@@ -142,21 +145,35 @@ class GuiObject:
         return list_names
         
     def get_gui_node (self):
-        return self.gui_node
+        #return self.gui_node
+        return None
     
     # Check if item is this node (or a child of this node)
     # Returns None (if not found)
     # Or object
     def check_item (self, item):
         # Is it this gui obj
-        if self.gui_node == item:
-            return (self)
+        #if self.gui_node == item:
+        #    return (self)
         # Is it a button
         for i in range (0, len(self.buttons)):
             if self.buttons[i].gui_node == item:
                 return (self.buttons[i])
         # Is it a label
+        # Is it a label
         for i in range (0, len(self.labels)):
+            if self.labels[i].gui_node == item:
+                return (self.labels[i])
+        return None
+        
+    def add_button (self, button_type, settings, pos=(5,5)):
+        self.buttons.append (TrackViewButton(self, pos, button_type, settings))
+        #self.gui_node.appendRow(self.buttons[-1].get_gui_node ())
+        
+    # Paint (Draw) all objects on painter within layoutdisplay
+    def paint (self, painter):
+        for label in self.labels:
+            label.draw(painter)
             if self.labels[i].gui_node == item:
                 return (self.labels[i])
         return None
@@ -213,12 +230,12 @@ class GuiObject:
         
     # Here pos is optional so it's moved to the end
     def add_label (self, label_type, settings, pos=(5,5)):
-        self.labels.append (LayoutLabel(self, pos, label_type, settings))
-        self.gui_node.appendRow(self.labels[-1].get_gui_node())
+        self.labels.append (TrackViewLabel(self, pos, label_type, settings))
+        #self.gui_node.appendRow(self.labels[-1].get_gui_node())
         
     def add_button (self, button_type, settings, pos=(5,5)):
-        self.buttons.append (LayoutButton(self, pos, button_type, settings))
-        self.gui_node.appendRow(self.buttons[-1].get_gui_node ())
+        self.buttons.append (TrackViewButton(self, pos, button_type, settings))
+        #self.gui_node.appendRow(self.buttons[-1].get_gui_node ())
         
     # Paint (Draw) all objects on painter within layoutdisplay
     def paint (self, painter):

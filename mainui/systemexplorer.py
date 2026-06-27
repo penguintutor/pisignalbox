@@ -7,15 +7,16 @@ from PySide6.QtCore import Qt, QTimer, QSize, QPoint
 from PySide6.QtWidgets import QMenu, QDialog, QFileDialog, QMessageBox
 from PySide6.QtGui import QStandardItemModel, QStandardItem
 from core import device_model, event_bus
-from layout import GuiObject, LayoutObject, LayoutButton, LayoutLabel
+#from layout import TrackViewNode, TrackViewNode, LayoutButton, LayoutLabel
+from trackview import TrackViewNode, TrackViewElement, TrackViewButton, TrackViewLabel
 from pyvlcb import VLCB
 from device import device_manager, VLCBNode, VLCBEv
-from layout import layout_manager
+from trackview import track_view_manager
 # This will replace device_model in future
-#from layout import layout_manager
+#from trackview import track_view_manager
 
 # Note: hardware = vlcb (or device)
-# layout = GuiObject (and below)
+# layout = TrackViewNode (and below)
 
 class SystemExplorer:
     def __init__(self, parent):
@@ -55,8 +56,8 @@ class SystemExplorer:
             self.add_hardware_node(node)
             
         # --- Layout Pass ---
-        for gui_obj in layout_manager.get_all_nodes():
-            self.add_gui_node(gui_obj)
+        for track_view_node in track_view_manager.get_all_nodes():
+            self.add_track_view_node(track_view_node)
 
     def _build_backbone(self):
         """Creates the permanent top-level categories."""
@@ -93,7 +94,7 @@ class SystemExplorer:
         # Add the fully built Node (with its children) to the root category
         self.hardware_root.appendRow(node_item)
 
-    def add_gui_node(self, node):
+    def add_track_view_node(self, node):
         """Creates a Node row and its children."""
         # Create the Node Item using its built-in string representation
         node_item = QStandardItem(str(node))
@@ -174,7 +175,7 @@ class SystemExplorer:
 
         # If an entirely new node added to the gui
         if event.get_attr("action") == "new_node":
-            self.add_gui_node(event.get_node_object())
+            self.add_track_view_node(event.get_node_object())
 
         elif event.get_attr("action") == "update_node":
             # actual node from the event
@@ -186,7 +187,7 @@ class SystemExplorer:
                 node_item.setText(str(node_object))
             # otherwise it's a new object (node_id changed)
             else:
-                self.add_gui_node(node_object)
+                self.add_track_view_node(node_object)
 
     def on_device_event(self, event):
         """Updates the tree instantly when hardware changes."""
@@ -268,7 +269,7 @@ class SystemExplorer:
         # Create a context Menu
         menu = QMenu()
         # different menu depending upon node type
-        if isinstance(self.selected_node, GuiObject) or isinstance(self.selected_node, LayoutObject):
+        if isinstance(self.selected_node, TrackViewNode) or isinstance(self.selected_node, TrackViewNode):
             edit_action = menu.addAction("Edit")
         else:
             edit_action = None
@@ -278,8 +279,8 @@ class SystemExplorer:
             # Which type of node is this?
             #print (f"Selected node is {type(self.selected_node)}")
             # Methods to launch the edit are in main window / ui_layout Mixin
-            if isinstance(self.selected_node, GuiObject):
-                self.parent.edit_dialog_guiobject(self.selected_node)
+            if isinstance(self.selected_node, TrackViewNode):
+                self.parent.edit_dialog_trackviewnode(self.selected_node)
             elif isinstance(self.selected_node, LayoutButton):
                 self.parent.edit_dialog_layoutbutton(self.selected_node)
             elif isinstance(self.selected_node, LayoutLabel):
@@ -310,8 +311,8 @@ class SystemExplorer:
         if self.selected_node == None:
             return
         # If gui / layout object
-        if isinstance(self.selected_node, GuiObject):
-            self.node_table_show_gui_node(self.selected_node)
+        if isinstance(self.selected_node, TrackViewNode):
+            self.node_table_show_track_view_node(self.selected_node)
             # If num states < 2 then no button
             if self.selected_node.num_states < 2:
                 self.update_node_buttons (None, None)
@@ -322,9 +323,9 @@ class SystemExplorer:
             else:
                 self.update_node_buttons ("Prev", "Next")
         # Or it's a layoutobject (button / label)
-        elif isinstance(self.selected_node, LayoutObject):
+        elif isinstance(self.selected_node, TrackViewElement):
             # new item for child is [parent, type, pos]
-            self.node_table_show_gui_child(self.selected_node)
+            self.node_table_show_track_view_element(self.selected_node)
             # Typically GUI children will say Toggle (for a label), or value for a button
             self.update_node_buttons (self.selected_node.get_action_type(), None)
         elif isinstance(self.selected_node, VLCBNode):
@@ -401,7 +402,7 @@ class SystemExplorer:
             self.ui.evButtonOff.setText(off_text)
             self.ui.evButtonOff.show()
 
-    # Ev clicked off button - also used for "next" when guiobject has multiple
+    # Ev clicked off button - also used for "next" when trackviewnode has multiple
     def ev_clicked_off (self):
         # None selected (shouldn't normally be the case as buttons disabled)
         if self.selected_node == None:
@@ -409,8 +410,8 @@ class SystemExplorer:
         #print (f"Selected {self.selected_node}")
         if type(self.selected_node) is VLCBEv:
             self.api.start_request(self.api.vlcb.accessory_command(self.selected_node.node.node_id, self.selected_node.get_en(), False))
-        elif type(self.selected_node) is GuiObject:
-            self.selected_node.activate("GuiObject", 1)
+        elif type(self.selected_node) is TrackViewNode:
+            self.selected_node.activate("TrackViewNode", 1)
         else:
             self.selected_node.activate()
 
@@ -421,13 +422,13 @@ class SystemExplorer:
         #print (f"Selected {self.selected_node}")
         if type(self.selected_node) is VLCBEv:
             self.api.start_request(self.api.vlcb.accessory_command(self.selected_node.node.node_id, self.selected_node.get_en(), True))
-        elif type(self.selected_node) is GuiObject:
-            self.selected_node.activate("GuiObject", 0)
+        elif type(self.selected_node) is TrackViewNode:
+            self.selected_node.activate("TrackViewNode", 0)
         else:
             self.selected_node.activate()
 
     # Update table for GUI node
-    def node_table_show_gui_node (self, node_item):
+    def node_table_show_track_view_node (self, node_item):
         self.ui.tableLabel.setText("GUI Node:")
         item = self.ui.nodeTable.verticalHeaderItem(0)
         item.setText("Name:")
@@ -443,7 +444,7 @@ class SystemExplorer:
         item = self.ui.nodeTable.item(0,0)
         item.setText(node_item.name)
         item = self.ui.nodeTable.item(1,0)
-        item.setText(node_item.object_type)
+        item.setText(node_item.node_type)
         item = self.ui.nodeTable.item(2,0)
         item.setText(str(node_item.num_states))
         item = self.ui.nodeTable.item(3,0)
@@ -452,7 +453,7 @@ class SystemExplorer:
         item.setText("")
 
     # Update table for gui child
-    def node_table_show_gui_child (self, node_item):
+    def node_table_show_track_view_element (self, node_item):
         self.ui.tableLabel.setText("GUI Node Object:")
         item = self.ui.nodeTable.verticalHeaderItem(0)
         item.setText("GUI Node:")

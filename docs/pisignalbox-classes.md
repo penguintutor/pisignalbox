@@ -37,8 +37,8 @@ Creates dialogs based on the following ui files
 
 ### GUI Objects
 
-* GuiObject (Groups LayoutObjects into a GuiObject)
-* LayoutObject (Parent class for following classes)
+* TrackViewNode (Groups TrackViewNodes into a TrackViewNode)
+* TrackViewNode (Parent class for following classes)
 * LayoutButton
 * LayoutDialog
 * LayoutDisplay

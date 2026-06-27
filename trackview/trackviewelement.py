@@ -1,5 +1,5 @@
 # This is an abstract class - used for creating LayoutButton or LayoutLabel
-# Layout Objects are anything on the layout that can display data and/or trigger events
+# TrackViewElements are anything on the layout that can display data and/or trigger events
 # Typically labels or buttons, can be moved in relation to the layout
 
 # position is relative to top left of the parent (QLabel)
@@ -12,8 +12,8 @@ from PySide6.QtGui import QMouseEvent, QPixmap, QColor, QPainter, QFont, QBrush
 from PySide6.QtCore import Qt, QPoint, QSize
 
 # Note the parent is the parent of the gui where it's displayed
-# So not guiobjects which typically owns these, but typically LayoutDisplay
-class LayoutObject:
+# So not trackviewnodes which typically owns these, but typically LayoutDisplay
+class TrackViewElement:
     def __init__ (self, parent, pos):
         self.parent = parent
         # Layout display is the parent of the gui object

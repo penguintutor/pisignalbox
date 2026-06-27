@@ -10,10 +10,10 @@ from PySide6.QtGui import QStandardItemModel, QStandardItem
 from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget, QMainWindow
 from PySide6.QtGui import QMouseEvent, QPixmap, QColor, QPainter, QFont, QPen
 from PySide6.QtCore import Qt, QPoint, QSize
-from .layoutobject import LayoutObject
+from .trackviewelement import TrackViewElement
 
 # for type="text" then settings must include "text":"Text to display"
-class LayoutLabel (LayoutObject):
+class TrackViewLabel (TrackViewElement):
     def __init__ (self, parent, pos, label_type, settings = {}):
         super().__init__(parent, pos)
         self.label_type = label_type
@@ -84,7 +84,7 @@ class LayoutLabel (LayoutObject):
         return self.click_value
 
     # Activate on a label is normally a toggle
-    # activate sends to parent (guiobject)
+    # activate sends to parent (trackviewnode)
     # This allows parent to set other objects as required
     # note that will call back to activate_value which get the value
     def activate (self):
@@ -107,7 +107,7 @@ class LayoutLabel (LayoutObject):
     def to_dict (self, guiobj):
         return {
             'object': "label",
-            'guiobject': guiobj,
+            'trackviewnode': guiobj,
             'pos': self.pos,
             'label_type': self.label_type,
             'settings': self.settings

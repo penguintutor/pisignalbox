@@ -11,7 +11,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QIntValidator
 from core import device_model
 from device import device_manager
-from layout import layout_manager
+from trackview import track_view_manager
 from loco import loco_manager
 from automationrule import AutomationRule
 from automationsequence import AutomationStep, AutomationSequence
@@ -300,7 +300,7 @@ class AutomationStepDialog(QDialog):
         
         # if  current type has changed then generate node list
         if self.current_row_value[1] != "Gui":
-            node_items = ["Select Node"] + layout_manager.get_nodes_names("Gui", null_events=False)
+            node_items = ["Select Node"] + track_view_manager.get_nodes_names("Gui", null_events=False)
             # if no nodes then just show NA
             if node_items == ["Select Node"]:
                 node_items = ["NA"]
@@ -313,7 +313,7 @@ class AutomationStepDialog(QDialog):
             self.rows.set_combo_text(2, device_manager.key_to_name(self.step['data'].get('node_id'), "Gui"))
 
         # Node selection is populated - check for a value
-        selected_node = layout_manager.name_to_key(self.rows.get_combo_text(2))
+        selected_node = track_view_manager.name_to_key(self.rows.get_combo_text(2))
         # If this was new and not loaded or moved back to "Select Node" then return here - need to select node first
         if selected_node == None or selected_node == "Select Node" or selected_node == "NA":
             self.current_row_value[2] = "Select Node"
@@ -325,13 +325,13 @@ class AutomationStepDialog(QDialog):
         self.rows.show_hide_row(3, True, "Action:")
         if selected_node != self.current_row_value[2]:
             # node is different to current - so update action list
-            action_items = ["Select Action"] + layout_manager.get_events(selected_node, "Gui")    
+            action_items = ["Select Action"] + track_view_manager.get_events(selected_node, "Gui")    
             if action_items == ["Select Action"]:
                 action_items = ["NA"]
             self.rows.combo_add_items(3, action_items)
 
         if self.load_progress == "load":
-            self.rows.set_combo_text(3, layout_manager.key_to_name(self.step['data'].get('event'), "Gui"))
+            self.rows.set_combo_text(3, track_view_manager.key_to_name(self.step['data'].get('event'), "Gui"))
 
         self.current_row_value[2] = selected_node
         
@@ -828,7 +828,7 @@ class AutomationStepDialog(QDialog):
         if node == None or node == "Select Node" or node == "NA":
             QMessageBox.warning(self, "Invalid Node", "Please select a valid node.")
             return None
-        data_dict['node_id'] = layout_manager.name_to_key(node)
+        data_dict['node_id'] = track_view_manager.name_to_key(node)
         action = self.rows.get_combo_text(3) 
         if action == None or action == "Select Action" or action == "NA":
             QMessageBox.warning(self, "Invalid Action", "Please select a valid action.")

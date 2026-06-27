@@ -4,7 +4,7 @@ import os
 
 from pyvlcb import VLCB, VLCBformat, VLCBopcode
 from loco import Loco
-from events import GuiObject
+from events import TrackViewNode
 from core import device_model
 from loco import loco_manager
                 
@@ -33,7 +33,7 @@ class TestDeviceModel(unittest.TestCase):
         
     def test_add_gui_node (self):
         gui_objects = []
-        gui_objects.append(GuiObject(None, "Point", "Test point 1", {}))
+        gui_objects.append(TrackViewNode(None, "Point", "Test point 1", {}))
         device_model.add_gui_node(gui_objects[-1])
         # Retrieve the gui_node
         this_node = device_model.get_gui_node(0)

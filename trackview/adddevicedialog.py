@@ -1,5 +1,7 @@
 """ Add new device - typicaly called from edit layout menu
 """
+# Todo - is this still used? perhaps delete or move to device
+# Or is this a gid_object (device???)
 
 import sys
 from PySide6.QtWidgets import (

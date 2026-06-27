@@ -2,7 +2,7 @@
 # and then other buttons etc.
 # This is a subclass of a QLabel class (which is used to house the image)
 
-# The components that are placed on the layoutdisplay are based on guiobjects - which in turn are layoutobjects
+# The components that are placed on the layoutdisplay are based on track_view_nodes - which in turn are layoutobjects
 
 # This is ui.layoutDisplayLabel
 
@@ -11,20 +11,20 @@ import json
 from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget, QMainWindow
 from PySide6.QtGui import QMouseEvent, QPixmap, QColor, QPainter, QFont, QPen, QBrush, QCursor, QImage
 from PySide6.QtCore import Qt, QPoint, QSize, QRect
-from layout import Layout
-from .layoutlabel import LayoutLabel
-from .layoutbutton import LayoutButton
-from .guiobject import GuiObject
+#from layout import Layout
+from .trackviewlabel import TrackViewLabel
+from .trackviewbutton import TrackViewButton
+from .trackviewnode import TrackViewNode
 from core import device_model
 
 
-class LayoutDisplay(QLabel):
+class TrackViewDisplay(QLabel):
     def __init__(self, parent):
         super().__init__(parent)
         
         # Main window is not known here (as parent is within .ui) - store when passing railway / layout
         self.mainwindow = None
-        self.railway = None		# Railway is the layout class - known as railway for consistancy with mw and avoid conflict with layout
+        self.layout = None		# Railway is the layout class - known as railway for consistancy with mw and avoid conflict with layout
         
         self.setMouseTracking(True)  # Enable mouse tracking even when no button is pressed
         
@@ -38,9 +38,9 @@ class LayoutDisplay(QLabel):
         # so we use same size for pixmap and status images
         self.canvas_size = QSize(200, 200)
 
-        # All buttons / labels etc. have been moved to railway.guiobjects
+        # All buttons / labels etc. have been moved to railway.track_view_nodes
         # Contains all the objects to display
-        # buttons and labels have been moved into guiobjects
+        # buttons and labels have been moved into track_view_nodes
 
         # Mode is control or edit
         self.mode = "control"
@@ -66,7 +66,14 @@ class LayoutDisplay(QLabel):
         brush.setStyle(Qt.SolidPattern)
         painter.setBrush(brush)
         
-        for object in self.railway.guiobjects:
+        ######## TODO
+        ## TODO
+        ######## TODO
+        # Temp disabled showing the elements to establish relationships 
+        # and get the QTreeView working correctly first
+        # Return to HERE to reenable the display view
+
+        for object in self.layout.track_view_nodes:
             object.paint(painter)
             
         # If in edit mode then show the cross
@@ -87,14 +94,14 @@ class LayoutDisplay(QLabel):
     # Set the layout - also set the mainwindow
     def set_layout (self, mainwindow, layout):
         self.mainwindow = mainwindow
-        self.railway = layout
+        self.layout = layout
         # Load the objects
         self.update()
         
           
 
     def load_image (self):
-        image_file = self.railway.get_layout_image()
+        image_file = self.layout.get_layout_image()
         self.canvas = QPixmap(image_file)
         if self.canvas.isNull():
             print (f"Error Failed to load image {image_file}")
@@ -177,9 +184,9 @@ class LayoutDisplay(QLabel):
         # set distance to a value far beyond any reasonable range (1000)
         # saves needing to test for a null value
         nearest_distance = 1000
-        for guiobject in self.railway.guiobjects:
+        for trackviewnode in self.layout.track_view_nodes:
             # result is None if no matches or (object, distance)
-            result = guiobject.nearestToClick(click_pos, types)
+            result = trackviewnode.nearestToClick(click_pos, types)
             if result == None:
                 continue
             if result[1] < nearest_distance:

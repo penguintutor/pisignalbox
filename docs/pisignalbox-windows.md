@@ -29,7 +29,7 @@ Launches the following dialogs (part of MainWindow)
 
 
 ### ui_devices
-- Calls dialogs from ui_layout - eg. edit_dialog_guiobject, edit_dialog_layoutbutton, edit_dialog_layoutlabel()
+- Calls dialogs from ui_layout - eg. edit_dialog_trackviewnode, edit_dialog_layoutbutton, edit_dialog_layoutlabel()
 
 
 ### ui_layout
@@ -38,7 +38,7 @@ Launches the following dialogs (part of MainWindow)
 
 - ImageExistDialog
 - edit_dialog_layoutbutton - Add / edit layout buttons - called from MainWindow (menu) or ui_devices (editgbuttondialog.ui)
-- edit_dialog_guiobject - Add / edit layout device - called from MainWindow (menu) or ui_devices (editguidialog.ui)
+- edit_dialog_trackviewnode - Add / edit layout device - called from MainWindow (menu) or ui_devices (editguidialog.ui)
 - edit_dialog_layoutlabel - Add / edit layout labels - called from MainWindow (menu) or ui_devices (editglabeldialog.ui)
 
 

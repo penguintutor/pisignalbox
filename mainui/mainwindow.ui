@@ -709,7 +709,7 @@
        </widget>
       </item>
       <item>
-       <widget class="LayoutDisplay" name="layoutDisplayLabel">
+       <widget class="TrackViewDisplay" name="layoutDisplayLabel">
         <property name="font">
          <font>
           <weight>75</weight>
@@ -734,7 +734,7 @@
      <x>0</x>
      <y>0</y>
      <width>945</width>
-     <height>24</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -868,9 +868,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>LayoutDisplay</class>
+   <class>TrackViewDisplay</class>
    <extends>QLabel</extends>
-   <header>layoutdisplay.py</header>
+   <header>trackviewdisplay.py</header>
   </customwidget>
  </customwidgets>
  <resources/>

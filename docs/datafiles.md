@@ -51,7 +51,7 @@ The current layout is defined in settings and loaded from MainWindow based on th
 ### Layout file details
 
 - title
-- guiobjects (eg. points / labels)
+- trackviewnodes (eg. points / labels)
 - layoutimage (image file stored in the layouts directory)
 
 #### Buttons and labels

@@ -15,9 +15,9 @@ from PySide6.QtUiTools import QUiLoader
 from pathlib import Path 
 from core import device_model, event_bus
 from imageexistdialog import ImageExistDialog
-from .layoutdialog import LayoutDialog
+from layout import LayoutDialog
 
-class UILayoutMixin:
+class UITrackViewMixin:
 
     def change_layout_dialog (self):
         layout_dialog = LayoutDialog(self, self.data_dir, self.dirs['layouts'], self.files['layouts'], self.settings)
@@ -28,9 +28,9 @@ class UILayoutMixin:
             
         # Get the new Layout filename
         new_filename = layout_dialog.selected_layout
-        self.railway.load_file(new_filename)
+        self.layout.load_file(new_filename)
         
-        self.ui.layoutDisplayLabel.set_layout(self, self.railway)
+        self.ui.layoutDisplayLabel.set_layout(self, self.layout)
         # Update the layout display
         # Includes load layout background image
         # and UI objects
@@ -55,7 +55,7 @@ class UILayoutMixin:
         
         # If the helper returns a valid filename, update the railway layout
         if final_filename:
-            self.railway.set_layout_image(final_filename)
+            self.layout.set_layout_image(final_filename)
             self.ui.layoutDisplayLabel.load_image()
 
 
@@ -127,7 +127,7 @@ class UILayoutMixin:
             #self.ui.menuEditLayout.setVisible(False)
             self.ui.menuEditLayoutAction.setVisible(False)
             # When switching back to control from edit then save config
-            self.railway.save_file()
+            self.layout.save_file()
 
     def edit_dialog_layoutbutton (self, selected_node):
         """ Dialog for creating and editing Layout Buttons
@@ -218,7 +218,7 @@ class UILayoutMixin:
 
 
     ## Setup Dialog for appropriate object type
-    def edit_dialog_guiobject (self, selected_node):
+    def edit_dialog_trackviewnode (self, selected_node):
         """ Setup dialog for add / edit GUI object  (device)
         """
         # Current object - for easy ref

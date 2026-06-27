@@ -7,7 +7,7 @@ from PySide6.QtGui import QStandardItemModel, QStandardItem
 from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget, QMainWindow
 from PySide6.QtGui import QMouseEvent, QPixmap, QColor, QPainter, QFont, QBrush
 from PySide6.QtCore import Qt, QPoint, QSize
-from .layoutobject import LayoutObject
+from .trackviewelement import TrackViewElement
 
 # button_type - eg. circle / square / diamond / image
 
@@ -26,7 +26,7 @@ from .layoutobject import LayoutObject
 # click_value - only used if click_type = "value" - response to click (if not supplied set to index)
 
 
-class LayoutButton (LayoutObject):
+class TrackViewButton (TrackViewElement):
     def __init__ (self, parent, pos, button_type, settings = {}):
         super().__init__(parent, pos)
         self.button_type = button_type
@@ -60,7 +60,7 @@ class LayoutButton (LayoutObject):
         # If not then takes default 0 from constructor
         # Index is used if we want an out-of-sequence button operation
         # If this is implemented then may need to consider setting for
-        # all buttons on a GuiObject
+        # all buttons on a TrackViewNode
         if ('index' in settings.keys()):
             self.index = settings['index']
 
@@ -79,7 +79,7 @@ class LayoutButton (LayoutObject):
         # Also update the qstandarditem
         #self.gui_node.setText(f"GUI {self.object_type} : {self.name}")
         
-    # activate sends to parent (guiobject)
+    # activate sends to parent (trackviewnode)
     # This allows parent to set other objects as required
     # note that will call back to activate_value which get the value
     def activate (self):
@@ -119,7 +119,7 @@ class LayoutButton (LayoutObject):
     def to_dict (self, guiobj):
         return {
             'object': "button",
-            'guiobject': guiobj,
+            'trackviewnode': guiobj,
             'pos': self.pos,
             'button_type': self.button_type,
             'settings': self.settings

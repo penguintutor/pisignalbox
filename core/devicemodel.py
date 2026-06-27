@@ -72,7 +72,7 @@ class DeviceModel(QObject):
 
     # Return Gui object matching name
     # Or return None
-    def get_guiobject_name (self, name):
+    def get_trackviewnode_name (self, name):
         for node in self.other_nodes['Gui']:
             if node.name == name:
                 return node

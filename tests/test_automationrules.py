@@ -8,7 +8,7 @@ from PySide6.QtWidgets import QApplication
 
 from pyvlcb import VLCB, VLCBformat, VLCBopcode
 from loco import Loco
-from layout import GuiObject
+from trackview import TrackViewNode
 from core import device_model
 
 from automationrule import AutomationRule

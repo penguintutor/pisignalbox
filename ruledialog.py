@@ -6,7 +6,7 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from core import device_model, event_bus
 from device import device_manager
-from layout import layout_manager
+from trackview import track_view_manager
 
 
 class RuleDialog(QDialog):
@@ -163,7 +163,7 @@ class RuleDialog(QDialog):
             if selected_type == "VLCB":
                 nodes = device_manager.get_nodes_names()
             elif selected_type == "User Interface" or selected_type == "Gui":
-                nodes = layout_manager.get_nodes_names()
+                nodes = track_view_manager.get_nodes_names()
             # If there are no devices of this type
             else:
                 device_model.get_nodes_names(selected_type)
@@ -216,8 +216,8 @@ class RuleDialog(QDialog):
                 node_key = device_manager.name_to_key(selected_node)
                 events = device_manager.get_events(node_key)
             elif selected_type == "User Interface" or selected_type == "Gui":
-                node_key = layout_manager.name_to_key(selected_node)
-                events = layout_manager.get_events(node_key)
+                node_key = track_view_manager.name_to_key(selected_node)
+                events = track_view_manager.get_events(node_key)
             if events == []:
                 events = ["NA"]
         if events != ["NA"]:
@@ -261,8 +261,8 @@ class RuleDialog(QDialog):
                 node_key = device_manager.name_to_key(selected_node)
                 events = device_manager.get_events(node_key)
             elif selected_type == "User Interface" or selected_type == "Gui":
-                node_key = layout_manager.name_to_key(selected_node)
-                events = layout_manager.get_events(node_key)
+                node_key = track_view_manager.name_to_key(selected_node)
+                events = track_view_manager.get_events(node_key)
 
             if events == []:
                 events = ["NA"]

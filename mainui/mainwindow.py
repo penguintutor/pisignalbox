@@ -5,13 +5,16 @@ from PySide6.QtCore import QTimer, QCoreApplication, Signal, QThreadPool, Qt, QP
 from PySide6.QtWidgets import QApplication, QMainWindow, QAbstractItemView, QMenu, QLineEdit, QDialog, QColorDialog, QFileDialog, QMessageBox, QHeaderView
 from PySide6.QtGui import QPixmap, QImage, QPalette, QColor, QFont, QResizeEvent
 from PySide6.QtUiTools import QUiLoader
-from core import device_model, event_bus
 import core.paths as app_paths
+from core import device_model, event_bus
 from loco import loco_manager
+from trackview import track_view_manager
 from settings import Settings
 from consolewindow import ConsoleWindowUI
 from eventdialog import EventDialog
-from layout import Layout, LayoutDisplay
+#rom layout import Layout, LayoutDisplay
+from layout import Layout
+from trackview import TrackViewDisplay
 from controlloco import ControlLoco
 from apihandler import ApiHandler
 from events import AppEvent
@@ -25,7 +28,7 @@ from automationmanagerdialog import AutomationManagerDialog
 from appvar import AppVar
 # UI code is split into Mixin classes so they can be placed in their own
 # package but access the MainWindow as though native to MainWindow
-from layout import UILayoutMixin, AddDeviceDialog, AddLabelDialog, AddButtonDialog
+from trackview import UITrackViewMixin, AddDeviceDialog, AddLabelDialog, AddButtonDialog
 from loco import UILocoMixin
 #from device import UIDeviceMixin
 from automate import UIAutomateMixin
@@ -40,7 +43,7 @@ url = "http://127.0.0.1:5000/"
 os.path.join(basedir, "data/")
 read_rate = 200
 
-class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin, UIAutomateMixin):
+class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin):
     
     steal_dialog_signal = Signal(int)
     # Handle loco selection
@@ -74,7 +77,7 @@ class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin, UIAutomateMixin):
 
         # Loader used to load the ui files
         loader = QUiLoader()
-        loader.registerCustomWidget(LayoutDisplay)
+        loader.registerCustomWidget(TrackViewDisplay)
         
         # Command line arguments and directory settings
         self.cmd_settings = settings or {}
@@ -247,8 +250,10 @@ class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin, UIAutomateMixin):
         event_bus.load_rules(os.path.join(self.dirs['rules'], "default.json"))
         
         # Pass the layout details to LayoutDisplay to allow it to load other resources
-        # Also pass safe so it can access mainwindow
-        self.ui.layoutDisplayLabel.set_layout(self, self.railway)
+        # Also pass self so it can access mainwindow
+        # Todo what is this doing? Is it required??
+        #self.ui.layoutDisplayLabel.set_layout(self, self.layout)QEs
+        self.ui.layoutDisplayLabel.set_layout(self, self.layout)
         # Includes load layout background image
         # and UI objects
         
@@ -281,9 +286,9 @@ class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin, UIAutomateMixin):
         # can also be used for giving real names to certain items
         # Needs to come after self.ui is loaded
         # Variable is named railway to avoid potential conflict if named layout
-        self.railway = Layout(self, self.dirs['layouts'], self.settings.get_layout_filename())
+        self.layout = Layout(self, self.dirs['layouts'], self.settings.get_layout_filename())
         # pass the layout to the devicemodel
-        device_model.set_layout(self.railway)
+        device_model.set_layout(self.layout)
         
          # Load all locos
         full_path_locos = os.path.join(self.data_dir, self.files['locos'])
@@ -317,7 +322,7 @@ class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin, UIAutomateMixin):
         pass
 
     def gui_event (self, gui_event):
-        gui_node = device_model.get_guiobject_name(gui_event.data.get('node'))
+        gui_node = device_model.get_trackviewnode_name(gui_event.data.get('node'))
         if gui_node != None:
             gui_node.set_value(gui_event.data.get('value'))
         self.system_explorer.update_table()
@@ -369,7 +374,7 @@ class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin, UIAutomateMixin):
             # the response is in the form id, text
             response = dialog.get_selected_values()
             # The first "text" is that it's a text style label (allows flexibility for future)
-            self.railway.add_gui_device(response[0], response[1])
+            self.layout.add_gui_device(response[0], response[1])
         
         
     def add_label_dialog (self):
@@ -378,13 +383,13 @@ class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin, UIAutomateMixin):
 
         usually triggered from actionAddLabel (mainwindow.ui)
         """
-        dialog = AddLabelDialog(self.railway.gui_object_names())
+        dialog = AddLabelDialog(self.layout.gui_object_names())
         if dialog.exec():
             # the response is in the form id, text
             response = dialog.get_selected_values()
             #print(f"Selected value: {text}")
             # The first "text" is that it's a text style label (allows flexibility for future)
-            self.railway.add_label(response[0], "text", {"text":response[1]})
+            self.layout.add_label(response[0], "text", {"text":response[1]})
         
     def add_button_dialog (self):
         """ Create and launch Add Button dialog
@@ -392,11 +397,11 @@ class MainWindowUI(QMainWindow, UILayoutMixin, UILocoMixin, UIAutomateMixin):
 
         usually triggered from actionAddButton (mainwindow.ui)
         """
-        dialog = AddButtonDialog(self.railway.gui_object_names())
+        dialog = AddButtonDialog(self.layout.gui_object_names())
         if dialog.exec():
             # # the response is in the form id, button_type
             response = dialog.get_selected_values()
-            self.railway.add_button(response[0], response[1], {})
+            self.layout.add_button(response[0], response[1], {})
         
     def event_selection_dialog (self):
         dialog = EventDialog()
