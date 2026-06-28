@@ -41,6 +41,9 @@ class AppVar():
         with self._lock:
             return self._variables.get(variable_name, None)
 
+    def get_variable_names (self):
+        with self._lock:
+            return self._variables.keys()
         
     def set_variable (self, variable_name, new_value, send_event=True):
         # Update within a mutex block

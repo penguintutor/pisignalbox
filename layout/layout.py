@@ -4,8 +4,9 @@
 import json
 import os
 from trackview import TrackViewNode
-from core import device_model
-import core.paths as app_paths
+#import core.paths as app_paths
+from pathlib import Path
+from core import DATA_DIR, RESOURCES_DIR
 from core import event_bus
 from events import GuiEvent
 from trackview import track_view_manager
@@ -20,11 +21,12 @@ from trackview import track_view_manager
 
 class Layout():
     def __init__ (self, mainwindow, layout_dir, layout_file, active=True):
-        #print (f"Creating Layout dir {layout_dir} file {layout_file}")
+        print (f"Creating Layout dir {layout_dir} file {layout_file}")
         self.active = active
         self.mainwindow = mainwindow
         self.layout_file = layout_file
         self.layout_dir = layout_dir
+        self.layout_data = {}
 
         # pass self to track_view_manager so that don't need
         # to double register track_view_nodes
@@ -61,13 +63,19 @@ class Layout():
         if layout_filename != None and layout_filename != "":
             self.layout_file = layout_filename
         if self.layout_file != None:
-            filename = os.path.join(self.layout_dir, self.layout_file)
+            #filename = os.path.join(self.layout_dir, self.layout_file)
+            filename = self.layout_dir / self.layout_file
+            print (f"Layout loading file {filename}")
             try:
                 with open(filename, 'r') as data_file:
                     self.layout_data = json.load(data_file)
-            except:
-                #print (f"No layout file '{filename}' using default values")
+            except FileNotFoundError:
+                print (f"No layout file '{filename}' using default values")
                 self.layout_data = {}
+            except json.JSONDecodeError as e:
+                print (f"Invalid file format for {filename} - {e}")
+            except Exception as e: 
+                print (f"Unknown error loading file {filename} - {e}")
         else:
             self.layout_data = {}
         # If no title (eg. new filename - then set)
@@ -178,7 +186,7 @@ class Layout():
         if 'layoutimage' in self.layout_data:
             return os.path.join(self.layout_dir, self.layout_data['layoutimage'])
         else:
-            return os.path.join(app_paths.RESOURCES_DIR, "nolayout.png")
+            return os.path.join(RESOURCES_DIR, "nolayout.png")
         
     def get_layout_objs_file (self):
         # Returns filename - file may not exist if this is new

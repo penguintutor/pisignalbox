@@ -9,7 +9,7 @@ from PySide6.QtWidgets import QApplication
 from pyvlcb import VLCB, VLCBformat, VLCBopcode
 from loco import Loco
 from trackview import TrackViewNode
-from core import device_model
+from core import device_manager
 
 from automationrule import AutomationRule
 

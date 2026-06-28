@@ -10,7 +10,7 @@ from pyvlcb import VLCB
 from pyvlcb import VLCBformat, VLCBopcode
 from loco import Loco
 from trackview import TrackViewNode
-from core import device_model
+from core import device_manager
 
 from core.appvar import AppVar
 from events import VarEvent

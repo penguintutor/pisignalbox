@@ -5,7 +5,9 @@ from PySide6.QtCore import QTimer, QCoreApplication, Signal, QThreadPool, Qt, QP
 from PySide6.QtWidgets import QApplication, QMainWindow, QAbstractItemView, QMenu, QLineEdit, QDialog, QColorDialog, QFileDialog, QMessageBox, QHeaderView
 from PySide6.QtGui import QPixmap, QImage, QPalette, QColor, QFont, QResizeEvent
 from PySide6.QtUiTools import QUiLoader
-import core.paths as app_paths
+from pathlib import Path
+#import core.paths as app_paths
+from core import DATA_DIR, RESOURCES_DIR
 from core import event_bus
 from loco import loco_manager
 from trackview import track_view_manager
@@ -42,7 +44,7 @@ basedir = os.path.dirname(__file__)
 app_title = "Pi SignalBox"
 
 url = "http://127.0.0.1:5000/"
-os.path.join(basedir, "data/")
+#os.path.join(basedir, "data/")
 read_rate = 200
 
 class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin):
@@ -94,11 +96,12 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin):
         # All data files are relative to this directory
         # Default this is basedir/data
         # Get from paths
-        self.data_dir = app_paths.DATA_DIR
+        self.data_dir = DATA_DIR
             
         # Update all the dirs to add data_dir
         for key, value in dirs.items():
-            self.dirs[key] = os.path.join(self.data_dir, value)
+            #self.dirs[key] = os.path.join(self.data_dir, value)
+            self.dirs[key] = DATA_DIR / value
         
         self.threadpool = QThreadPool()
         self.update_in_progress = False
@@ -144,10 +147,10 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin):
         
 
         # Load the settings file here
-        self.settings = Settings(self, self.data_dir, self.files['settings'])
+        self.settings = Settings(self, self.files['settings'])
 
-        
-        self.ui = loader.load(os.path.join(basedir, "mainwindow.ui"), None)
+        current_dir = Path(__file__).resolve().parent
+        self.ui = loader.load(current_dir / "mainwindow.ui", None)
         self.setWindowTitle(app_title)
         self.loco_window = None
         self.rules_window = None

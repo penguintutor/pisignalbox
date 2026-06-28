@@ -11,11 +11,13 @@ import json
 from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget, QMainWindow
 from PySide6.QtGui import QMouseEvent, QPixmap, QColor, QPainter, QFont, QPen, QBrush, QCursor, QImage
 from PySide6.QtCore import Qt, QPoint, QSize, QRect
+from pathlib import Path
+from core import RESOURCES_DIR
 #from layout import Layout
 from .trackviewlabel import TrackViewLabel
 from .trackviewbutton import TrackViewButton
 from .trackviewnode import TrackViewNode
-from core import device_model
+
 
 
 class TrackViewDisplay(QLabel):
@@ -48,8 +50,11 @@ class TrackViewDisplay(QLabel):
         # Move later to allow for scaling 
         self.close_button_rect = QRect(50, 50, 30, 30)
         
-        basedir = os.path.dirname(__file__)
-        close_image_file = os.path.join(basedir, "close-icon.png")
+        #basedir = os.path.dirname(__file__)
+        #close_image_file = os.path.join(basedir, "resources", "close-icon.png")
+        #basedir = Path(__file__).parent
+
+        close_image_file = RESOURCES_DIR / "close-icon.png"
         self.close_image = QImage (close_image_file)
         
         
@@ -73,6 +78,7 @@ class TrackViewDisplay(QLabel):
         if self.mode == "edit":
             #close_point = QPoint (self.canvas_size.width() - 50, 50)
             # Position rect at top right
+            #print ("TrackViewDisplay Painting close button")
             self.close_button_rect.moveTo(self.canvas_size.width() - 50, self.close_button_rect.y())
             painter.drawImage(self.close_button_rect, self.close_image)
             

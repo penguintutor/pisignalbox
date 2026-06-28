@@ -4,9 +4,10 @@ from PySide6.QtWidgets import (
     QLabel, QComboBox, QPushButton, QHBoxLayout, QWidget, QMessageBox
 )
 from PySide6.QtCore import Qt
-from core import device_model, event_bus
+from core import event_bus
 from device import device_manager
 from trackview import track_view_manager
+from core import global_app_vars
 
 
 class RuleDialog(QDialog):
@@ -166,7 +167,7 @@ class RuleDialog(QDialog):
                 nodes = track_view_manager.get_nodes_names()
             # If there are no devices of this type
             else:
-                device_model.get_nodes_names(selected_type)
+                global_app_vars.get_nodes_names(selected_type)
             if nodes == []:
                 nodes = ["NA"]
         # Don't say select if there are none to select

@@ -11,7 +11,7 @@ from PySide6.QtWidgets import (
     QDialogButtonBox,
 )
 from PySide6.QtUiTools import QUiLoader
-from core import device_model, event_bus
+from core import event_bus
 from ruledialog import RuleDialog
 from events import DeviceEvent, LocoEvent, AppEvent, GuiEvent, TimerEvent
 
@@ -127,11 +127,11 @@ class RulesWindow(QMainWindow):
             #event_type = device_model.get_type_node(event_details['node'])
             # For Device the node name / event name may be user friendly name - so instead get node_id and event_id
             if event_details['type'] == "VLCB":
-                event_dict['node_id'] = device_model.name_to_key(event_details['node'])
+                event_dict['node_id'] = device_manager.name_to_key(event_details['node'])
 #                 print (f"This {event_dict['node_id']}")
 #                 print (f"Event dict {event_dict}")
 #                 print (f"Event details {event_details}")
-                event_dict['event_id'] = device_model.evname_to_evid(event_dict['node_id'], event_details['event'])
+                event_dict['event_id'] = device_manager.evname_to_evid(event_dict['node_id'], event_details['event'])
             # Add reset of details
             event_dict["node"] = event_details['node']
             event_dict["event"] = event_details['event']
@@ -141,8 +141,8 @@ class RulesWindow(QMainWindow):
             action_details = selected_data['action']
             #action_type = device_model.get_type_node(action_details['node'])
             if action_details['type'] == "VLCB":
-                action_dict['node_id'] = device_model.name_to_key(action_details['node'])
-                action_dict['event_id'] = device_model.evname_to_evid(action_dict['node_id'], action_details['event'])
+                action_dict['node_id'] = device_manager.name_to_key(action_details['node'])
+                action_dict['event_id'] = device_manager.evname_to_evid(action_dict['node_id'], action_details['event'])
             # Add reset of details
             action_dict["node"] = action_details['node']
             action_dict["event"] = action_details['event']

@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (
     QDialogButtonBox,
     QLineEdit
 )
-from core import device_model
+
 
 class AddButtonDialog(QDialog):
     def __init__(self, object_names, parent=None):

@@ -9,7 +9,6 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QIntValidator
-from core import device_model
 from device import device_manager
 from trackview import track_view_manager
 from loco import loco_manager
@@ -426,7 +425,7 @@ class AutomationStepDialog(QDialog):
 
         # row may be set to Select Command from defaults
         if self.current_row_value[2] != "Set Variable":
-            variable_list = ["Select Variable"] + device_model.get_variable_names() + ["New Variable"]
+            variable_list = ["Select Variable"] + global_app_vars.get_variable_names() + ["New Variable"]
             self.rows.combo_add_items(3, variable_list)
 
         # If loading existing then select variable
@@ -440,7 +439,7 @@ class AutomationStepDialog(QDialog):
                     # Create the variable but do not give it a value - as that will only be when automation run
                     global_app_vars.add_variable(variable_name, "", False)    
                     # Reload the combo list 
-                    variable_list = ["Select Variable"] + device_model.get_variable_names() + ["New Variable"]
+                    variable_list = ["Select Variable"] + global_app_vars.get_variable_names() + ["New Variable"]
                     self.rows.combo_add_items(3, variable_list)
                 self.rows.set_combo_text (3, variable_name)
         
@@ -463,7 +462,7 @@ class AutomationStepDialog(QDialog):
                 # Create new variable by setting value to ""
                 self.mainwindow.add_variable(new_variable, "", False)
                 # Update menu
-                variable_list = ["Select Variable"] + device_model.get_variable_names() + ["New Variable"]
+                variable_list = ["Select Variable"] + global_app_vars.get_variable_names() + ["New Variable"]
                 self.rows.combo_add_items(3, variable_list)
                 self.rows.set_combo_text(3, new_variable)
             else:
@@ -504,7 +503,7 @@ class AutomationStepDialog(QDialog):
 
         # row may be set to Select Command from defaults
         if self.current_row_value[2] != "Increment Variable":
-            variable_list = ["Select Variable"] + device_model.get_variable_names()
+            variable_list = ["Select Variable"] + global_app_vars.get_variable_names()
             self.rows.combo_add_items(3, variable_list)
 
         # If loading existing then select variable
@@ -605,7 +604,7 @@ class AutomationStepDialog(QDialog):
         self.rows.show_hide_row(3, True, "Variable:")
         if selected_label != self.current_row_value[2]:
             # label is different to current - so update variable list
-            variable_list = ["Select Variable"] + device_model.get_variable_names()
+            variable_list = ["Select Variable"] + global_app_vars.get_variable_names()
             if variable_list == ["Select Variable"]:
                 variable_list = ["NA"]
             self.rows.combo_add_items(3, variable_list)

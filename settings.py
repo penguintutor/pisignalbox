@@ -2,13 +2,15 @@
 # Owned by MainWindow
 import os, sys
 import json
-import core.paths as app_paths
+#import core.paths as app_paths
+from core import DATA_DIR
 from pathlib import Path 
 
 class Settings:
-    def __init__ (self, parent, data_dir, setting_file):
+    def __init__ (self, parent, setting_file):
         self.parent = parent
-        self.data_dir = app_paths.DATA_DIR
+        #self.data_dir = app_paths.DATA_DIR
+        self.data_dir = DATA_DIR
         self.setting_filename = setting_file
         self.settings_dict = {}
         
@@ -19,7 +21,7 @@ class Settings:
     def load_settings (self, filename=None):
         if filename == None:
             filename = self.setting_filename
-        full_path = os.path.join(self.data_dir, filename)
+        full_path = self.data_dir / filename
         try:
             with open(full_path, 'r') as data_file:
                 self.settings_dict = json.load(data_file)
@@ -31,7 +33,7 @@ class Settings:
         self.update_settings ()		# Read in any settings that may have changed
         if filename == None:
             filename = self.setting_filename
-        full_path = os.path.join(self.data_dir, filename)
+        full_path = self.data_dir / filename
         try:
             with open(full_path, 'w') as data_file:
                 json.dump(self.settings_dict, data_file, indent=4)

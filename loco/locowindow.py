@@ -8,7 +8,6 @@ from PySide6.QtGui import QPixmap, QIcon
 from PySide6.QtCore import Qt, QSize
 from .locoentry import LocoEntry
 from .locodialog import LocoDialog
-from core import device_model
 from .locomanager import loco_manager
 
 # parent is required (although could be set to None it should normally be mainwindow)
