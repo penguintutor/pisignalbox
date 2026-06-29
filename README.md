@@ -35,7 +35,7 @@ To setup using virtual environment:
 
 # Upgrade July 2026
 
-Due to a major refactoring and node name change any layout files will need to be updated. To update, run the application choose Tools -> Layout Edit, and then click on the cross to close out of Laout Edit mode. 
+Due to a major refactoring and node name change any layout files before July 2026 will need to be updated. To update, first checkout one of the refactor git commits (eg. refactor-console 733d06d). Then run the application choose Tools -> Layout Edit, and then click on the cross to close out of Layout Edit mode. You can then move to a a newer version.
 
 This will be deprecated in future. 
 
