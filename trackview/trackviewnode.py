@@ -46,7 +46,7 @@ class TrackViewNode:
         # Create a gui_node for displaying in QStandardItemModel
         # Read by device_model for inclusion in device tree
         # TODO - remove this - it should be created in systemexplorer instead
-        #self.gui_node = QStandardItem(f"GUI {self.object_type} : {self.name}")
+        #self.gui_node = QStandardItem(f"GUI {self.node_type} : {self.name}")
             
         self.buttons = []
         self.labels = []
@@ -71,23 +71,23 @@ class TrackViewNode:
     # If changing name then must use this to update QStandardItem
     def set_name (self, new_name):
         self.name = new_name
-        #self.gui_node.setText(f"GUI {self.object_type} : {self.name}")
+        #self.gui_node.setText(f"GUI {self.node_type} : {self.name}")
         
     # Sets the device_type
     # If lowercase (default) then sets to lowercase, otherwise keep case
     def set_type_str (self, new_type, lowercase=True):
         if lowercase == True:
-            self.object_type = new_type.lower()
+            self.node_type = new_type.lower()
         else:
-            self.object_type = new_type
+            self.node_type = new_type
         # Also update the qstandarditem
-        #self.gui_node.setText(f"GUI {self.object_type} : {self.name}")
+        #self.gui_node.setText(f"GUI {self.node_type} : {self.name}")
         
     # Gets object type as a string (option to capitalize first letter - as used in menus)
     def get_type_str (self, capitalize=False):
         if capitalize == True:
-            return self.object_type.capitalize()
-        return self.object_type
+            return self.node_type.capitalize()
+        return self.node_type
         
     # Set value from an event
     # Includes own events or triggers from elsewhere
@@ -188,14 +188,13 @@ class TrackViewNode:
     def type (self):
         return "Gui"
         
-    def object_type (self):
-        return self.object_type
+
     
     def get_save_objects(self):
         data_list = [
                 {
                     'object': "gui",
-                    'type': self.object_type,
+                    'type': self.node_type,
                     'name': self.name,
                     'settings': self.data
                 }

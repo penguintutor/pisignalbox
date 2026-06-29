@@ -21,7 +21,7 @@ from trackview import track_view_manager
 
 class Layout():
     def __init__ (self, mainwindow, layout_dir, layout_file, active=True):
-        print (f"Creating Layout dir {layout_dir} file {layout_file}")
+        #print (f"Layout: Reading Layout dir {layout_dir} file {layout_file}")
         self.active = active
         self.mainwindow = mainwindow
         self.layout_file = layout_file
@@ -65,7 +65,7 @@ class Layout():
         if self.layout_file != None:
             #filename = os.path.join(self.layout_dir, self.layout_file)
             filename = self.layout_dir / self.layout_file
-            print (f"Layout loading file {filename}")
+            #print (f"Layout loading file {filename}")
             try:
                 with open(filename, 'r') as data_file:
                     self.layout_data = json.load(data_file)
@@ -84,10 +84,18 @@ class Layout():
         if 'title' not in self.layout_data:
             self.layout_data['title'] = "Default Layout"
             
+        # Check for old version - this will be removed in future version
+        # Deprecated - remove this in future:
+        if "guiobjects" in self.layout_data:
+            print (f"Layout file {self.layout_file} is for an older version")
+            print ("To upgrade choose Tools -> Layout Edit and then click on close.")
+        
+
         # Load the trackviewnodes from self.layout_data['trackviewnodes']
         # First reset trackviewnodes so we don't add to the end of existing
         self.track_view_nodes = []
         # If no objects in the layout_data then nothing else to do
+        # Deprecated: remove guiobjects reference in future
         if 'trackviewnodes' not in self.layout_data and "guiobjects" not in self.layout_data:
             print (f"No trackviewnodes {self.layout_data}")
             return
@@ -111,6 +119,12 @@ class Layout():
                     track_view_node_name = entry.get('trackviewnode', entry.get("guiobject"))
                     track_view_node_id = self.gui_name_toid(track_view_node_name)
                     self.track_view_nodes[track_view_node_id].add_label(entry['label_type'], entry['settings'], entry['pos'])
+
+            # Now remove the gui_object values - if save then it will save as trackviewnodes
+            # Deprecated - remove in future
+            # If doesn't exist then pop None
+            self.layout_data.pop('guiobjects', None)
+            
             
                 
     def add_track_view_node (self, device_type, device_name):
@@ -199,7 +213,7 @@ class Layout():
         
         # clear out any existing objects
         self.layout_data['trackviewnodes'] = []
-        
+
         for object in self.track_view_nodes:
             self.layout_data['trackviewnodes'].extend(object.get_save_objects())
         

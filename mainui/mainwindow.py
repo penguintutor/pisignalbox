@@ -12,7 +12,7 @@ from core import event_bus
 from loco import loco_manager
 from trackview import track_view_manager
 from settings import Settings
-from consolewindow import ConsoleWindowUI
+from console.consolewindow import ConsoleWindowUI
 from eventdialog import EventDialog
 #rom layout import Layout, LayoutDisplay
 from layout import Layout

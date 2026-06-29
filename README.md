@@ -11,7 +11,6 @@ For more details about VLCB / CBUS see: [PenguinTutor MERG page](https://www.pen
 
 ## Install
 
-
 The GUI requires PySide6.
 
 To install on Raspberry Pi OS Trixie (or later)
@@ -32,6 +31,15 @@ To setup using virtual environment:
     pip install flask
     pip install flask.wtf
     pip install pyserial
+
+
+# Upgrade July 2026
+
+Due to a major refactoring and node name change any layout files will need to be updated. To update, run the application choose Tools -> Layout Edit, and then click on the cross to close out of Laout Edit mode. 
+
+This will be deprecated in future. 
+
+Note: There may be other data upgrades needed in future whilst the code is still under development. 
 
 
 # Development
