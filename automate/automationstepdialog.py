@@ -12,9 +12,9 @@ from PySide6.QtGui import QIntValidator
 from device import device_manager
 from trackview import track_view_manager
 from loco import loco_manager
-from automationrule import AutomationRule
-from automationsequence import AutomationStep, AutomationSequence
-from automationdialogrows import AutomationDialogRows
+from .automationrule import AutomationRule
+from .automationsequence import AutomationStep, AutomationSequence
+from .automationdialogrows import AutomationDialogRows
 from events import LocoEvent
 from core import global_app_vars
 
@@ -300,7 +300,7 @@ class AutomationStepDialog(QDialog):
         
         # if  current type has changed then generate node list
         if self.current_row_value[1] != "Gui":
-            node_items = ["Select Node"] + track_view_manager.get_nodes_names("Gui", null_events=False)
+            node_items = ["Select Node"] + track_view_manager.get_nodes_names(null_events=False)
             # if no nodes then just show NA
             if node_items == ["Select Node"]:
                 node_items = ["NA"]
@@ -313,6 +313,7 @@ class AutomationStepDialog(QDialog):
             self.rows.set_combo_text(2, device_manager.key_to_name(self.step['data'].get('node_id'), "Gui"))
 
         # Node selection is populated - check for a value
+        # Todo - error in AutomationStepDialog
         selected_node = track_view_manager.name_to_key(self.rows.get_combo_text(2))
         # If this was new and not loaded or moved back to "Select Node" then return here - need to select node first
         if selected_node == None or selected_node == "Select Node" or selected_node == "NA":

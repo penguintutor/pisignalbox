@@ -10,7 +10,7 @@ from PySide6.QtCore import QTimer, QSize
 from PySide6.QtWidgets import QMenu, QDialog, QFileDialog, QMessageBox
 from PySide6.QtGui import QPixmap, QImage, QPalette, QColor, QFont, QResizeEvent
 from core import event_bus
-from autolocodialog import AutoLocoDialog
+from automate.autolocodialog import AutoLocoDialog
 
 class UIAutomateMixin:
 

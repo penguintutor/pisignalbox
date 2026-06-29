@@ -26,15 +26,13 @@ from ruleswindow import RulesWindow
 #from device.vlcbev import VLCBEv
 from device import device_manager
 from imageexistdialog import ImageExistDialog
-from automationmanager import AutomationManager
-from automationmanagerdialog import AutomationManagerDialog
+from automate import AutomationManager, AutomationManagerDialog
 from core import global_app_vars
 #from core.appvar import AppVar
 # UI code is split into Mixin classes so they can be placed in their own
 # package but access the MainWindow as though native to MainWindow
 from trackview import UITrackViewMixin, AddDeviceDialog, AddLabelDialog, AddButtonDialog
 from loco import UILocoMixin
-#from device import UIDeviceMixin
 from automate import UIAutomateMixin
 from .systemexplorer import SystemExplorer
 

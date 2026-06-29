@@ -62,13 +62,15 @@ class TrackViewManager(QObject):
                 
     # Get list of nodes by names
     # null_events determines whether to check if the nodes must have events
-    # null_events not currently enabled
     def get_nodes_names(self, null_events=True):
         node_list = []
 
-        node_list.extend(
-            node.name for node in self.active_layout.track_view_nodes
-        )
+        for node in self.active_layout.track_view_nodes:
+            # if no children and don't want (eg. when selecting a child)
+            # skip
+            if null_events == False and node.num_children() < 1:
+                continue
+            node_list.append(node.name)
 
         return node_list
     

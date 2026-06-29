@@ -14,9 +14,9 @@ from PySide6.QtWidgets import (
     QListWidget, QFormLayout, QLineEdit, QSpinBox 
 )
 from PySide6.QtCore import Qt
-from automationrule import AutomationRule
-from automationsequence import AutomationStep, AutomationSequence
-from automationstepdialog import AutomationStepDialog
+from .automationrule import AutomationRule
+from .automationsequence import AutomationStep, AutomationSequence
+from .automationstepdialog import AutomationStepDialog
 
 class AutomationSeqDialog(QDialog):
     def __init__(self, parent, sequence=None):

@@ -14,9 +14,9 @@ from core import device_manager
 
 from core.appvar import AppVar
 from events import VarEvent
-from automationsequence import AutomationSequence, AutomationStep
-from automationstepdialog import AutomationStepDialog
-from automationrule import AutomationRule
+from automate.automationsequence import AutomationSequence, AutomationStep
+from automate.automationstepdialog import AutomationStepDialog
+from automate.automationrule import AutomationRule
 
 # A global QApplication instance is required for signal/slot testing
 app = QApplication.instance() or QApplication(sys.argv)

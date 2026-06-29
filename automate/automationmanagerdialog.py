@@ -7,8 +7,8 @@ from PySide6.QtWidgets import (
     QListWidget
 )
 from PySide6.QtCore import Qt
-from automationseqdialog import AutomationSeqDialog
-from automationmanager import AutomationManager
+from .automationseqdialog import AutomationSeqDialog
+from .automationmanager import AutomationManager
 
 
 class AutomationManagerDialog(QDialog):

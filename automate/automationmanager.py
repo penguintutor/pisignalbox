@@ -5,7 +5,7 @@ from PySide6.QtCore import Qt, QTimer, QObject, QThreadPool, QRunnable, Signal, 
 from PySide6.QtWidgets import QMessageBox
 from core import Worker, WorkerSignals
 from core import global_app_vars
-from automationsequence import AutomationSequence
+from .automationsequence import AutomationSequence
 
 
 

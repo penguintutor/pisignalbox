@@ -58,6 +58,11 @@ class TrackViewNode:
         self.state_value = state_value
 
 
+    # Return the number of children (eg. buttons & labels)
+    def num_children(self):
+        return len(self.buttons) + len(self.labels)
+
+
     # Return all children uses the button  labels list position as an index (like ev_id)
     def get_children_dict(self):
         child_objs = {("button", i): btn for i, btn in enumerate(self.buttons)}

@@ -4,7 +4,7 @@ import json
 import threading
 from core import event_bus
 from events import LocoEvent, LogEvent
-from automationrule import AutomationRule
+from .automationrule import AutomationRule
 from core import WorkerSignals
 from core import global_app_vars
 

@@ -11,7 +11,7 @@ from loco import Loco
 from trackview import TrackViewNode
 from core import device_manager
 
-from automationrule import AutomationRule
+from automate.automationrule import AutomationRule
 
 # A global QApplication instance is required for signal/slot testing
 app = QApplication.instance() or QApplication(sys.argv)

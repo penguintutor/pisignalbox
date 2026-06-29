@@ -1,8 +1,8 @@
 from PySide6.QtCore import QRunnable, Slot, Signal, QObject, QThread, QThreadPool
 import time
 import json
-from automationstep import AutomationStep
-from automationrule import AutomationRule
+from .automationstep import AutomationStep
+from .automationrule import AutomationRule
 from core import WorkerSignals
 from events import LogEvent
 from core import event_bus
