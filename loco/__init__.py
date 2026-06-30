@@ -9,3 +9,4 @@ from .locoentry import LocoEntry
 from .locowindow import LocoWindow
 from .locodialog import LocoDialog
 from .stealdialog import StealDialog
+from .controlloco import ControlLoco

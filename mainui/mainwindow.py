@@ -9,15 +9,15 @@ from pathlib import Path
 #import core.paths as app_paths
 from core import DATA_DIR, RESOURCES_DIR
 from core import event_bus
-from loco import loco_manager
 from trackview import track_view_manager
+from loco import loco_manager
 from settings import Settings
 from console.consolewindow import ConsoleWindowUI
 from eventdialog import EventDialog
 #rom layout import Layout, LayoutDisplay
 from layout import Layout
 from trackview import TrackViewDisplay
-from controlloco import ControlLoco
+from loco import ControlLoco
 from core import ApiHandler
 from events import AppEvent
 from loco import LocoWindow, StealDialog
