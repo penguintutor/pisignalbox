@@ -108,15 +108,15 @@ class SystemExplorer:
         
         # # Loop through the Node's Labels and Button objects and add as children
         # # Iterate over the values of the events dictionary to get the VLCBev objects
-        child_objs = node.get_children_dict()
-        for (child_type, child_idx), child_obj in child_objs.items():
-             self._add_child_to_gui_node(node_item, node.node_id, child_obj, (child_type, child_idx))
+        element_objs = node.get_elements_dict()
+        for (elment_type, element_idx), element_obj in element_objs.items():
+             self._add_element_to_gui_node(node_item, node.node_id, element_obj, (elment_type, element_idx))
             
         # Add the fully built Node (with its children) to the root category
         self.layout_root.appendRow(node_item)
 
     # Also need obj type (button / label)
-    def _add_child_to_gui_node(self, parent_node_item, node_id, child_obj, idx):
+    def _add_element_to_gui_node(self, parent_node_item, node_id, child_obj, idx):
         """Helper to create child rows."""
         # Assuming Button and Label objects have a __str__ method
 

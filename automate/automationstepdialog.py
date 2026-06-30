@@ -137,7 +137,7 @@ class AutomationStepDialog(QDialog):
         # if  current type has changed then generate node list
         #print (f"Current_row _values {self.current_row_value}")
         if self.current_row_value[1] != "VLCB":
-            node_items = ["Select Node"] + device_manager.get_nodes_names("VLCB", null_events=False)
+            node_items = ["Select Node"] + device_manager.get_nodes_names(null_events=False)
             # if no nodes then just show NA
             if node_items == ["Select Node"]:
                 node_items = ["NA"]
@@ -148,10 +148,10 @@ class AutomationStepDialog(QDialog):
         # If loading then set
         if self.load_progress == "load":
             # Set row 2 (node) based on loaded step
-            self.rows.set_combo_text(2, device_manager.key_to_name(self.step['data'].get('node_id'), "VLCB"))
+            self.rows.set_combo_text(2, device_manager.key_to_name(self.step['data'].get('node_id')))
 
         # Node selection is populated - check for a value
-        selected_node = device_manager.name_to_key(self.rows.get_combo_text(2), "VLCB")
+        selected_node = device_manager.name_to_key(self.rows.get_combo_text(2))
         # If this was new and not loaded or moved back to "Select Node" then return here - need to select node first
         if selected_node == None or selected_node == "Select Node" or selected_node == "NA":
             self.current_row_value[2] = "Select Node"
@@ -164,7 +164,7 @@ class AutomationStepDialog(QDialog):
         self.rows.show_hide_row(3, True, "Event:")
         if self.current_row_value[2] != selected_node:
             # node is different to current - so update event list
-            event_items = ["Select Event"] + device_manager.get_events(selected_node, "VLCB")    
+            event_items = ["Select Event"] + device_manager.get_events(selected_node)    
             if event_items == ["Select Event"]:
                 event_items = ["NA"]
             self.rows.combo_add_items(3, event_items)
@@ -172,7 +172,7 @@ class AutomationStepDialog(QDialog):
             
         if self.load_progress == "load":
             # Set based on loaded step
-            self.rows.set_combo_text(3, device_manager.key_to_name(self.step['data'].get('event'), "VLCB"))
+            self.rows.set_combo_text(3, device_manager.key_to_name(self.step['data'].get('event')))
                 
         # Read in row 3 (event) and check for change
         selected_event = self.rows.get_combo_text(3)
@@ -206,7 +206,7 @@ class AutomationStepDialog(QDialog):
 
         # If changed then load loco list
         if self.current_row_value[1] != "Loco":
-            node_items = ["Select Loco"] + [loco_manager.key_to_name(i, "Loco") for i in range(1, self.num_locos_req + 1)] + ["Use DCC ID"]
+            node_items = ["Select Loco"] + [loco_manager.loco_key_to_name(i) for i in range(1, self.num_locos_req + 1)] + ["Use DCC ID"]
             self.rows.combo_add_items(2, node_items)
         self.current_row_value[1] = "Loco"
 
@@ -242,7 +242,7 @@ class AutomationStepDialog(QDialog):
             if self.load_progress == "load":
                 dccid = self.step['data'].get('dccid')
                 if dccid is not None:
-                    self.rows.set_lineedit_text(3, loco_manager.key_to_name(dccid, "Loco"))
+                    self.rows.set_lineedit_text(3, loco_manager.loco_key_to_name(dccid))
         else:
             # A Loco ID is selected so show field label 
             # These say allocated at run time
@@ -314,9 +314,14 @@ class AutomationStepDialog(QDialog):
 
         # Node selection is populated - check for a value
         # Todo - error in AutomationStepDialog
-        selected_node = track_view_manager.name_to_key(self.rows.get_combo_text(2))
+        # selected_node_id is value of position in index
+        # selected_node_string is the selected string
+        selected_node_string = self.rows.get_combo_text(2)
+        selected_node = track_view_manager.get_node_from_name(selected_node_string)
+        #selected_node_id = track_view_manager.name_to_key(selected_node_string)
         # If this was new and not loaded or moved back to "Select Node" then return here - need to select node first
-        if selected_node == None or selected_node == "Select Node" or selected_node == "NA":
+        #if selected_node == None or selected_node == "Select Node" or selected_node == "NA":
+        if selected_node == None:
             self.current_row_value[2] = "Select Node"
             self._hide_rows(3)
             return
@@ -326,7 +331,7 @@ class AutomationStepDialog(QDialog):
         self.rows.show_hide_row(3, True, "Action:")
         if selected_node != self.current_row_value[2]:
             # node is different to current - so update action list
-            action_items = ["Select Action"] + track_view_manager.get_events(selected_node, "Gui")    
+            action_items = ["Select Action"] + selected_node.get_element_names()    
             if action_items == ["Select Action"]:
                 action_items = ["NA"]
             self.rows.combo_add_items(3, action_items)

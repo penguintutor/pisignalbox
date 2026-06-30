@@ -68,7 +68,7 @@ class TrackViewManager(QObject):
         for node in self.active_layout.track_view_nodes:
             # if no children and don't want (eg. when selecting a child)
             # skip
-            if null_events == False and node.num_children() < 1:
+            if null_events == False and node.num_elements() < 1:
                 continue
             node_list.append(node.name)
 
@@ -94,11 +94,17 @@ class TrackViewManager(QObject):
     #                 return i
     #     return None
 
+    def name_to_key (self, name):
+        return self.active_layout.node_name_to_key(name)
+
     def key_to_name (self, key):
         if key in self.nodes.keys():
             return self.nodes[key].name
         # if no name found then name equals key
         return key
+    
+    def get_node_from_name (self, name):
+        return self.active_layout.get_node_from_name(name)
 
     # Based on node_id and evnaame get event_id
     def evname_to_evid (self, node_id, evname):

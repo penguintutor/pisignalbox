@@ -59,12 +59,12 @@ class TrackViewNode:
 
 
     # Return the number of children (eg. buttons & labels)
-    def num_children(self):
+    def num_elements(self):
         return len(self.buttons) + len(self.labels)
 
 
     # Return all children uses the button  labels list position as an index (like ev_id)
-    def get_children_dict(self):
+    def get_elements_dict(self):
         child_objs = {("button", i): btn for i, btn in enumerate(self.buttons)}
         child_objs.update({("label", i): lbl for i, lbl in enumerate(self.labels)})
         return child_objs
@@ -96,7 +96,7 @@ class TrackViewNode:
         
     # Set value from an event
     # Includes own events or triggers from elsewhere
-    def set_value_children (self):
+    def set_value_elements (self):
         ## Note set_value_status in TrackViewNodes includes additional features
         # and can also set label (future improvement)
         #self.state_value = value
@@ -139,14 +139,14 @@ class TrackViewNode:
             self.state_value = self.buttons[index].activate_value(self.state_value, self.num_states)
 
         # Update all child nodes values
-        self.set_value_children()
+        self.set_value_elements()
 
  
         # Create and send GUI event
         #event_bus.publish(GuiEvent({'name': self.name, 'value': self.state_value}))
         event_bus.publish(GuiEvent({'node': self.name, 'value': self.state_value}))
         
-    def get_ev_names (self):
+    def get_element_names (self):
         list_names = []
         for label in self.labels:
             list_names.append(label.get_long_name())

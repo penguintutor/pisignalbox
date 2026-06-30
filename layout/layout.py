@@ -43,7 +43,18 @@ class Layout():
         if self.active:
             track_view_manager.register_layout(self)
 
-        
+    def node_name_to_key(self, name):
+        for i in range (len(self.track_view_nodes)):
+            if self.track_view_nodes[i].name == name:
+                return i
+        return None
+
+    def get_node_from_name(self, name):
+        id = self.node_name_to_key(name)
+        if id == None: 
+            return None
+        return self.track_view_nodes[i]
+
     def set_title (self, title):
         # title is required / created when loading file  so no need to check it exists
         self.layout_data['title'] = title

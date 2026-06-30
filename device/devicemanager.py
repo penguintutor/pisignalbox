@@ -34,10 +34,9 @@ class DeviceManager(QObject):
     def get_all_nodes(self):
         return self.nodes.values() 
     
-    # Get list of nodes by names
-    # Default Only return vlcb nodes
-    # null_events determines whether to check if the nodes must have events
     def get_nodes_names(self, null_events=True):
+        """Get list of nodes by names
+        null_events determines whether to check if the nodes must have events"""
         node_list = []
 
         node_list.extend(
