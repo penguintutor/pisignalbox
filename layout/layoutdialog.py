@@ -5,7 +5,7 @@ from pathlib import Path
 from PySide6.QtCore import Signal, Slot
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QFileDialog, QMessageBox
 from PySide6.QtUiTools import QUiLoader
-from settings import Settings
+from core import Settings
 from .layout import Layout
 from .layouts import Layouts
 

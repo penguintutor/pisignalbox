@@ -14,7 +14,7 @@ from PySide6.QtGui import QPixmap, QImage, QPalette, QColor, QFont, QResizeEvent
 from PySide6.QtUiTools import QUiLoader
 from pathlib import Path 
 from core import event_bus
-from common.imageexistdialog import ImageExistDialog
+from common import ImageExistDialog
 from layout import LayoutDialog
 
 class UITrackViewMixin:

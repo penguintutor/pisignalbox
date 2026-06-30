@@ -11,7 +11,7 @@ from core import DATA_DIR, RESOURCES_DIR
 from core import event_bus
 from trackview import track_view_manager
 from loco import loco_manager
-from settings import Settings
+from core import Settings
 from console.consolewindow import ConsoleWindowUI
 #from eventdialog import EventDialog
 from layout import Layout

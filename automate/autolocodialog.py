@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (QDialog, QVBoxLayout, QFileDialog,
 from core import event_bus
 from loco import loco_manager
 from events import LocoEvent
-from settings import Settings
+from core import Settings
 from layout import Layout, layouts
 from loco import Loco
 

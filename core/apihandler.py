@@ -1,4 +1,5 @@
 from PySide6.QtCore import Qt, QTimer, QObject, QThreadPool, QRunnable
+from .vlcbclient import VLCBClient
 from .worker import Worker
 from .eventbus import event_bus
 #from loco import loco_manager
@@ -7,7 +8,7 @@ import time
 from pyvlcb import VLCB
 from pyvlcb import VLCBOpcode
 from device import device_manager, VLCBNode
-from vlcbclient import VLCBClient
+
 
 
 
