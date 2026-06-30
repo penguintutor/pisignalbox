@@ -12,7 +12,8 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtUiTools import QUiLoader
 from core import event_bus
-from ruledialog import RuleDialog
+from device import device_manager
+from rules.ruledialog import RuleDialog
 from events import DeviceEvent, LocoEvent, AppEvent, GuiEvent, TimerEvent
 
 # Load the GUI resources.

@@ -21,7 +21,7 @@ from controlloco import ControlLoco
 from core import ApiHandler
 from events import AppEvent
 from loco import LocoWindow, StealDialog
-from ruleswindow import RulesWindow
+from rules import RulesWindow
 #from device.vlcbnode import VLCBNode
 #from device.vlcbev import VLCBEv
 from device import device_manager

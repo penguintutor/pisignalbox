@@ -164,7 +164,7 @@ class RuleDialog(QDialog):
             if selected_type == "VLCB":
                 nodes = device_manager.get_nodes_names()
             elif selected_type == "User Interface" or selected_type == "Gui":
-                nodes = track_view_manager.get_nodes_names()
+                nodes = track_view_manager.get_nodes_names(null_events=False)
             # If there are no devices of this type
             else:
                 global_app_vars.get_nodes_names(selected_type)
@@ -217,8 +217,8 @@ class RuleDialog(QDialog):
                 node_key = device_manager.name_to_key(selected_node)
                 events = device_manager.get_events(node_key)
             elif selected_type == "User Interface" or selected_type == "Gui":
-                node_key = track_view_manager.name_to_key(selected_node)
-                events = track_view_manager.get_events(node_key)
+                selected_node = track_view_manager.get_track_view_node_from_name(selected_node)
+                events = selected_node.get_element_names()
             if events == []:
                 events = ["NA"]
         if events != ["NA"]:
@@ -262,8 +262,8 @@ class RuleDialog(QDialog):
                 node_key = device_manager.name_to_key(selected_node)
                 events = device_manager.get_events(node_key)
             elif selected_type == "User Interface" or selected_type == "Gui":
-                node_key = track_view_manager.name_to_key(selected_node)
-                events = track_view_manager.get_events(node_key)
+                node = track_view_manager.get_track_view_node_from_name(selected_node)
+                events = node.get_element_names()
 
             if events == []:
                 events = ["NA"]
