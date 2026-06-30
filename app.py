@@ -8,6 +8,8 @@ from pathlib import Path
 from PySide6.QtWidgets import QApplication, QDialog, QFileDialog, QMessageBox
 from PySide6.QtCore import Qt, QPoint
 from PySide6.QtGui import QFont
+from core import DATA_DIR, RESOURCES_DIR
+# Todo - remove core.paths in favour of above
 import core.paths as app_paths
 from mainui import MainWindowUI
 from loco import LocoWindow
@@ -126,7 +128,7 @@ app.setFont(new_font)
 
 # Load and apply QSS file
 try:
-    with open("style.qss", "r") as f:
+    with open(RESOURCES_DIR / "style.qss", "r") as f:
         _style = f.read()
         app.setStyleSheet(_style)
 except FileNotFoundError:
