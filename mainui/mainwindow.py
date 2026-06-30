@@ -24,7 +24,7 @@ from rules import RulesWindow
 #from device.vlcbnode import VLCBNode
 #from device.vlcbev import VLCBEv
 from device import device_manager
-from imageexistdialog import ImageExistDialog
+from common import ImageExistDialog
 from automate import AutomationManager, AutomationManagerDialog
 from core import global_app_vars
 #from core.appvar import AppVar

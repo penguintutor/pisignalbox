@@ -6,7 +6,7 @@ from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QFileDialog, QMessageBox
 from PySide6.QtUiTools import QUiLoader
 from .functionsdialog import FunctionsDialog
-from imageexistdialog import ImageExistDialog
+from common import ImageExistDialog
 
 # Dialog to get details about a loco
 # Also allows upload of an image

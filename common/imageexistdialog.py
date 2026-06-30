@@ -12,8 +12,8 @@ class ImageExistDialog(QDialog):
         self.locosdir = locos_dir
         self.setModal(True)
         loader = QUiLoader()
-        basedir = os.path.dirname(__file__)
-        self.ui = loader.load(os.path.join(basedir, "imageexistdialog.ui"), None)
+        thisdir = Path(__file__).parent
+        self.ui = loader.load(thisdir / "imageexistdialog.ui", self)
         self.setWindowTitle("Image already exists")
         self.setLayout(self.ui.layout())
         # Save action selected
