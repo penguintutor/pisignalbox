@@ -5,7 +5,7 @@ from PySide6.QtWidgets import (QApplication, QDialog, QWidget, QVBoxLayout,
     QDialogButtonBox, QStyle, QComboBox, QMessageBox) 
 from PySide6.QtGui import QPixmap, QIcon
 from PySide6.QtCore import Qt, QSize
-from functionentry import FunctionEntry
+from .functionentry import FunctionEntry
 
 
 class FunctionsDialog(QDialog):

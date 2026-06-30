@@ -5,7 +5,7 @@ from PySide6.QtCore import Qt, Signal, Slot, QFile
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QFileDialog, QMessageBox
 from PySide6.QtUiTools import QUiLoader
-from functionsdialog import FunctionsDialog
+from loco.functionsdialog import FunctionsDialog
 from imageexistdialog import ImageExistDialog
 
 # Dialog to get details about a loco

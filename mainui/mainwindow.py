@@ -13,8 +13,7 @@ from trackview import track_view_manager
 from loco import loco_manager
 from settings import Settings
 from console.consolewindow import ConsoleWindowUI
-from eventdialog import EventDialog
-#rom layout import Layout, LayoutDisplay
+#from eventdialog import EventDialog
 from layout import Layout
 from trackview import TrackViewDisplay
 from loco import ControlLoco
@@ -408,11 +407,11 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin):
             response = dialog.get_selected_values()
             self.layout.add_button(response[0], response[1], {})
         
-    def event_selection_dialog (self):
-        dialog = EventDialog()
-        if dialog.exec():
-            node, event = dialog.get_selected_values()
-            return (node, event)
+#    def event_selection_dialog (self):
+#        dialog = EventDialog()
+#        if dialog.exec():
+#            node, event = dialog.get_selected_values()
+#            return (node, event)
 
         
     # App event is used to send events from other parts of the app
