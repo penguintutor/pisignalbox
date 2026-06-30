@@ -19,7 +19,7 @@ from events import DeviceEvent, LocoEvent, AppEvent, GuiEvent, TimerEvent
 # Load the GUI resources.
 # These first need to be compiled from the .qrd file
 # pyside6-rcc guiresources.qrc -o guiresources.py
-import guiresources
+from resources import guiresources
 
 loader = QUiLoader()
 basedir = os.path.dirname(__file__)
