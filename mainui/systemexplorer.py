@@ -233,20 +233,6 @@ class SystemExplorer:
                 ev_item.setText(str(event.ev_object))
 
     ## Handle clicks
-
-    # def _get_id_from_index(self, index):
-    #     """Helper to safely extract the custom ID from a QModelIndex."""
-    #     if not index.isValid():
-    #         return None
-            
-    #     # Get the QStandardItem from the model
-    #     item = self.model.itemFromIndex(index)
-    #     if not item:
-    #         return None
-            
-    #     # Retrieve the custom tuple we stored earlier
-    #     return item.data(Qt.UserRole)
-
             
     ## Handle right click - need to get item from position
     #def tree_clicked_right(self, position: QPoint):
@@ -280,9 +266,9 @@ class SystemExplorer:
             # Methods to launch the edit are in main window / ui_layout Mixin
             if isinstance(self.selected_node, TrackViewNode):
                 self.parent.edit_dialog_trackviewnode(self.selected_node)
-            elif isinstance(self.selected_node, LayoutButton):
+            elif isinstance(self.selected_node, TrackViewButton):
                 self.parent.edit_dialog_layoutbutton(self.selected_node)
-            elif isinstance(self.selected_node, LayoutLabel):
+            elif isinstance(self.selected_node, TrackViewLabel):
                 self.parent.edit_dialog_layoutlabel(self.selected_node)
 
     def _on_left_click(self, index):
@@ -337,47 +323,6 @@ class SystemExplorer:
         else:
             print (f"System Explorer - update table - unknown node type {type(self.selected_node)}")
 
-
-    # def _tree_item_selected (self, node_item):")
-    #     self.selected_node = None
-        
-    #     # Cleanly resolve the node and top-level strings
-    #     node_string = node_item.text()
-    #     parent_item = node_item.parent()
-    #     top_string = parent_item.text() if parent_item else node_string
-
-    #     print (f"str {node_string}, parent {parent_item}, top {top_string}")
-
-    #     # Route to the appropriate handler
-    #     if top_string.startswith("GUI"):
-    #         self._set_gui_selected_node(node_item)
-    #     else:
-    #         self._handle_standard_node(node_item, node_string)
-
-    #     self.update_table()
-
-    # def _set_gui_selected_node(self, node_item):
-    #     """Helper to find and set a GUI specific node."""
-    #     for gui_node in device_model.other_nodes['Gui']:
-    #         new_item = gui_node.check_item(node_item)
-    #         if new_item is not None:
-    #             self.selected_node = new_item
-    #             break  # Stop searching once we find the match
-                
-    # def _handle_standard_node(self, node_item, node_string):
-    #     """Helper to handle standard nodes and their associated UI button states."""
-    #     # Use a tuple to cleanly check for multiple prefixes at once
-    #     if node_string.startswith(("CANCAB", "CANCMD")):
-    #         self.update_node_buttons(None, None)
-    #     else:
-    #         self.update_node_buttons("On", "Off")
-            
-    #     # Check device_model for the node
-    #     for key, node in device_model.nodes.items():
-    #         new_item = node.check_item(node_item)
-    #         if new_item is not None:
-    #             self.selected_node = new_item
-    #             break  # Stop searching once we find the match
 
     # Updates the two node buttons at the bottom of the table
     # These are known as evButtonOff & evButtonOn, but may also be used by

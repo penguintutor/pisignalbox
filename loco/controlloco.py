@@ -33,73 +33,87 @@ class ControlLoco:
         elif event.event_type == "ERR":
             self.handle_error (event.data)
         
-        
-    def handle_error (self, error_data):
-        #print (f"Handling loco error: {error_data}")
-        #print (f"Current loco id: {self.get_id()} Status {self.get_status()} Acquiring {self.is_acquiring()}")
-        # Depending upon the error code the data may have different interpretations
-        # Stored as Byte1, Byte2, ErrCode - where Byte1,Byte2 may eqal AddrHigh_AddrLow, or
-        # may be Byte1 = Session ID, Byte 2 = 0
-        # So only check after looking at the ErrCode
-        #loco_id = data_entry['AddrHigh_AddrLow'] & 0x3FFF
-        # Check error code relates to the current loco
-        if error_data['ErrCode'] == 1:
-            # Only valid during acquiring status
-            if self.is_acquiring() == False:
-                if self.debug:
-                    print ("Not acquiring loco - ignoring error")
+
+    def handle_error(self, error_data):
+        """
+        Handle loco errors
+
+        Depending upon the error code the data may have different interpretations
+        Stored as Byte1, Byte2, ErrCode - where Byte1,Byte2 may eqal AddrHigh_AddrLow, or
+        may be Byte1 = Session ID, Byte 2 = 0
+        """
+        match error_data:    
+            # ---------------------------------------------------------
+            # ErrCode 1: Error - no sessions available
+            # ---------------------------------------------------------
+            case {"ErrCode": 1, "Byte1": byte1, "Byte2": byte2}:
+                if not self.is_acquiring():
+                    self._log_debug("Not acquiring loco - ignoring error")
                     return
-            loco_id = bytes_to_addr(error_data['Byte1'],error_data['Byte2']) & 0x3FFF
-            # If doesn't match then it may be for a different control thread (eg. automation vs gui) or during reallocate
-            if self.get_id() != loco_id:
-                if self.debug:
-                    print (f"ERR ID {loco_id} does not match current Loco ID {self.get_id()}")
-                return
-            if self.loco != None:
-                event_bus.publish(AppEvent({"action":"uitext", 'label': "locoStatusLabel", 'value': "Error - no sessions available", "loco_id": self.loco.loco_id}))
+                
+                loco_id = bytes_to_addr(byte1, byte2) & 0x3FFF
+                
+                if self.get_id() != loco_id:
+                    self._log_debug(f"ERR ID {loco_id} does not match current Loco ID {self.get_id()}")
+                    return
+                    
+                if self.loco is not None:
+                    event_bus.publish(AppEvent({
+                        "action": "uitext", 
+                        "label": "locoStatusLabel", 
+                        "value": "Error - no sessions available", 
+                        "loco_id": self.loco.loco_id
+                    }))
 
-        # Already taken - option to steal
-        elif error_data['ErrCode'] == 2:
-            if self.debug:
-                print ("Error code 2 - loco taken")
-            #Only for us if we haven't completed the session setup
-            if self.get_status() == "on":
-                return
-            elif self.is_acquiring() == False:
-                #print ("Not acquiring session")
-                return
-            loco_id = bytes_to_addr(error_data['Byte1'],error_data['Byte2']) & 0x3FFF
-            # Not our loco
-            if self.get_id() != loco_id:
-                if self.debug:
-                    print (f"ERR ID {loco_id} does not match current Loco ID {self.get_id()}")
-                return
-            # It is our loco and we are trying to acquire - so allow acquire
-            # Let stealdialog request update gui
-            #event_bus.publish(AppEvent({"action":"uitext", 'label': "locoStatusLabel", 'value': "Error - address taken"}))
-            # request steal dialog by signalling locotaken
-            # Should be an allocated loco - otherwise why are we here, but just in case
-            if self.loco != None:
-                event_bus.publish(AppEvent({"action": "locotaken", 'loco_id': self.loco.loco_id}))
+            # ---------------------------------------------------------
+            # ErrCode 2: Already taken - option to steal
+            # ---------------------------------------------------------
+            case {"ErrCode": 2, "Byte1": byte1, "Byte2": byte2}:
+                self._log_debug("Error code 2 - loco taken")
+                
+                # Only for us if we haven't completed the session setup
+                if self.get_status() == "on" or not self.is_acquiring():
+                    return
+                    
+                loco_id = bytes_to_addr(byte1, byte2) & 0x3FFF
+                
+                if self.get_id() != loco_id:
+                    self._log_debug(f"ERR ID {loco_id} does not match current Loco ID {self.get_id()}")
+                    return
+                    
+                if self.loco is not None:
+                    event_bus.publish(AppEvent({
+                        "action": "locotaken", 
+                        "loco_id": self.loco.loco_id
+                    }))
 
-        elif error_data['ErrCode'] == 8:
-            # If we are trying to acquire a session then this could be us resetting other node
-            if self.is_acquiring():
-                return
-            # byte 1 is now sessionid - byte2 is ignored - should be 00
-            session_id = int(error_data['Byte1'])
-            # if not our current session_id then could be for a different controller so ignore
-            if session_id != 0 and session_id == self.get_session():
-                if self.debug:
-                    print (f"Session cancelled {session_id}")
-                # This updates the loco and the GUI
-                self.reset_loco()
-                if self.loco != None:
-                    event_bus.publish(AppEvent({"action":"resetloco", 'loco_id': self.loco.loco_id}))
-            else:
-                # probably not for us
-                if self.debug:
-                    print (f"Session not cancelled {session_id}, loco session {self.get_session()}")
+            # ---------------------------------------------------------
+            # ErrCode 8: Session cancelled
+            # ---------------------------------------------------------
+            case {"ErrCode": 8, "Byte1": byte1}:
+                if self.is_acquiring():
+                    return
+                    
+                # Note: Byte2 is intentionally excluded from the match pattern 
+                # above because dict matching does a partial match (it ignores extra keys).
+                session_id = int(byte1)
+                
+                if session_id != 0 and session_id == self.get_session():
+                    self._log_debug(f"Session cancelled {session_id}")
+                    self.reset_loco()
+                    if self.loco is not None:
+                        event_bus.publish(AppEvent({
+                            "action": "resetloco", 
+                            "loco_id": self.loco.loco_id
+                        }))
+                else:
+                    self._log_debug(f"Session not cancelled {session_id}, loco session {self.get_session()}")
+                    
+            # ---------------------------------------------------------
+            # Fallback for unhandled error codes
+            # ---------------------------------------------------------
+            case _:
+                self._log_debug(f"Unknown error code caught in ControlLoco handle_error {error_data["ErrCode"]}")
 
 
     def is_active(self):
@@ -225,8 +239,6 @@ class ControlLoco:
         if (self.loco.loco_id == 0):
             self.reset_loco()
             return ""
-        loco_id = self.loco.loco_id
-        #loco_name = self.loco_list.loco_name(loco_id)
         loco_name = self.loco.loco_name
         self.loco.status = 'gloc'
         return (f"Stealing {loco_name}")
@@ -236,7 +248,6 @@ class ControlLoco:
         if (self.loco.loco_id == 0):
             self.reset_loco()
             return ""
-        loco_id = self.loco.loco_id
         loco_name = self.loco.loco_name
         return (f"Req sharing {loco_name}")
         
@@ -280,7 +291,7 @@ class ControlLoco:
         
     # Emergency stop - current loco
     # To reset need to set speed to 0 on the dial
-    def stop (self, msg="STOP!"):
+    def stop (self):
         self.loco.set_stop()
         if self.loco.session != 0:
             # check we have a session
@@ -291,3 +302,8 @@ class ControlLoco:
     # Same as a stop as far as ControlLoco is concerned
     def stop_all (self):
         self.stop()
+
+    def _log_debug(self, message):
+        """Helper to remove branching complexity from main logic."""
+        if self.debug:
+            print(message)

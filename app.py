@@ -9,8 +9,6 @@ from PySide6.QtWidgets import QApplication, QDialog, QFileDialog, QMessageBox
 from PySide6.QtCore import Qt, QPoint
 from PySide6.QtGui import QFont
 from core import DATA_DIR, RESOURCES_DIR
-# Todo - remove core.paths in favour of above
-import core.paths as app_paths
 from mainui import MainWindowUI
 from loco import LocoWindow
 from loco import LocoDialog
@@ -72,12 +70,12 @@ if data_dir:
     # Keeping your defensive check: only override if the directory actually exists
     if override_path.is_dir():
         # Update the global path in the imported module!
-        app_paths.DATA_DIR = override_path
-        print(f"Data directory overridden to: {app_paths.DATA_DIR}")
+        DATA_DIR = override_path
+        print(f"Data directory overridden to: {DATA_DIR}")
     else:
         # Fall back gracefully to the default we established in paths.py
         print(f"Warning: Directory '{override_path}' does not exist.")
-        print(f"Falling back to default: {app_paths.DATA_DIR}")
+        print(f"Falling back to default: {DATA_DIR}")
 
 # Handle Mock Mode
 if args.mock:

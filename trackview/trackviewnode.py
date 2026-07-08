@@ -184,8 +184,8 @@ class TrackViewNode:
     def paint (self, painter):
         for label in self.labels:
             label.draw(painter)
-            if self.labels[i].gui_node == item:
-                return (self.labels[i])
+            if label.gui_node == item:
+                return (label)
         return None
         
     # Type replies with "Gui"

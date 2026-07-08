@@ -1,10 +1,9 @@
 # Class to hold details about the layout / locos etc
 # Reads data from layout.json file
-# Todo in future add multiple layout files
+# FUTURE: add multiple layout files
 import json
 import os
 from trackview import TrackViewNode
-#import core.paths as app_paths
 from pathlib import Path
 from core import DATA_DIR, RESOURCES_DIR
 from core import event_bus
@@ -50,10 +49,10 @@ class Layout():
         return None
 
     def get_node_from_name(self, name):
-        id = self.node_name_to_key(name)
-        if id == None: 
+        node_id = self.node_name_to_key(name)
+        if node_id == None: 
             return None
-        return self.track_view_nodes[i]
+        return self.track_view_nodes[node_id]
 
     def set_title (self, title):
         # title is required / created when loading file  so no need to check it exists
@@ -74,9 +73,7 @@ class Layout():
         if layout_filename != None and layout_filename != "":
             self.layout_file = layout_filename
         if self.layout_file != None:
-            #filename = os.path.join(self.layout_dir, self.layout_file)
             filename = self.layout_dir / self.layout_file
-            #print (f"Layout loading file {filename}")
             try:
                 with open(filename, 'r') as data_file:
                     self.layout_data = json.load(data_file)
@@ -115,9 +112,19 @@ class Layout():
         # Can load both, and merge
         track_nodes = self.layout_data.get('trackviewnodes', [])
         gui_objects = self.layout_data.get('guiobjects', [])
+        all_objects = track_nodes + gui_objects
+        # Read in the nodes
+        self._read_track_nodes(all_objects)
 
-        for entry in track_nodes + gui_objects:
-            #print (f"Track view node object {entry}")
+        # Now remove the gui_object values - if save then it will save as trackviewnodes
+        # Deprecated - remove in future
+        # If doesn't exist then pop None
+        self.layout_data.pop('guiobjects', None)
+
+
+    def _read_track_nodes (self, track_nodes):
+        """ Reads in the track nodes, called during load file"""
+        for entry in track_nodes:
             if 'object' in entry.keys():
                 if entry['object'] == 'gui':
                     #self.layout.trackviewnodes.append(TrackViewNode(self, entry['type'], entry['name'], {}))
@@ -131,10 +138,6 @@ class Layout():
                     track_view_node_id = self.gui_name_toid(track_view_node_name)
                     self.track_view_nodes[track_view_node_id].add_label(entry['label_type'], entry['settings'], entry['pos'])
 
-            # Now remove the gui_object values - if save then it will save as trackviewnodes
-            # Deprecated - remove in future
-            # If doesn't exist then pop None
-            self.layout_data.pop('guiobjects', None)
             
             
                 
@@ -241,25 +244,3 @@ class Layout():
             return_list.append(object.name)
         return return_list
                    
-    # Translation from node_id to friendly name
-    # Ideally this should be done within the module, but could be supported here
-    # Temporarily disabled
-    def node_name (self, node_id):
-        return f"Node: {node_id}"
-#         #print (f"Node id {node_id}")
-#         if (node_id in self.node_names.keys()):
-#             #print (f" name {self.node_names[node_id]}")
-#             return self.node_names[node_id]
-#         else:
-#             #print (f" name (from node) Node: {node_id}")
-#             return f"Node: {node_id}"
-        
-    # As with node name - is this needed - need to implement differently
-    # EV name normally use en, if not in lookup 
-    def ev_name (self, node_id, ev_id, en=None):
-        #if (node_id in self.ev_names.keys() and ev_id in self.ev_names[node_id].keys()):
-        #    return self.ev_names[node_id][ev_id]
-        if en != None:
-            return f"{en:#08x}"
-        else:
-            return f"EV {ev_id}"

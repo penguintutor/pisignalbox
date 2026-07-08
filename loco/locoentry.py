@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
     QDialogButtonBox, QStyle) 
 from PySide6.QtGui import QPixmap, QIcon
 from PySide6.QtCore import Qt, QSize, Signal, QEvent
-
+from loco import loco_manager
 
 # A simple class to represent a single row for a loco
 class LocoEntry(QWidget):
@@ -16,7 +16,6 @@ class LocoEntry(QWidget):
         super().__init__(parent)
         self.locowin = parent
         self.loco_id = loco_id
-        #self.loco_class = loco_class
         self.loco_name = loco_name
         self.loco_image_path = loco_image_path
         self.filename = filename		# filename provides a unique id
@@ -66,9 +65,9 @@ class LocoEntry(QWidget):
         # note that our saved filename is full path - so just get the basename
         basename = os.path.basename(self.filename)
         if self.enable_checkbox.isChecked():
-            device_model.enable_loco(basename)
+            loco_manager.enable_loco(basename)
         else:
-            device_model.disable_loco(basename)
+            loco_manager.disable_loco(basename)
         # Send updated signal
         # locowin locowindow, parent is mainwindow
         self.locowin.parent.updated_locos_signal.emit()
