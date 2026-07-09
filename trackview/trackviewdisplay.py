@@ -13,7 +13,6 @@ from PySide6.QtGui import QMouseEvent, QPixmap, QColor, QPainter, QFont, QPen, Q
 from PySide6.QtCore import Qt, QPoint, QSize, QRect
 from pathlib import Path
 from core import RESOURCES_DIR
-#from layout import Layout
 from .trackviewlabel import TrackViewLabel
 from .trackviewbutton import TrackViewButton
 from .trackviewnode import TrackViewNode
@@ -50,12 +49,9 @@ class TrackViewDisplay(QLabel):
         # Move later to allow for scaling 
         self.close_button_rect = QRect(50, 50, 30, 30)
         
-        #basedir = os.path.dirname(__file__)
-        #close_image_file = os.path.join(basedir, "resources", "close-icon.png")
-        #basedir = Path(__file__).parent
-
         close_image_file = RESOURCES_DIR / "close-icon.png"
         self.close_image = QImage (close_image_file)
+        self.debug = False
         
         
     def paintEvent (self, event):
@@ -111,20 +107,20 @@ class TrackViewDisplay(QLabel):
         self.canvas_size = QSize(w, h)
         
         scaled_pixmap = self.canvas.scaled(self.canvas_size, Qt.KeepAspectRatio)
-        #self.image_size = scaled_pixmap.size()
         self.setPixmap(scaled_pixmap)
         
         # Adjust Size updates the label so that querying the size gives correct values
         self.adjustSize()
         button_settings = {
             'size': (2,2),
-            # Todo these are not currently used - see layoutbutton values
+            # Future these are not currently used - see layoutbutton values
             'color_on': '#00FF00', 'color_off': '#FF0000', 'color_unknown': '#555555'
             }
+        if self.debug:
+            print (f"button settings not current used {button_settings}")
 
        
     def resizeEvent(self, event=None):
-        #self.canvas_size = self.ui.layoutLabel.size()
         self.canvas_size = self.size()
         scaled_pixmap = self.canvas.scaled(self.canvas_size, Qt.KeepAspectRatio)
         self.setPixmap(scaled_pixmap)
@@ -153,6 +149,7 @@ class TrackViewDisplay(QLabel):
                 return
             self.selected.controlButtonClick()
         elif event.button() == Qt.MouseButton.RightButton:
+            # Future - add handling of right button here
             pass
     
     # Mouse press in edit mode
@@ -172,6 +169,7 @@ class TrackViewDisplay(QLabel):
             if self.selected == None:
                 return
         elif event.button() == Qt.MouseButton.RightButton:
+            # Future add handling of right mouse button here
             pass
         
     # Find nearest object to click that is touched
@@ -205,7 +203,6 @@ class TrackViewDisplay(QLabel):
             self.cursor.setShape(Qt.DragMoveCursor)
             self.setCursor(self.cursor)
             current_pos = event.position().toPoint()
-#            self.last_mouse_pos = self.last_mouse_pos + self.click_offset
             new_pos = self.pixel_to_percent(current_pos - self.click_offset)
             # if out of bounds then cancel the drag
             if new_pos[0] < 0 or new_pos[1] < 0 or new_pos[0] + self.selected.size[0] >= 100 or new_pos[1] + self.selected.size[1] >= 100:
@@ -233,7 +230,6 @@ class TrackViewDisplay(QLabel):
     # factoring in the difference betwen label and image size
     # If rel=True then ignore that and calculate relative value
     def pixel_to_percent (self, position, rel=False):
-        label_size = self.canvas_size
         image_size = self.pixmap().size()
         # allow position to be a a list/tuple or a QObject type
         if isinstance(position, (list, tuple)):

@@ -6,14 +6,12 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QAbstractItemView, QMen
 from PySide6.QtGui import QPixmap, QImage, QPalette, QColor, QFont, QResizeEvent
 from PySide6.QtUiTools import QUiLoader
 from pathlib import Path
-#import core.paths as app_paths
 from core import DATA_DIR, RESOURCES_DIR
 from core import event_bus
 from trackview import track_view_manager
 from loco import loco_manager
 from core import Settings
 from console.consolewindow import ConsoleWindowUI
-#from eventdialog import EventDialog
 from layout import Layout
 from trackview import TrackViewDisplay
 from loco import ControlLoco
@@ -21,13 +19,10 @@ from core import ApiHandler
 from events import AppEvent
 from loco import LocoWindow, StealDialog
 from rules import RulesWindow
-#from device.vlcbnode import VLCBNode
-#from device.vlcbev import VLCBEv
 from device import device_manager
 from common import ImageExistDialog
 from automate import AutomationManager, AutomationManagerDialog
 from core import global_app_vars
-#from core.appvar import AppVar
 # UI code is split into Mixin classes so they can be placed in their own
 # package but access the MainWindow as though native to MainWindow
 from trackview import UITrackViewMixin, AddDeviceDialog, AddLabelDialog, AddButtonDialog
@@ -97,7 +92,6 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin):
             
         # Update all the dirs to add data_dir
         for key, value in dirs.items():
-            #self.dirs[key] = os.path.join(self.data_dir, value)
             self.dirs[key] = DATA_DIR / value
         
         self.threadpool = QThreadPool()
@@ -198,22 +192,9 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin):
         self.ui.actionAddButton.triggered.connect(self.add_button_dialog)
         
         # Tree view
-        #self.node_model = device_model.node_model
-        #self.node_model.setHorizontalHeaderLabels(['Nodes'])
-        # Todo this should have been removed with device_manager
-        #self.ui.nodeTreeView.setModel(device_model.node_model)
         self.ui.nodeTreeView.setEditTriggers(QAbstractItemView.NoEditTriggers)
-        
         # Tree View buttons moved to system_explorer
-        
-        # Event buttons
-        #self.ui.evButtonOff.clicked.connect(self.system_explorer.ev_clicked_off)
-        #self.ui.evButtonOn.clicked.connect(self.system_explorer.ev_clicked_on)
-        
-        # Last Node / Event that was selected - use for On/Off buttons
-        #self.selected_node = None
-        # This is now handled within the SystemExplorer
-        
+                
         # Update other GUI components
         # Add locos to menu
         self.update_loco_list ()
@@ -255,8 +236,7 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin):
         
         # Pass the layout details to LayoutDisplay to allow it to load other resources
         # Also pass self so it can access mainwindow
-        # Todo what is this doing? Is it required??
-        #self.ui.layoutDisplayLabel.set_layout(self, self.layout)QEs
+        # Note that layoutDisplayLabel is of class TrackViewDisplay
         self.ui.layoutDisplayLabel.set_layout(self, self.layout)
         # Includes load layout background image
         # and UI objects
@@ -320,7 +300,7 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin):
 
         self.ui.automationRunButton.clicked.connect(self.run_selected_sequence)
 
-    # TODO: handle sequence status updates
+    # Future: handle sequence status updates
     def update_sequence_status (self, status_message):
         #print (f"Sequence status update: {status_message}") 
         pass
@@ -514,16 +494,33 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin):
                 
                 # Is the file in the locosdir
                 if self.is_datadir(selected_file, 'locos'):
-                    #print (f"{filename} in data directory")
                     new_path = selected_file
                 # if not then copy (note it will overwrite existing, but already established it's not being loaded)
                 else:
                     # New path - includes filename
-                    new_path = os.path.join(self.dirs['locos'], filename)
-                    print (f"Copying {selected_file} to {new_path}")
-                    shutil.copyfile (selected_file, new_path)
-                    # Todo wrap above in try clause
-                    #loco_filename = filename
+                    try:
+                        new_path = os.path.join(self.dirs['locos'], filename)
+                        print (f"Copying {selected_file} to {new_path}")
+                        shutil.copyfile (selected_file, new_path)
+                    except OSError as e:
+                        # Captures file-related errors like missing permissions, disk full, or file not found
+                        QMessageBox.critical(
+                            self,  # Assuming 'self' is your main window or current QWidget
+                            "File Copy Error",
+                            f"An error occurred while trying to copy the file.\n\n"
+                            f"Source: {selected_file}\n"
+                            f"Destination: {new_path}\n\n"
+                            f"Details: {str(e)}"
+                        )
+                        return
+                    except Exception as e:
+                        # Fallback for any other unexpected errors
+                        QMessageBox.critical(
+                            self,
+                            "Unexpected Error",
+                            f"An unexpected error occurred:\n\n{str(e)}"
+                        )
+                        return
                 
                 # Now load and add to the file
                 #print (f"Loading file {new_path}")

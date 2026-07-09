@@ -7,7 +7,7 @@ from PySide6.QtCore import Qt
 from core import event_bus
 from device import device_manager
 from trackview import track_view_manager
-from core import global_app_vars
+from core import global_app_vars, constants
 
 
 class RuleDialog(QDialog):
@@ -55,7 +55,7 @@ class RuleDialog(QDialog):
                 self.selection_comboboxes[f"row{row}_col{col}"] = combo_box
 
         # Populate Event combo boxes
-        self.selection_comboboxes["row0_col0"].addItems(["Select Type", "VLCB", "User Interface"])
+        self.selection_comboboxes["row0_col0"].addItems([constants.COMBO_TYPE_PROMPT, constants.COMBO_VLCB_PROMPT, constants.COMBO_UI_PROMPT])
         #self.selection_comboboxes["row1_col0"].addItem("Select Node")
         self.selection_comboboxes["row0_col0"].currentIndexChanged.connect(self.update_event_node_combo)
         #self.selection_comboboxes["row1_col0"].addItems(device_model.get_nodes_names())
@@ -65,7 +65,7 @@ class RuleDialog(QDialog):
         self.selection_comboboxes["row2_col0"].currentIndexChanged.connect(self.update_event_state_combo)
         
         # Populate Action combo boxes
-        self.selection_comboboxes["row0_col1"].addItems(["Select Type", "VLCB", "User Interface"])
+        self.selection_comboboxes["row0_col1"].addItems([constants.COMBO_TYPE_PROMPT, constants.COMBO_VLCB_PROMPT, constants.COMBO_UI_PROMPT])
         self.selection_comboboxes["row0_col1"].currentIndexChanged.connect(self.update_action_node_combo)
         #self.selection_comboboxes["row1_col1"].addItems(device_model.get_nodes_names())
         # Connect the event node combo box to update the event combo box
@@ -94,8 +94,8 @@ class RuleDialog(QDialog):
         # If type / node / event have not been selected
         # Todo still need to remove any nodes that don't have events
         if (
-            self.selection_comboboxes["row0_col0"].currentText() == "Select Type" or
-            self.selection_comboboxes["row0_col1"].currentText() == "Select Type" or
+            self.selection_comboboxes["row0_col0"].currentText() == constants.COMBO_TYPE_PROMPT or
+            self.selection_comboboxes["row0_col1"].currentText() == constants.COMBO_TYPE_PROMPT or
             self.selection_comboboxes["row1_col0"].currentText() == "Select Node" or
             self.selection_comboboxes["row1_col1"].currentText() == "Select Node" or
             self.selection_comboboxes["row2_col0"].currentText() == "Select Event" or
@@ -133,8 +133,8 @@ class RuleDialog(QDialog):
         #for key, combo_box in self.selection_comboboxes.items():
         #    selected_values[key] = combo_box.currentText()
         node_type = self.selection_comboboxes["row0_col0"].currentText()
-        # special case for node_type as if "User Interface" need to convert to Gui
-        if node_type == "User Interface":
+        # special case for node_type as if constants.COMBO_UI_PROMPT need to convert to Gui
+        if node_type == constants.COMBO_UI_PROMPT:
             node_type = "Gui"
         selected_values['event']['type'] = node_type
         selected_values['event']['node'] = self.selection_comboboxes["row1_col0"].currentText()
@@ -142,8 +142,8 @@ class RuleDialog(QDialog):
         selected_values['event']['value'] = self.selection_comboboxes["row3_col0"].currentText()
         #selected_values['action']['type'] = self.selection_comboboxes["row1_col0"].currentText()
         node_type = self.selection_comboboxes["row0_col1"].currentText()
-        # special case for node_type as if "User Interface" need to convert to Gui
-        if node_type == "User Interface":
+        # special case for node_type as if constants.COMBO_UI_PROMPT need to convert to Gui
+        if node_type == constants.COMBO_UI_PROMPT:
             node_type = "Gui"
         selected_values['action']['type'] = node_type
         selected_values['action']['node'] = self.selection_comboboxes["row1_col1"].currentText()
@@ -157,13 +157,13 @@ class RuleDialog(QDialog):
         self.selection_comboboxes["row1_col1"].clear()
         # Updates the event_combo based on the selected type
         selected_type = self.selection_comboboxes["row0_col1"].currentText()
-        if selected_type == None or selected_type == "Select Type":
+        if selected_type == None or selected_type == constants.COMBO_TYPE_PROMPT:
             nodes = ["NA"]
         else:
             # If User Interface - convert to Gui
-            if selected_type == "VLCB":
+            if selected_type == constants.COMBO_VLCB_PROMPT:
                 nodes = device_manager.get_nodes_names()
-            elif selected_type == "User Interface" or selected_type == "Gui":
+            elif selected_type == constants.COMBO_UI_PROMPT or selected_type == "Gui":
                 nodes = track_view_manager.get_nodes_names(null_events=False)
             # If there are no devices of this type
             else:
@@ -180,11 +180,11 @@ class RuleDialog(QDialog):
         self.selection_comboboxes["row1_col0"].clear()
         # Updates the event_combo based on the selected type
         selected_type = self.selection_comboboxes["row0_col0"].currentText()
-        if selected_type == None or selected_type == "Select Type":
+        if selected_type == None or selected_type == constants.COMBO_TYPE_PROMPT:
             nodes = ["NA"]
         else:
             # If User Interface - convert to Gui
-            if selected_type == "User Interface":
+            if selected_type == constants.COMBO_UI_PROMPT:
                 selected_type = "Gui"
             nodes = device_manager.get_nodes_names(selected_type)
             # If there are no devices of this type
@@ -199,11 +199,11 @@ class RuleDialog(QDialog):
         # First get the type (so we can lookup the node)
         selected_type = self.selection_comboboxes["row0_col0"].currentText()
         # Should always have a type if this has an option, but check anyway
-        if selected_type == None or selected_type == "Select Type":
+        if selected_type == None or selected_type == constants.COMBO_TYPE_PROMPT:
             return
 
             # If User Interface - convert to Gui
-            #if selected_type == "User Interface":
+            #if selected_type == constants.COMBO_UI_PROMPT:
             #    selected_type = "Gui"
         #print (f"Updating event combo {index}")
         self.selection_comboboxes["row2_col0"].clear()
@@ -213,10 +213,10 @@ class RuleDialog(QDialog):
             events = ["NA"]
         else:
             # convert to node_key
-            if selected_type == "VLCB":
+            if selected_type == constants.COMBO_VLCB_PROMPT:
                 node_key = device_manager.name_to_key(selected_node)
                 events = device_manager.get_events(node_key)
-            elif selected_type == "User Interface" or selected_type == "Gui":
+            elif selected_type == constants.COMBO_UI_PROMPT or selected_type == "Gui":
                 selected_node = track_view_manager.get_track_view_node_from_name(selected_node)
                 events = selected_node.get_element_names()
             if events == []:
@@ -243,12 +243,12 @@ class RuleDialog(QDialog):
         # First get the type (so we can lookup the node)
         selected_type = self.selection_comboboxes["row0_col1"].currentText()
         # Should always have a type if this has an option, but check anyway
-        if selected_type == None or selected_type == "Select Type":
+        if selected_type == None or selected_type == constants.COMBO_TYPE_PROMPT:
             return
         #else:
             #node_type = device_model.name_to_key(selected_type)
             # If User Interface - convert to Gui
-            #if selected_type == "User Interface":
+            #if selected_type == constants.COMBO_UI_PROMPT:
             #    selected_type = "Gui"
         #print (f"Updating event combo {index}")
         self.selection_comboboxes["row2_col1"].clear()
@@ -258,10 +258,10 @@ class RuleDialog(QDialog):
             events = ["NA"]
         else:
             # convert to node_key
-            if selected_type == "VLCB":
+            if selected_type == constants.COMBO_VLCB_PROMPT:
                 node_key = device_manager.name_to_key(selected_node)
                 events = device_manager.get_events(node_key)
-            elif selected_type == "User Interface" or selected_type == "Gui":
+            elif selected_type == constants.COMBO_UI_PROMPT or selected_type == "Gui":
                 node = track_view_manager.get_track_view_node_from_name(selected_node)
                 events = node.get_element_names()
 

@@ -43,11 +43,7 @@ class TrackViewNode:
         # WARNING: if position in list changes then needs to be updated
         self.node_id = id
             
-        # Create a gui_node for displaying in QStandardItemModel
-        # Read by device_model for inclusion in device tree
-        # TODO - remove this - it should be created in systemexplorer instead
-        #self.gui_node = QStandardItem(f"GUI {self.node_type} : {self.name}")
-            
+           
         self.buttons = []
         self.labels = []
         
@@ -153,11 +149,7 @@ class TrackViewNode:
         for button in self.buttons:
             list_names.append(button.get_long_name())
         return list_names
-        
-    def get_gui_node (self):
-        #return self.gui_node
-        return None
-    
+           
     # Check if item is this node (or a child of this node)
     # Returns None (if not found)
     # Or object
@@ -180,21 +172,12 @@ class TrackViewNode:
         self.buttons.append (TrackViewButton(self, pos, button_type, settings))
         #self.gui_node.appendRow(self.buttons[-1].get_gui_node ())
         
-    # Paint (Draw) all objects on painter within layoutdisplay
-    def paint (self, painter):
-        for label in self.labels:
-            label.draw(painter)
-            if label.gui_node == item:
-                return (label)
-        return None
         
     # Type replies with "Gui"
     # for specific type use object_type (eg. Point)
     def type (self):
         return "Gui"
         
-
-    
     def get_save_objects(self):
         data_list = [
                 {
@@ -211,7 +194,7 @@ class TrackViewNode:
             data_list.append(label.to_dict(self.name))
         return data_list
     
-    def nearestToClick(self, click_pos, types="all"):
+    def nearest_to_click(self, click_pos, types="all"):
         nearest_object = None
         # set distance to a value far beyond any reasonable range (1000)
         # saves needing to test for a null value

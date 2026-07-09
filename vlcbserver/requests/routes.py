@@ -4,13 +4,9 @@ from flask import render_template
 from flask import session
 from flask import redirect
 from strip_tags import strip_tags
-#from flask import Markup
 import threading
 import logging, os
 import vlcbserver
-#from pixelserver.statusmsg import StatusMsg
-#from pixelserver.serverauth import ServerAuth
-#from pixelserver.serveruseradmin import ServerUserAdmin
 
 from . import requests_blueprint
 
@@ -23,21 +19,19 @@ def vlcb_request():
     # If there is a value then it's a send
     this_arg = request.args.get('send', default = 'none', type = str)
     if this_arg != "none":
-        #print (f"Send {this_arg}")
         #Todo check valid format
         vlcbserver.send_data(this_arg)
         return_data = ["0,0,0"]
         
     else:
         this_arg = request.args.get('read', default = 0, type = int)
-        #print (f"Read {this_arg}")
+
         entries = vlcbserver.get_data(this_arg)
         # Add first entry
         return_data = entries[0]
         for i in range(1, len(entries)):
             return_data += "\n"
             return_data += entries[i]
-    #return (vlcbserver.data)
     return return_data
     
 #/vlcb?read=<id of first data packet>&format=txt&[&end=<id last packet to retrieve]

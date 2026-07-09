@@ -14,11 +14,14 @@ from .trackviewelement import TrackViewElement
 
 # for type="text" then settings must include "text":"Text to display"
 class TrackViewLabel (TrackViewElement):
-    def __init__ (self, parent, pos, label_type, settings = {}):
+    def __init__ (self, parent, pos, label_type, settings = None):
         super().__init__(parent, pos)
         self.label_type = label_type
         ## get values from settings or set defaults
-        self.settings = settings
+        if settings is None:
+            settings = {}
+        else:
+            self.settings = settings
         if 'click_type' in settings:
             self.click_type = settings['click_type']
         else:
