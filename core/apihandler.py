@@ -2,7 +2,6 @@ from PySide6.QtCore import Qt, QTimer, QObject, QThreadPool, QRunnable
 from .vlcbclient import VLCBClient
 from .worker import Worker
 from .eventbus import event_bus
-#from loco import loco_manager
 from events import LocoEvent, GuiEvent, AppEvent, DeviceEvent
 import time
 from pyvlcb import VLCB
@@ -41,7 +40,6 @@ class ApiHandler(QObject):
         # If None just get the last few packets received (effectively start from current instead of history)
         # None is -5 to ensure see the initial discover
         self.last_packet = None
-        #self.data_received = None
         
         # Get events from the event_bus
         event_bus.device_event_signal.connect(self.vlcb_event)
@@ -195,9 +193,6 @@ class ApiHandler(QObject):
         # Check for an empty data first as we can ignore
         if response[0:10] == "Read,0,0,0":
             # No new data received
-            # todo consider tuning this
-            # sleep does not impact performance as its the main thread that is processor bound
-            #time.sleep(0.21
             pass
         # Check response starts with "Read,"
         elif response[0:5] == "Read,":
@@ -253,7 +248,7 @@ class ApiHandler(QObject):
         
         worker = Worker(self.thread_getupdate)
         self.threadpool.start(worker)
-        return
+
     
     def handle_incoming_data (self, response):
         
@@ -282,7 +277,7 @@ class ApiHandler(QObject):
             print (f"VLCB Entry {vlcb_entry}")
 
         # Look for specific responses
-        # todo - should we check timestamp first? If the entry is from before the first request then may not be
+        # future option? - should we check timestamp first? If the entry is from before the first request then may not be
         # interested as it's an old node. Alternatively we could load anyway (max 100 past entries are stored)
         # or we could not retrieve any previous messages by first checking for -1 entries and using that for
         # the start value
@@ -296,8 +291,11 @@ class ApiHandler(QObject):
             # Emergency stop and stop all are the same
             # except for the message
             #self.loco_stop ("STOP ALL!")
-            pass
-            # Todo update UI when stop all
+            # Trigger an App Event to indicate all locos stopped
+            event_bus.publish(AppEvent({
+                        "action": "locoupdate", 
+                        "value": "STOP ALL!"
+                    }))
             
         elif ret_opcode == 'PNN':    # PNN (Response to query node)
             data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
@@ -311,7 +309,7 @@ class ApiHandler(QObject):
 
             # if we don't already have this device add it
             if not device_manager.node_exists(data_entry['NN']):
-                node_object = device_manager.add_node(VLCBNode(data_entry['NN'], mode, vlcb_entry.can_id, data_entry['ManufId'], data_entry['ModId'] ,data_entry['Flags']))
+                device_manager.add_node(VLCBNode(data_entry['NN'], mode, vlcb_entry.can_id, data_entry['ManufId'], data_entry['ModId'] ,data_entry['Flags']))
 
             else:
                 # Update existing entry

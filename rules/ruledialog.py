@@ -56,7 +56,7 @@ class RuleDialog(QDialog):
 
         # Populate Event combo boxes
         self.selection_comboboxes["row0_col0"].addItems([constants.COMBO_TYPE_PROMPT, constants.COMBO_VLCB_PROMPT, constants.COMBO_UI_PROMPT])
-        #self.selection_comboboxes["row1_col0"].addItem("Select Node")
+        #self.selection_comboboxes["row1_col0"].addItem(constants.COMBO_NODE_PROMPT)
         self.selection_comboboxes["row0_col0"].currentIndexChanged.connect(self.update_event_node_combo)
         #self.selection_comboboxes["row1_col0"].addItems(device_model.get_nodes_names())
         # Connect the event node combo box to update the event combo box
@@ -92,14 +92,13 @@ class RuleDialog(QDialog):
     # Validate before accepting dialog
     def validate(self):
         # If type / node / event have not been selected
-        # Todo still need to remove any nodes that don't have events
         if (
             self.selection_comboboxes["row0_col0"].currentText() == constants.COMBO_TYPE_PROMPT or
             self.selection_comboboxes["row0_col1"].currentText() == constants.COMBO_TYPE_PROMPT or
-            self.selection_comboboxes["row1_col0"].currentText() == "Select Node" or
-            self.selection_comboboxes["row1_col1"].currentText() == "Select Node" or
-            self.selection_comboboxes["row2_col0"].currentText() == "Select Event" or
-            self.selection_comboboxes["row2_col1"].currentText() == "Select Event"
+            self.selection_comboboxes["row1_col0"].currentText() == constants.COMBO_NODE_PROMPT or
+            self.selection_comboboxes["row1_col1"].currentText() == constants.COMBO_NODE_PROMPT or
+            self.selection_comboboxes["row2_col0"].currentText() == constants.COMBO_EVENT_PROMPT or
+            self.selection_comboboxes["row2_col1"].currentText() == constants.COMBO_EVENT_PROMPT
             ):
             msg_box = QMessageBox()
             msg_box.setWindowTitle ("Missing details")
@@ -140,7 +139,6 @@ class RuleDialog(QDialog):
         selected_values['event']['node'] = self.selection_comboboxes["row1_col0"].currentText()
         selected_values['event']['event'] = self.selection_comboboxes["row2_col0"].currentText()
         selected_values['event']['value'] = self.selection_comboboxes["row3_col0"].currentText()
-        #selected_values['action']['type'] = self.selection_comboboxes["row1_col0"].currentText()
         node_type = self.selection_comboboxes["row0_col1"].currentText()
         # special case for node_type as if constants.COMBO_UI_PROMPT need to convert to Gui
         if node_type == constants.COMBO_UI_PROMPT:
@@ -149,8 +147,7 @@ class RuleDialog(QDialog):
         selected_values['action']['node'] = self.selection_comboboxes["row1_col1"].currentText()
         selected_values['action']['event'] = self.selection_comboboxes["row2_col1"].currentText()
         selected_values['action']['value'] = self.selection_comboboxes["row3_col1"].currentText()
-        # todo
-        # options not yet implemented as it depends upon the action Event
+        # Future options not yet implemented as it depends upon the action Event
         return selected_values
 
     def update_action_node_combo(self, index):
@@ -172,7 +169,7 @@ class RuleDialog(QDialog):
                 nodes = ["NA"]
         # Don't say select if there are none to select
         if nodes != ["NA"]:
-            self.selection_comboboxes["row1_col1"].addItem("Select Node")
+            self.selection_comboboxes["row1_col1"].addItem(constants.COMBO_NODE_PROMPT)
         self.selection_comboboxes["row1_col1"].addItems(nodes)
 
 
@@ -180,19 +177,18 @@ class RuleDialog(QDialog):
         self.selection_comboboxes["row1_col0"].clear()
         # Updates the event_combo based on the selected type
         selected_type = self.selection_comboboxes["row0_col0"].currentText()
-        if selected_type == None or selected_type == constants.COMBO_TYPE_PROMPT:
-            nodes = ["NA"]
-        else:
-            # If User Interface - convert to Gui
-            if selected_type == constants.COMBO_UI_PROMPT:
-                selected_type = "Gui"
-            nodes = device_manager.get_nodes_names(selected_type)
-            # If there are no devices of this type
-            if nodes == []:
-                nodes = ["NA"]
+        # Sets nodes to "NA" - if constants.COMBO_TYPE_PROMPT then it remains as this
+        # Otherwise replace with appropriate types
+        nodes = ["NA"]
+        # If User Interface 
+        if selected_type == constants.COMBO_UI_PROMPT:
+            nodes = track_view_manager.get_nodes_names(null_events = False)
+        elif selected_type == constants.COMBO_VLCB_PROMPT:
+            nodes = device_manager.get_nodes_names(null_events = False)
+
         # Don't say select if there are none to select
         if nodes != ["NA"]:
-            self.selection_comboboxes["row1_col0"].addItem("Select Node")
+            self.selection_comboboxes["row1_col0"].addItem(constants.COMBO_NODE_PROMPT)
         self.selection_comboboxes["row1_col0"].addItems(nodes)
 
     def update_event_combo(self, index):
@@ -209,7 +205,7 @@ class RuleDialog(QDialog):
         self.selection_comboboxes["row2_col0"].clear()
         # Updates the event_combo based on the selected node.
         selected_node = self.selection_comboboxes["row1_col0"].currentText()
-        if selected_node == None or selected_node == "Select Node" or selected_node == "NA":
+        if selected_node == None or selected_node == constants.COMBO_NODE_PROMPT or selected_node == "NA":
             events = ["NA"]
         else:
             # convert to node_key
@@ -222,7 +218,7 @@ class RuleDialog(QDialog):
             if events == []:
                 events = ["NA"]
         if events != ["NA"]:
-            self.selection_comboboxes["row2_col0"].addItem("Select Event")
+            self.selection_comboboxes["row2_col0"].addItem(constants.COMBO_EVENT_PROMPT)
         self.selection_comboboxes["row2_col0"].addItems(events)
         
     
@@ -254,7 +250,7 @@ class RuleDialog(QDialog):
         self.selection_comboboxes["row2_col1"].clear()
         # Updates the event_combo based on the selected node.
         selected_node = self.selection_comboboxes["row1_col1"].currentText()
-        if selected_node == None or selected_node == "Select Node" or selected_node == "NA":
+        if selected_node == None or selected_node == constants.COMBO_NODE_PROMPT or selected_node == "NA":
             events = ["NA"]
         else:
             # convert to node_key
@@ -268,7 +264,7 @@ class RuleDialog(QDialog):
             if events == []:
                 events = ["NA"]
         if events != ["NA"]:
-            self.selection_comboboxes["row2_col1"].addItem("Select Event")
+            self.selection_comboboxes["row2_col1"].addItem(constants.COMBO_EVENT_PROMPT)
         self.selection_comboboxes["row2_col1"].addItems(events)
                 
     

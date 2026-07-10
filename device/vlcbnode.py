@@ -28,11 +28,9 @@ class VLCBNode():
         self.manuf_id = manuf_id
         self.mod_id = mod_id
         self.flags = flags
-        #self.events = []
         self.time_updated = time()
         # GUI node is used to provide entry for the model view
         self.gui_node = QStandardItem(f"{self.name}, {self.node_id}, {self.can_id}")
-        #self.gui_node = QStandardItem(f"{self.name}")
         self.numev = -1 # If number events unknown then set to -1
         self.evspc = -1 # event space
         # Events are stored as a dictionary with the ev_id as the index
@@ -42,13 +40,9 @@ class VLCBNode():
         return self.ev.values()
         
     def get_ev_names (self):
-        #print (f"Getting Ev Names from {self.name}")
-        #print (f" EV {self.ev}")
         list_names = []
         for key in self.ev.keys():
-            #print (f" This EV {self.ev[key]}")
             list_names.append(self.ev[key].get_name())
-        #print (f"EV names {list_names}")
         return list_names
         
     def get_gui_node (self):
@@ -56,7 +50,6 @@ class VLCBNode():
         
     # Sets name and updates the GUI string
     def set_name (self, name):
-        #print (f"Setting name to {name}")
         self.name = name
         self.update_gui_node_string()
 
@@ -73,12 +66,9 @@ class VLCBNode():
     # or item if is
     def check_item (self, item):
         if self.gui_node == item:
-            #print ("This node")
-            #return ([self.node_id, 0])
             return self
         for key, ev in self.ev.items():
             if ev.gui_node == item:
-                #return ([self.node_id, ev.ev_id])
                 return ev
         return None
         
@@ -100,7 +90,7 @@ class VLCBNode():
     # field is to be updated - this needs to be coded manually
     # Features included = "name"
     def update_ev(self, ev_id, field, value):
-        if not ev_id in self.ev.keys():
+        if ev_id not in self.ev.keys():
             return False
         if field == "name":
            self.ev[ev_id].set_name(value)

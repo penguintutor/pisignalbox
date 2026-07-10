@@ -99,11 +99,10 @@ class ConsoleWindowUI(QMainWindow):
             self.activateWindow()
         
     def log_update (self, log_event):
-        #print (f"Log Event {log_event.data}")
         if log_event.get_log_type() == "Automation":
             ui_auto.add_log(self, log_event)
             ui_auto.update_log(self)
-        #Todo other logs could be handled if desired
+        #Future other logs could be handled if desired
             
     # Uses main window to send the contents of commandEdit
     def send_command (self):

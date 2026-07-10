@@ -134,9 +134,8 @@ class DeviceManager(QObject):
         # Add the EV
         ev_node = self.nodes[node_id].add_ev(ev_id, en)
         # Send signal so that the gui thread can perform addRow
-        #self.add_node_signal.emit (self.nodes[node_id].gui_node, ev_node.gui_node)
         # Update the name based on layout
-        # Todo add this feature back - using layout for names
+        # Future add this feature back - using layout for names
         #name = self.layout.ev_name(node_id, ev_id, en)
         #self.update_ev(node_id, ev_id, "name", name)
         # Notify of new node

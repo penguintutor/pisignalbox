@@ -153,7 +153,7 @@ def arg1_nodeid (self):
         node_str = self.ui.arg1Select.currentText()
         node_id = int(node_str)
         # If no node_id, or it's not a number return
-    except:
+    except (ValueError, TypeError):
         return None
     # Also check number is not negative or too large
     if node_id < 0 or node_id > 65535:
@@ -166,7 +166,7 @@ def arg2_evid (self):
         ev_str = self.ui.arg2Select.currentText()
         ev_id = int(ev_str)
         # If no node_id, or it's not a number return
-    except:
+    except (ValueError, TypeError):
         return None
     # Also check number is not negative or too large
     if ev_id < 0 or ev_id > 65535:
