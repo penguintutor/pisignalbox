@@ -413,7 +413,7 @@ class ApiHandler(QObject):
                 # After extracting data publish as an event then let receiving classes process
                 event_bus.publish(LocoEvent('ERR', data_entry))
             case _:
-                print (f"Unknown opcode {ret_opcode}")
+                logger.warning(f"Unknown opcode {ret_opcode}")
 
     
     # Initial discovery of modules    

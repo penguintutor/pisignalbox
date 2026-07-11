@@ -20,8 +20,17 @@ class VLCBClient():
         try:
             request_url = urllib.request.urlopen(request_string)
             response = request_url.read()
-        except:
-            print ("Error sending via http")
+        except urllib.error.HTTPError as e:
+            # Catches server errors eg. 404 not found, 401 unathorized, 500 internal server error
+            logger.warning(f"Error sending via http {request_string}: {e.code}, {e.reason}")
+            # None indicates not connected
+            return None
+        except urllib.error.URLError as e:
+            logger.warning(f"Error sending via http, due to network connection error {e.reason}")
+            # None indicates not connected
+            return None
+        except TimeoutError as e:
+            logger.warning(f"Error sending via http, due to timeout {e}")
             # None indicates not connected
             return None
         if response[0:7] == "Success":
@@ -40,8 +49,18 @@ class VLCBClient():
         try:
             request_url = urllib.request.urlopen(request_string)
             response = request_url.read().decode('utf-8')
-        except:
-            print ("Error reading from http request")
+        except urllib.error.HTTPError as e:
+            # Catches server errors eg. 404 not found, 401 unathorized, 500 internal server error
+            logger.warning(f"Error reading via http {request_string}: {e.code}, {e.reason}")
+            # None indicates not connected
+            return None
+        except urllib.error.URLError as e:
+            logger.warning(f"Error reading via http, due to network connection error {e.reason}")
+            # None indicates not connected
+            return None
+        except TimeoutError as e:
+            logger.warning(f"Error reading via http, due to timeout {e}")
+            # None indicates not connected
             return None
         return response
         
