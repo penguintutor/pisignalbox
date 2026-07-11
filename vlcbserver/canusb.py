@@ -1,4 +1,7 @@
 import serial
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Custom Exception class
 class DeviceConnectionError(Exception):
@@ -11,7 +14,6 @@ class DeviceConnectionError(Exception):
 # Needs port (eg. /dev/ttyACM0)
 class CanUSB4 ():
     def __init__ (self, port, baud=115200, timeout=0.01):
-        self.debug = False
         self.port = port
         self.baud = baud
         self.timeout = timeout

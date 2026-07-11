@@ -10,7 +10,7 @@ Allow additional options through the rules dialog
 Provide a way to provide user friendly node and ev names through the Layout configuration
 
 ### All Stop
-Update loco status in response to ERSTOP AppEvent action:"locoupdate"
+Update loco status in response to ERSTOP AppEvent "action":"locoupdate","value": "STOP ALL!"
 
 ## Priority 2
 These are features that are planned for addition in the near future

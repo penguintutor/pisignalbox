@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from flask import Flask
 import threading
+import logging
 from vlcbserver.canusb import CanUSB4, DeviceConnectionError
 from datetime import datetime
 import time
@@ -10,6 +11,8 @@ import vlcbserver
 from vlcbserver import create_app
 import vlcbserver.requests
 
+# Configure logging for the entire application
+logging.basicConfig(level=logging.ERROR) 
 
 port = '/dev/ttyACM0'
 

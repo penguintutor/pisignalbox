@@ -1,4 +1,5 @@
 from PySide6.QtCore import Qt, QTimer, QObject, QThreadPool, QRunnable
+import logging
 from .vlcbclient import VLCBClient
 from .worker import Worker
 from .eventbus import event_bus
@@ -9,7 +10,7 @@ from pyvlcb import VLCBOpcode
 from device import device_manager, VLCBNode
 
 
-
+logger = logging.getLogger(__name__)
 
 class ApiHandler(QObject):
     def __init__(self, thread_pool: QThreadPool, url, server_client=None):
@@ -18,8 +19,6 @@ class ApiHandler(QObject):
         self.url = url
        
         # Keep alive timer must run on mainwindow and must be started / stopped using signals
-
-        self.debug = False
         
         # Queue to hold commands as they are sent from the queue
         self.send_queue = []
@@ -198,8 +197,7 @@ class ApiHandler(QObject):
         elif response[0:5] == "Read,":
             # split into status_line and data
             status_data = response.split('\n',1)
-            if self.debug:
-                print (f"Status data {status_data}")
+            logger.debug (f"Status data {status_data}")
 
             # First line format is "Read,<start>,<end>,<numlines>"
             header = status_data[0].split(',', 3)
@@ -252,8 +250,7 @@ class ApiHandler(QObject):
     
     def handle_incoming_data (self, response):
         
-        if self.debug:
-            print (f"Incoming data {response}")
+        logger.debug(f"Incoming data {response}")
 
         # pass to console (unparsed)
         event_bus.publish(AppEvent({"action":"newdata", "response":response}))
@@ -269,12 +266,10 @@ class ApiHandler(QObject):
         vlcb_entry = self.vlcb.parse_input(id_date_data[3])
         # If not a valid entry then ignore
         if vlcb_entry == False:
-            if self.debug:
-                print (f"Not a valid entry {id_date_data}")
+            logger.warning (f"Not a valid entry {id_date_data}")
             return
         
-        if self.debug:
-            print (f"VLCB Entry {vlcb_entry}")
+        logger.debug(f"VLCB Entry {vlcb_entry}")
 
         # Look for specific responses
         # future option? - should we check timestamp first? If the entry is from before the first request then may not be
@@ -285,138 +280,140 @@ class ApiHandler(QObject):
 
         # Special case check for null responses - If so set opcode to "NONE"
         ret_opcode = vlcb_entry.opcode()    # Instead of calling method for each condition save it in a variable
-        if self.debug:
-            print (f"Op code {ret_opcode}")
-        if ret_opcode == 'ERSTOP':    # Emergency stop all
-            # Emergency stop and stop all are the same
-            # except for the message
-            #self.loco_stop ("STOP ALL!")
-            # Trigger an App Event to indicate all locos stopped
-            event_bus.publish(AppEvent({
-                        "action": "locoupdate", 
-                        "value": "STOP ALL!"
-                    }))
-            
-        elif ret_opcode == 'PNN':    # PNN (Response to query node)
-            data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
-            # Determine mode based on flags (bit 3)
-            # Flags bit 0 = consumer, bit 1 = producer, bit 2= FliM, bit 3 = supports bootloading
-            if data_entry['Flags'] & 0x4:
-                mode = "FLiM"
-            else:
-                mode = "SLiM"
+        logger.debug (f"Op code {ret_opcode}")
+
+        match ret_opcode:    
+            case 'ERSTOP':    # Emergency stop all
+                # Emergency stop and stop all are the same
+                # except for the message
+                #self.loco_stop ("STOP ALL!")
+                # Trigger an App Event to indicate all locos stopped
+                event_bus.publish(AppEvent({
+                            "action": "locoupdate", 
+                            "value": "STOP ALL!"
+                        }))
+                
+            case 'PNN':    # PNN (Response to query node)
+                data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
+                # Determine mode based on flags (bit 3)
+                # Flags bit 0 = consumer, bit 1 = producer, bit 2= FliM, bit 3 = supports bootloading
+                if data_entry['Flags'] & 0x4:
+                    mode = "FLiM"
+                else:
+                    mode = "SLiM"
 
 
-            # if we don't already have this device add it
-            if not device_manager.node_exists(data_entry['NN']):
-                device_manager.add_node(VLCBNode(data_entry['NN'], mode, vlcb_entry.can_id, data_entry['ManufId'], data_entry['ModId'] ,data_entry['Flags']))
+                # if we don't already have this device add it
+                if not device_manager.node_exists(data_entry['NN']):
+                    device_manager.add_node(VLCBNode(data_entry['NN'], mode, vlcb_entry.can_id, data_entry['ManufId'], data_entry['ModId'] ,data_entry['Flags']))
 
-            else:
-                # Update existing entry
-                items_changed = device_manager.update_node(data_entry['NN'], {'Mode': mode, 'ManfId': data_entry['ManufId'], 'ModId': data_entry['ModId'], 'Flags': data_entry['Flags']})
-                # If no items changed then no need to check for further updates
-                if items_changed == 0:
+                else:
+                    # Update existing entry
+                    items_changed = device_manager.update_node(data_entry['NN'], {'Mode': mode, 'ManfId': data_entry['ManufId'], 'ModId': data_entry['ModId'], 'Flags': data_entry['Flags']})
+                    # If no items changed then no need to check for further updates
+                    if items_changed == 0:
+                        return
+
+                # If this is new, or has changed then we can also get the number of events
+                self.discover_evn (data_entry['NN'])
+            case 'NUMEV':    # Number of configured events
+                data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
+                # If we don't already have this node then didn't see a PNN response - so likely error
+                if not device_manager.node_exists(data_entry['NN']):
+                    print (f"NUMV response from Unknown node {data_entry['NN']}")
                     return
+                # Update node with evnum value
+                device_manager.set_numev(data_entry['NN'], data_entry['NumEvents'])
+            case 'EVNLF':    # Number of event space left in node
+                data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
+                # If we don't already have this node then didn't see a PNN response - so likely error
+                if not device_manager.node_exists(data_entry['NN']):
+                    print (f"EVNLF response from Unknown node {data_entry['NN']}")
+                    return
+                # Update node with evnum value
+                device_manager.set_evspc(data_entry['NN'], data_entry['EVSPC'])
+                # Add a query for the next discovery stage - get a list of all the events
+                self.discover_nerd (data_entry['NN'])
+            case 'ENRSP':    # EV discovery
+                data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
+                # If we don't already have this node then didn't see a PNN response - so likely error
+                if not device_manager.node_exists(data_entry['NN']):
+                    # Most likely reason is connected to existing server with old entries
+                    # So ignore unless debug
+                    logger.debug(f"ENRSP response from Unknown node {data_entry['NN']}")
+                    return
+                # Add event to node
+                device_manager.add_ev(data_entry['NN'], data_entry['EnIndex'], data_entry['En3_0'])
 
-            # If this is new, or has changed then we can also get the number of events
-            self.discover_evn (data_entry['NN'])
-        elif ret_opcode == 'NUMEV':    # Number of configured events
-            data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
-            # If we don't already have this node then didn't see a PNN response - so likely error
-            if not device_manager.node_exists(data_entry['NN']):
-                print (f"NUMV response from Unknown node {data_entry['NN']}")
-                return
-            # Update node with evnum value
-            device_manager.set_numev(data_entry['NN'], data_entry['NumEvents'])
-        elif ret_opcode == 'EVNLF':    # Number of event space left in node
-            data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
-            # If we don't already have this node then didn't see a PNN response - so likely error
-            if not device_manager.node_exists(data_entry['NN']):
-                print (f"EVNLF response from Unknown node {data_entry['NN']}")
-                return
-            # Update node with evnum value
-            device_manager.set_evspc(data_entry['NN'], data_entry['EVSPC'])
-            # Add a query for the next discovery stage - get a list of all the events
-            self.discover_nerd (data_entry['NN'])
-        elif ret_opcode == 'ENRSP':    # EV discovery
-            data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
-            # If we don't already have this node then didn't see a PNN response - so likely error
-            if not device_manager.node_exists(data_entry['NN']):
-                # Most likely reason is connected to existing server with old entries
-                # So ignore unless debug
-                if self.debug:
-                    print (f"ENRSP response from Unknown node {data_entry['NN']}")
-                return
-            # Add event to node
-            device_manager.add_ev(data_entry['NN'], data_entry['EnIndex'], data_entry['En3_0'])
-
-        # Indicates allocation of loco - need to verify this is expected
-        elif ret_opcode == 'PLOC':
-            data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
-            #print (f"PLOC received {data_entry}")
-            # Session,AddrHigh_AddrLow,SpeedDir,Fn1,Fn2,Fn3'
-            loco_id = data_entry['AddrHigh_AddrLow'] & 0x3FFF
-            event_bus.publish(LocoEvent('PLOC', {
-                'Loco_id': loco_id,
-                'Session': data_entry['Session'],
-                'Speeddir': data_entry['SpeedDir'],
-                'Fn1': data_entry['Fn1'],
-                'Fn2': data_entry['Fn2'],
-                'Fn3': data_entry['Fn3'],
-                'Status': "on"
-                }))
-            
-            event_bus.publish(AppEvent({"action":"uitext", 'label': "locoStatusLabel", 'value': "Ready"}))
-            # Set status to on last gives time to ensure all entries updated
-            # Update controller with new values
-            event_bus.publish(AppEvent({"action":"lcd"}))
-            # Start the keepalive timer
-            event_bus.publish(AppEvent({"action":"keepalive"}))
-        ## Update events - these need to notify other devices
-        # Accessory On (eg ACON = Acc / ASON = short)
-        # Works on both event codes (eg. ACON) and status codes (eg. ARON)
-        # Uses 'active' True / false
-        elif (ret_opcode in VLCBOpcode.accessory_codes['on']):
-            data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
-            # pass all data into event, but also add additional information
-            data_entry ['node_id'] = data_entry ['NN']
-            # Long codes (ACON) use Event Number, Short codes (ASON) use Device Number
-            if 'EnHigh_EnLow' in data_entry:
-                data_entry ['event_id'] = data_entry ['EnHigh_EnLow']
-            elif 'DNHigh_DNLow' in data_entry:
-                data_entry ['event_id'] = data_entry ['DNHigh_DNLow']
-            # Catch unknown
-            else:
-                data_entry['event_id'] = 0
-            data_entry ['active'] = True
-            data_entry ['value'] = "on"
-            #print (f"On code {data_entry}")
-            self.consume_device_event (data_entry)
-        # Accessory Off (eg ACOFF = Acc / ASOF = short)
-        elif (ret_opcode in VLCBOpcode.accessory_codes['off']):
-            data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
-            data_entry ['node_id'] = data_entry ['NN']
-            if 'EnHigh_EnLow' in data_entry:
-                data_entry ['event_id'] = data_entry ['EnHigh_EnLow']
-            elif 'DNHigh_DNLow' in data_entry:
-                data_entry ['event_id'] = data_entry ['DNHigh_DNLow']
-            # Catch unknown
-            else:
-                data_entry['event_id'] = 0
-            data_entry ['value'] = "off"
-            #print (f"Off code {data_entry}")
-            self.consume_device_event (data_entry)
-        # ERR is error from DCC controller - eg. problem acquiring loco
-        elif ret_opcode == 'ERR':
-            if self.debug:
-                print ("Error message received")
-            # Depending upon the error code the data may have different interpretations
-            # Stored as Byte1, Byte2, ErrCode - where Byte1,Byte2 may eqal AddrHigh_AddrLow, or
-            # may be Byte1 = Session ID, Byte 2 = 0
-            # So only check after looking at the ErrCodepublish_device_event 
-            data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
-            # After extracting data publish as an event then let receiving classes process
-            event_bus.publish(LocoEvent('ERR', data_entry))
+            # Indicates allocation of loco - need to verify this is expected
+            case 'PLOC':
+                data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
+                #print (f"PLOC received {data_entry}")
+                # Session,AddrHigh_AddrLow,SpeedDir,Fn1,Fn2,Fn3'
+                loco_id = data_entry['AddrHigh_AddrLow'] & 0x3FFF
+                event_bus.publish(LocoEvent('PLOC', {
+                    'Loco_id': loco_id,
+                    'Session': data_entry['Session'],
+                    'Speeddir': data_entry['SpeedDir'],
+                    'Fn1': data_entry['Fn1'],
+                    'Fn2': data_entry['Fn2'],
+                    'Fn3': data_entry['Fn3'],
+                    'Status': "on"
+                    }))
+                
+                event_bus.publish(AppEvent({"action":"uitext", 'label': "locoStatusLabel", 'value': "Ready"}))
+                # Set status to on last gives time to ensure all entries updated
+                # Update controller with new values
+                event_bus.publish(AppEvent({"action":"lcd"}))
+                # Start the keepalive timer
+                event_bus.publish(AppEvent({"action":"keepalive"}))
+            ## Update events - these need to notify other devices
+            # Accessory On (eg ACON = Acc / ASON = short)
+            # Works on both event codes (eg. ACON) and status codes (eg. ARON)
+            # Uses 'active' True / false
+            # match guard clause: checks if the opcode is within a lit
+            case _ if ret_opcode in VLCBOpcode.accessory_codes['on']:
+                data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
+                # pass all data into event, but also add additional information
+                data_entry ['node_id'] = data_entry ['NN']
+                # Long codes (ACON) use Event Number, Short codes (ASON) use Device Number
+                if 'EnHigh_EnLow' in data_entry:
+                    data_entry ['event_id'] = data_entry ['EnHigh_EnLow']
+                elif 'DNHigh_DNLow' in data_entry:
+                    data_entry ['event_id'] = data_entry ['DNHigh_DNLow']
+                # Catch unknown
+                else:
+                    data_entry['event_id'] = 0
+                data_entry ['active'] = True
+                data_entry ['value'] = "on"
+                #print (f"On code {data_entry}")
+                self.consume_device_event (data_entry)
+            # Accessory Off (eg ACOFF = Acc / ASOF = short)
+            case _ if ret_opcode in VLCBOpcode.accessory_codes['off']:
+                data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
+                data_entry ['node_id'] = data_entry ['NN']
+                if 'EnHigh_EnLow' in data_entry:
+                    data_entry ['event_id'] = data_entry ['EnHigh_EnLow']
+                elif 'DNHigh_DNLow' in data_entry:
+                    data_entry ['event_id'] = data_entry ['DNHigh_DNLow']
+                # Catch unknown
+                else:
+                    data_entry['event_id'] = 0
+                data_entry ['value'] = "off"
+                #print (f"Off code {data_entry}")
+                self.consume_device_event (data_entry)
+            # ERR is error from DCC controller - eg. problem acquiring loco
+            case 'ERR':
+                logger.info ("Error message received")
+                # Depending upon the error code the data may have different interpretations
+                # Stored as Byte1, Byte2, ErrCode - where Byte1,Byte2 may eqal AddrHigh_AddrLow, or
+                # may be Byte1 = Session ID, Byte 2 = 0
+                # So only check after looking at the ErrCodepublish_device_event 
+                data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
+                # After extracting data publish as an event then let receiving classes process
+                event_bus.publish(LocoEvent('ERR', data_entry))
+            case _:
+                print (f"Unknown opcode {ret_opcode}")
 
     
     # Initial discovery of modules    
@@ -437,4 +434,5 @@ class ApiHandler(QObject):
     # Searching for this shows which responses send device notify events to automation
     def consume_device_event (self, data):
         event_bus.consume(DeviceEvent(data))
+
         

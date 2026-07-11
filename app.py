@@ -3,6 +3,7 @@ import sys, os
 # Supress debug messages from qt6ct
 os.environ["QT_LOGGING_RULES"] = "*.debug=false;"
 import argparse
+import logging
 import time
 from pathlib import Path
 from PySide6.QtWidgets import QApplication, QDialog, QFileDialog, QMessageBox
@@ -14,6 +15,12 @@ from loco import LocoWindow
 from loco import LocoDialog
 
 os.environ["QT_QPA_PLATFORM"] = "xcb"
+
+# Configure logging for the entire application
+logging.basicConfig(level=logging.ERROR) 
+# Change to logging.INFO to turn off all debug prints globally
+# To enable detailed logging for apihandler then use below
+# logging.getLogger('core.apihandler').setLevel(logging.DEBUG)
 
 # filenames are relative to data directory
 # by default that is basedir/data/

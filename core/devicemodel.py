@@ -36,8 +36,7 @@ class DeviceModel(QObject):
 
     def __init__(self):
         super().__init__()
-        
-        self.debug = False
+
 
         # dict of nodes indexed by NN
         self.nodes = {}

@@ -12,10 +12,14 @@ from PySide6.QtCore import QTimer, QSize, Qt
 from PySide6.QtWidgets import QMenu, QDialog, QFileDialog, QMessageBox, QColorDialog
 from PySide6.QtGui import QPixmap, QImage, QPalette, QColor, QFont, QResizeEvent
 from PySide6.QtUiTools import QUiLoader
+import logging
 from pathlib import Path 
 from core import event_bus
 from common import ImageExistDialog
 from layout import LayoutDialog
+
+# As this is a Mixin it will report as this file rather than the file it's imported into
+logger = logging.getLogger(__name__)
 
 class UITrackViewMixin:
 
@@ -264,8 +268,7 @@ class UITrackViewMixin:
         # Still possible bug in hsv val setting - so set manually to 255 (1)
         # dont know why bug here but not in the other color pickers
         hue, sat, val, alpha = current_color.getHsvF()
-        if self.debug:
-            print (f"Colour value HsvF is {hue}, {sat}, {val}, {alpha}")
+        logger.debug (f"Colour value HsvF is {hue}, {sat}, {val}, {alpha}")
         current_color.setHsvF(hue, sat, 1, alpha)
         color_dialog = QColorDialog(current_color, self.edit_gui_dialog)
         if color_dialog.exec() == QDialog.Accepted:

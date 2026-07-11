@@ -21,7 +21,6 @@ class ConsoleWindowUI(QMainWindow):
     
     def __init__(self, mainwindow):
         super().__init__()
-        self.debug = False
         self.mainwindow = mainwindow
         
         self.window_title = "PiSignalbox Console"

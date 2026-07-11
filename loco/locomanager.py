@@ -5,6 +5,7 @@ import os
 import json
 from PySide6.QtCore import Qt, QObject, Signal, Slot
 from PySide6.QtGui import QStandardItemModel, QStandardItem
+import logging
 from core import event_bus
 from pyvlcb import VLCB
 from pyvlcb.utils import bytes_to_addr
@@ -13,6 +14,7 @@ from core.vlcbclient import VLCBClient
 from .locolist import LocoList
 from events import DeviceEvent, LocoEvent, AppEvent, GuiEvent, TimerEvent
 
+logger = logging.getLogger(__name__)
 
 # Many of the methods in there (particularly when related to self.locos)
 # are just used to hand off to the other class. This maintains loco_manager as
@@ -38,8 +40,6 @@ class LocoManager(QObject):
 
     def __init__(self):
         super().__init__()
-        
-        self.debug = False
 
         
         # Locos is now replaced with a LocoList (object containing a list not a python list)
@@ -115,8 +115,8 @@ class LocoManager(QObject):
         handler = handlers.get(err_code)
         if handler:
             handler(error_data)
-        elif self.debug:
-            print(f"Unhandled loco error code: {err_code} - Data: {error_data}")
+        else:
+            logger.debug(f"Unhandled loco error code: {err_code} - Data: {error_data}")
 
     def _get_loco_from_bytes(self, byte1, byte2):
         """Helper to extract loco ID and object from error bytes."""
@@ -143,8 +143,7 @@ class LocoManager(QObject):
 
     def _handle_err_loco_taken(self, error_data):
         """Handles ErrCode 2: Loco already taken."""
-        if self.debug:
-            print("Error code 2 - loco taken")
+        logger.debug("Error code 2 - loco taken")
             
         loco_id, loco = self._get_loco_from_bytes(error_data['Byte1'], error_data['Byte2'])
         
@@ -165,19 +164,16 @@ class LocoManager(QObject):
         """Handles ErrCode 8: Session cancelled."""
         session_id = int(error_data['Byte1'])
         
-        if self.debug:
-            print(f"Session cancel for session_id {session_id}")
+        logger.debug(f"Session cancel for session_id {session_id}")
             
         loco = self.loco_from_session(session_id)
         
         if loco is None:
-            if self.debug:
-                print("Not a valid loco - ignoring")
+            logger.debug("Not a valid loco - ignoring")
             return
 
-        if self.debug:
-            # Fixed: loco_id was previously undefined here. Falling back to session_id.
-            print(f"Session cancelled {session_id} successfully.")
+        # Fixed: loco_id was previously undefined here. Falling back to session_id.
+        logger.debug(f"Session cancelled {session_id} successfully.")
             
         loco.reset()
         event_bus.publish(AppEvent({"action": "resetloco", 'loco_id': self.loco.loco_id}))

@@ -7,6 +7,7 @@ import json
 import itertools
 from PySide6.QtCore import Qt, QObject, Signal, Slot
 from PySide6.QtGui import QStandardItemModel, QStandardItem
+import logging
 from core import event_bus
 from pyvlcb import VLCB
 from pyvlcb.utils import bytes_to_addr
@@ -14,14 +15,13 @@ from device import VLCBNode
 from core import VLCBClient
 from events import DeviceEvent, LocoEvent, AppEvent, GuiEvent, TimerEvent
 
-
+logger = logging.getLogger(__name__)
 
 class TrackViewManager(QObject):
 
     def __init__(self):
         super().__init__()
-        
-        self.debug = False
+
         # links back to the layout which owns the actual objects
         self.active_layout = None
 

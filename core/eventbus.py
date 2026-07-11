@@ -125,7 +125,7 @@ class EventBus(QObject):
         # Have we reached maximum
         if self.automation_count >= self.max_automation_count:
             print ("*** Warning automation events exceeded ***")
-            # Todo call a gui event to notify userrr
+            # Todo call a gui event to notify user
             self.automation_enabled = False
             # Allowed to continue for this event, but then stop
         

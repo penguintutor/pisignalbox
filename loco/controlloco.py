@@ -1,6 +1,7 @@
 import os
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QStandardItemModel, QStandardItem, QPixmap
+import logging
 from layout import Layout
 from pyvlcb import VLCB
 from pyvlcb.utils import bytes_to_addr
@@ -9,6 +10,8 @@ from core import ApiHandler
 from core import event_bus
 from loco import loco_manager
 from events import AppEvent, LocoEvent
+
+logger = logging.getLogger(__name__)
 
 # Tracks and generates events(activities) against a loco
 # When we receive / send an event do we need to update devices and corresponding objects
@@ -20,7 +23,7 @@ class ControlLoco:
         # Refer to self.loco 
         self.loco = None
         # loco moved to loco_manager
-        self.debug = False
+
         
     def event_trigger (self, event):
         #print (f"ControlLoco received event {event.event_type} data {event.data}")
@@ -48,13 +51,13 @@ class ControlLoco:
             # ---------------------------------------------------------
             case {"ErrCode": 1, "Byte1": byte1, "Byte2": byte2}:
                 if not self.is_acquiring():
-                    self._log_debug("Not acquiring loco - ignoring error")
+                    logger.debug("Not acquiring loco - ignoring error")
                     return
                 
                 loco_id = bytes_to_addr(byte1, byte2) & 0x3FFF
                 
                 if self.get_id() != loco_id:
-                    self._log_debug(f"ERR ID {loco_id} does not match current Loco ID {self.get_id()}")
+                    logger.debug(f"ERR ID {loco_id} does not match current Loco ID {self.get_id()}")
                     return
                     
                 if self.loco is not None:
@@ -69,7 +72,7 @@ class ControlLoco:
             # ErrCode 2: Already taken - option to steal
             # ---------------------------------------------------------
             case {"ErrCode": 2, "Byte1": byte1, "Byte2": byte2}:
-                self._log_debug("Error code 2 - loco taken")
+                logger.debug("Error code 2 - loco taken")
                 
                 # Only for us if we haven't completed the session setup
                 if self.get_status() == "on" or not self.is_acquiring():
@@ -78,7 +81,7 @@ class ControlLoco:
                 loco_id = bytes_to_addr(byte1, byte2) & 0x3FFF
                 
                 if self.get_id() != loco_id:
-                    self._log_debug(f"ERR ID {loco_id} does not match current Loco ID {self.get_id()}")
+                    logger.debug(f"ERR ID {loco_id} does not match current Loco ID {self.get_id()}")
                     return
                     
                 if self.loco is not None:
@@ -99,7 +102,7 @@ class ControlLoco:
                 session_id = int(byte1)
                 
                 if session_id != 0 and session_id == self.get_session():
-                    self._log_debug(f"Session cancelled {session_id}")
+                    logger.debug(f"Session cancelled {session_id}")
                     self.reset_loco()
                     if self.loco is not None:
                         event_bus.publish(AppEvent({
@@ -107,13 +110,13 @@ class ControlLoco:
                             "loco_id": self.loco.loco_id
                         }))
                 else:
-                    self._log_debug(f"Session not cancelled {session_id}, loco session {self.get_session()}")
+                    logger.debug(f"Session not cancelled {session_id}, loco session {self.get_session()}")
                     
             # ---------------------------------------------------------
             # Fallback for unhandled error codes
             # ---------------------------------------------------------
             case _:
-                self._log_debug(f"Unknown error code caught in ControlLoco handle_error {error_data["ErrCode"]}")
+                logger.debug(f"Unknown error code caught in ControlLoco handle_error {error_data["ErrCode"]}")
 
 
     def is_active(self):
@@ -302,8 +305,3 @@ class ControlLoco:
     # Same as a stop as far as ControlLoco is concerned
     def stop_all (self):
         self.stop()
-
-    def _log_debug(self, message):
-        """Helper to remove branching complexity from main logic."""
-        if self.debug:
-            print(message)

@@ -5,6 +5,7 @@ from PySide6.QtCore import QTimer, QCoreApplication, Signal, QThreadPool, Qt, QP
 from PySide6.QtWidgets import QApplication, QMainWindow, QAbstractItemView, QMenu, QLineEdit, QDialog, QColorDialog, QFileDialog, QMessageBox, QHeaderView
 from PySide6.QtGui import QPixmap, QImage, QPalette, QColor, QFont, QResizeEvent
 from PySide6.QtUiTools import QUiLoader
+import logging
 from pathlib import Path
 from core import DATA_DIR, RESOURCES_DIR
 from core import event_bus
@@ -39,6 +40,8 @@ url = "http://127.0.0.1:5000/"
 #os.path.join(basedir, "data/")
 read_rate = 200
 
+logger = logging.getLogger(__name__)
+
 class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin):
     
     steal_dialog_signal = Signal(int)
@@ -69,7 +72,6 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin):
     # settings provides an option for command line arguments to the data dir
     def __init__(self, dirs, files, settings=None):
         super().__init__()
-        self.debug = False
 
         # Loader used to load the ui files
         loader = QUiLoader()

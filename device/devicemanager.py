@@ -5,6 +5,7 @@ import os
 import json
 from PySide6.QtCore import Qt, QObject, Signal, Slot
 from PySide6.QtGui import QStandardItemModel, QStandardItem
+import logging
 from core import event_bus
 from pyvlcb import VLCB
 from pyvlcb.utils import bytes_to_addr
@@ -12,6 +13,7 @@ from .vlcbnode import VLCBNode
 from core import VLCBClient
 from events import DeviceEvent, LocoEvent, AppEvent, GuiEvent, TimerEvent
 
+logger = logging.getLogger(__name__)
 
 # Many of the methods in there (particularly when related to self.locos)
 # are just used to hand off to the other class. This maintains device_model as
@@ -22,8 +24,6 @@ class DeviceManager(QObject):
 
     def __init__(self):
         super().__init__()
-        
-        self.debug = False
 
         # dict of nodes indexed by NN
         self.nodes = {}

@@ -5,29 +5,26 @@
 # Note due to url restrictions : and ; need to be encoded
 
 import urllib.request, urllib.parse
+import logging
+
+logger = logging.getLogger(__name__)
 
 class VLCBClient():
     def __init__ (self, url):
         self.url = url
-        self.debug = False
-     
     
     def send (self, message):
         message = urllib.parse.quote(message)
         request_string = f"{self.url}vlcb?send={message}&format=txt"
-        if (self.debug):
-            print (f"Send request {request_string}")
+        logger.debug(f"Send request {request_string}")
         try:
             request_url = urllib.request.urlopen(request_string)
-            #print(request_url.read())
-            #print ("\n")
             response = request_url.read()
         except:
             print ("Error sending via http")
             # None indicates not connected
             return None
         if response[0:7] == "Success":
-            #print ("Success")
             return True
         return False
     
@@ -39,16 +36,13 @@ class VLCBClient():
         else:
             last_packet += 1	# Read next packet
         request_string = f"{self.url}vlcb?read={last_packet}&format=txt"
-        if (self.debug):
-            print (f"Reading {request_string}")
+        logger.debug(f"Reading {request_string}")
         try:
             request_url = urllib.request.urlopen(request_string)
             response = request_url.read().decode('utf-8')
         except:
             print ("Error reading from http request")
             return None
-        #print(response)
-        #print ("\n")
         return response
         
         

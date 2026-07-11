@@ -11,13 +11,14 @@ import json
 from PySide6.QtWidgets import QApplication, QLabel, QVBoxLayout, QWidget, QMainWindow
 from PySide6.QtGui import QMouseEvent, QPixmap, QColor, QPainter, QFont, QPen, QBrush, QCursor, QImage
 from PySide6.QtCore import Qt, QPoint, QSize, QRect
+import logging
 from pathlib import Path
 from core import RESOURCES_DIR
 from .trackviewlabel import TrackViewLabel
 from .trackviewbutton import TrackViewButton
 from .trackviewnode import TrackViewNode
 
-
+logger = logging.getLogger(__name__)
 
 class TrackViewDisplay(QLabel):
     def __init__(self, parent):
@@ -51,7 +52,6 @@ class TrackViewDisplay(QLabel):
         
         close_image_file = RESOURCES_DIR / "close-icon.png"
         self.close_image = QImage (close_image_file)
-        self.debug = False
         
         
     def paintEvent (self, event):
@@ -116,8 +116,7 @@ class TrackViewDisplay(QLabel):
             # Future these are not currently used - see layoutbutton values
             'color_on': '#00FF00', 'color_off': '#FF0000', 'color_unknown': '#555555'
             }
-        if self.debug:
-            print (f"button settings not current used {button_settings}")
+        logger.debug(f"button settings not current used {button_settings}")
 
        
     def resizeEvent(self, event=None):
