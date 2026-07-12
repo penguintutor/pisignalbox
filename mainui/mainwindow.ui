@@ -837,7 +837,10 @@
   </action>
   <action name="actionAddTrackViewNode">
    <property name="text">
-    <string>Add Device</string>
+    <string>Add Module</string>
+   </property>
+   <property name="toolTip">
+    <string>Add Module</string>
    </property>
   </action>
   <action name="actionLocoManager">
