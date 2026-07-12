@@ -1,10 +1,9 @@
 ## TrackView - View of the track / layout in the GUI
 
 from .addbuttondialog import AddButtonDialog
-from .adddevicedialog import AddDeviceDialog
+from .addtrackviewnodedialog import AddTrackViewNodeDialog
 from .addlabeldialog import AddLabelDialog
 from .trackviewbutton import TrackViewButton
-#from layoutdialog import LayoutDialog
 from .trackviewdisplay import TrackViewDisplay
 from .trackviewlabel import TrackViewLabel
 from .trackviewelement import TrackViewElement

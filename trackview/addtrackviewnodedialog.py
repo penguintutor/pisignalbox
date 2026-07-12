@@ -1,7 +1,6 @@
 """ Add new device - typicaly called from edit layout menu
 """
-# Todo - is this still used? perhaps delete or move to device
-# Or is this a gid_object (device???)
+# Adds a new "Device" - known as a TackViewNode
 
 import sys
 from PySide6.QtWidgets import (
@@ -16,8 +15,9 @@ from PySide6.QtWidgets import (
     QLineEdit
 )
 
-class AddDeviceDialog(QDialog):
+class AddTrackViewNodeDialog(QDialog):
     def __init__(self, parent=None):
+
         super().__init__(parent)
         self.setWindowTitle("New Device")
         self.setGeometry(200, 200, 300, 150)

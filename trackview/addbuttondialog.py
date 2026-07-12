@@ -67,5 +67,4 @@ class AddButtonDialog(QDialog):
         # Returns the selected node and event.
         gui_device = self.device_combo.currentText()
         selected_type = self.type_combo.currentText()
-        #id_text = self.node_id_textedit.text()
         return [gui_device, selected_type]

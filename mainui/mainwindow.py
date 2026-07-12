@@ -26,7 +26,7 @@ from automate import AutomationManager, AutomationManagerDialog
 from core import global_app_vars
 # UI code is split into Mixin classes so they can be placed in their own
 # package but access the MainWindow as though native to MainWindow
-from trackview import UITrackViewMixin, AddDeviceDialog, AddLabelDialog, AddButtonDialog
+from trackview import UITrackViewMixin, AddTrackViewNodeDialog, AddLabelDialog, AddButtonDialog
 from loco import UILocoMixin
 from automate import UIAutomateMixin
 from .systemexplorer import SystemExplorer
@@ -189,7 +189,7 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin):
         self.ui.menuEditLayoutAction = self.ui.menuEditLayout.menuAction()
         self.ui.menuEditLayoutAction.setVisible(False)
         self.ui.actionChangeImage.triggered.connect(self.change_layout_image_dialog)
-        self.ui.actionAddDevice.triggered.connect(self.add_device_dialog)
+        self.ui.actionAddTrackViewNode.triggered.connect(self.add_trackviewnode_dialog)
         self.ui.actionAddLabel.triggered.connect(self.add_label_dialog)
         self.ui.actionAddButton.triggered.connect(self.add_button_dialog)
         
@@ -349,13 +349,13 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin):
         return self.loco_manager.get_enabled_loco_filenames ()
     
     
-    def add_device_dialog (self):
+    def add_trackviewnode_dialog (self):
         """ Create and launch Add Device dialog
         used to add new devices to the layout
 
         usually triggered from actionAddDevice (mainwindow.ui)
         """
-        dialog = AddDeviceDialog()
+        dialog = AddTrackViewNodeDialog()
         if dialog.exec():
             # the response is in the form id, text
             response = dialog.get_selected_values()

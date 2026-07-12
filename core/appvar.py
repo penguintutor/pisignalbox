@@ -7,8 +7,11 @@
 
 # make this threadsafe
 import threading
+import logging
 from .eventbus import event_bus
 from events import VarEvent
+
+logger = logging.getLogger(__name__)
 
 # Always use getters and setters as they can update model and/or trigger events if required
 class AppVar():
@@ -79,9 +82,16 @@ class AppVar():
                 if isinstance (inc_amount, str):
                     inc_amount = float(inc_amount)
                 self._variables[variable_name] += inc_amount
-            except:
-                #print ("Exception")
+            except (ValueError, TypeError) as e:
+                # Log the specific error and the action taken
+                logger.warning("Failed to increment '%s' with '%s' (%s). Defaulting to 1.", 
+                            variable_name, inc_amount, e)
                 self._variables[variable_name] = 1
+            except KeyError:
+                # Log that it was missing and initialized
+                logger.info("Variable '%s' not found. Initializing to 1.", variable_name)
+                self._variables[variable_name] = 1
+
         # Mutex released - send event
         var_event = VarEvent ({"name":variable_name, "value":self._variables[variable_name], "event_type": event_type})
         event_bus.broadcast(var_event)
