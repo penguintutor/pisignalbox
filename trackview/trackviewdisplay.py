@@ -143,7 +143,7 @@ class TrackViewDisplay(QLabel):
             mouse_pos = event.position().toPoint()
             click_pos = self.pixel_to_percent(mouse_pos)
             # Test all buttons for click, if multiple hit then use one closest
-            self.selected = self.nearestToClick(click_pos)
+            self.selected = self.nearest_to_click(click_pos)
             if self.selected == None:
                 return
             self.selected.controlButtonClick()
@@ -164,7 +164,7 @@ class TrackViewDisplay(QLabel):
                 # Calls mainwindow - so as to reset menus etc
                 self.mainwindow.layout_edit("control")
             # Test all buttons for click, if multiple hit then use one closest
-            self.selected = self.nearestToClick(click_pos)
+            self.selected = self.nearest_to_click(click_pos)
             if self.selected == None:
                 return
         elif event.button() == Qt.MouseButton.RightButton:
@@ -175,14 +175,14 @@ class TrackViewDisplay(QLabel):
     # separates two nearby objects
     # types can be "buttons", "labels" or "all"
     #click_pos is percentage
-    def nearestToClick(self, click_pos, types="all"):
+    def nearest_to_click(self, click_pos, types="all"):
         nearest_object = None
         # set distance to a value far beyond any reasonable range (1000)
         # saves needing to test for a null value
         nearest_distance = 1000
         for trackviewnode in self.layout.track_view_nodes:
             # result is None if no matches or (object, distance)
-            result = trackviewnode.nearestToClick(click_pos, types)
+            result = trackviewnode.nearest_to_click(click_pos, types)
             if result == None:
                 continue
             if result[1] < nearest_distance:
