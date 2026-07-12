@@ -779,7 +779,7 @@
      <string>Edit Layout</string>
     </property>
     <addaction name="actionChangeImage"/>
-    <addaction name="actionAddDevice"/>
+    <addaction name="actionAddTrackViewNode"/>
     <addaction name="actionAddLabel"/>
     <addaction name="actionAddButton"/>
    </widget>
@@ -835,7 +835,7 @@
     <string>Rules</string>
    </property>
   </action>
-  <action name="actionAddDevice">
+  <action name="actionAddTrackViewNode">
    <property name="text">
     <string>Add Device</string>
    </property>
