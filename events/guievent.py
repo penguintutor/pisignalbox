@@ -34,6 +34,9 @@ class GuiEvent(Event):
             return self.data['node']
         return "Gui node"
     
+    def get_node_object (self):
+        return self.data.get('node_object', None)
+    
     def get_event (self):
         if 'event' in self.data:
             return "Gui event"

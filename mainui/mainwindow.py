@@ -360,7 +360,7 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin):
             # the response is in the form id, text
             response = dialog.get_selected_values()
             # The first "text" is that it's a text style label (allows flexibility for future)
-            self.layout.add_gui_device(response[0], response[1])
+            self.layout.add_track_view_node(response[0], response[1])
         
         
     def add_label_dialog (self):
