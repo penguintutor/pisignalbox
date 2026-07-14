@@ -10,10 +10,13 @@ from .functionentry import FunctionEntry
 
 class FunctionsDialog(QDialog):
        
-    def __init__(self, parent, functions=[]):
+    def __init__(self, parent, functions=None):
         super().__init__(parent)
         self.parent = parent
-        self.functions = functions
+        if functions is None:
+            self.functions = []
+        else:
+            self.functions = functions
         self.function_entries = []
 
         self.setWindowTitle("Edit functions")

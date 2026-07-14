@@ -134,7 +134,7 @@ class TrackViewElement:
         return return_string
 
     # Called when clicked and layout in control mode
-    def controlButtonClick(self):
+    def control_button_click(self):
         self.activate()
 
     # If window scales then change font size accordingly

@@ -57,8 +57,6 @@ class LocoList:
             for loco in self.locos.values():
                 loco_names.append (loco.loco_name)
         else:
-            #print (f"self.locos {self.locos}")
-            #print (f"Enabled locos {self.enabled_locos}")
             for filename in self.enabled_locos:
                 if filename in self.locos:
                     loco_names.append (self.locos[filename].loco_name)

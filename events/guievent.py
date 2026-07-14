@@ -10,15 +10,11 @@ class GuiEvent(Event):
     def __init__(self, data_dict):
         self.event_type = "Gui"
         self.data = data_dict
-        if not 'event_type' in self.data:
+        if 'event_type' not in self.data:
             self.data['event_type'] = self.event_type
 
     def matches(self, other_event):
-        #print (f"GuiEvent matches called {other_event}")
-        #print (f"Self {self.data} Other {other_event.data}")
-        #print (f"Self node {self.get_node()} Other node {other_event.get_node()}")
         if self.get_node() == other_event.get_node():
-            #print (f"Self value {self.get_value_int()} Other value {other_event.get_value()}")
             if self.get_value_int() == other_event.get_value():
                 return True
         return False

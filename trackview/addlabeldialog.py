@@ -86,5 +86,4 @@ class AddLabelDialog(QDialog):
         # Returns the selected node and event.
         gui_device = self.device_combo.currentText()
         node_text = self.node_label_textedit.text()
-        #id_text = self.node_id_textedit.text()
         return [gui_device, node_text]

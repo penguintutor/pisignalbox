@@ -9,7 +9,7 @@ class VarEvent(Event):
     def __init__(self, data_dict):
         self.event_type = "Var"
         self.data = data_dict
-        if not 'event_type' in self.data:
+        if 'event_type' not in self.data:
             self.data['event_type'] = self.event_type
         
     def event_type (self):

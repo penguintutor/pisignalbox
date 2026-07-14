@@ -20,8 +20,11 @@ Numerical CodeSeverity Description
 from .event import Event
 
 class LogEvent (Event):
-    def __init__(self, data_dict={}):
-        self.data = data_dict
+    def __init__(self, data_dict=None):
+        if data_dict is None:
+            self.data_dict = {}
+        else:
+            self.data = data_dict
         # log_type eg. Automation or App
         self.log_type = self.data.get('type', "Log")
         # 0 to 7 (see above)

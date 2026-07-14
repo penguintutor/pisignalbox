@@ -27,8 +27,8 @@ from .trackviewelement import TrackViewElement
 
 
 class TrackViewButton (TrackViewElement):
-    def __init__ (self, parent, pos, button_type, settings = {}):
-        super().__init__(parent, pos)
+    def __init__ (self, parent, pos, button_type, settings=None):
+        super().__init__(parent, pos)        
         self.button_type = button_type
         # Colours unknown, on, off
         # Button can have more values - but that would need these to be set using a config
@@ -36,7 +36,10 @@ class TrackViewButton (TrackViewElement):
         self.button_colors = ["#444444", "#00FF00", "#FF4444"]
         self.min_size = 5 # min size for click area (actual size can be smaller - this is just for clicks)
         ## get values from settings or set defaults
-        self.settings = settings
+        if settings is None:
+            self.settings = {}
+        else:
+            self.settings = settings
         if 'click_type' in settings:
             self.click_type = settings['click_type']
         else:
@@ -54,7 +57,7 @@ class TrackViewButton (TrackViewElement):
         # Create gui_node through get_gui_node
         # Initially set to None so know it doesn't exist
         self.gui_node = None
-        # value is 0 (not known), 1 = on, 2 = off
+        # value can be 0 (not known), 1 = on, 2 = off
         if ('value' in settings.keys()):
             self.value = settings['value']
         # If not then takes default 0 from constructor
@@ -151,7 +154,6 @@ class TrackViewButton (TrackViewElement):
             
     # returns size as pixels rather than ratio
     def pixel_size (self):
-        #label_size = self.parent.canvas_size
         image_size = self.layout_disp.pixmap().size()
         width = image_size.width() * self.size[0] / 100
         height = image_size.width() * self.size[1] / 100

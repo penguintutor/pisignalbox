@@ -39,7 +39,7 @@ class LocoEvent:
         return self.data.get("action", "Loco")
     
     def get_value(self):
-        value = self.data.get("value", 0)
+        return self.data.get("value", 0)
 
     # Not all events include loco_id / command etc - returns None if not included
     def get_loco_id(self):

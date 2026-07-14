@@ -9,13 +9,15 @@ from PySide6.QtCore import Qt, QSize, Signal, QEvent
 # A simple class to represent a single row for a loco
 class FunctionEntry(QWidget):
     
-    # If this object is clicked (perform an edit)
-    #clicked = Signal(QWidget)
-    
-    def __init__(self, function_id, function=["","","",""], parent=None):
+    # If function provided then it should be a list of 4 elements
+    # Reference, Description, Type, Comment
+    def __init__(self, function_id, function=None, parent=None):
         super().__init__(parent)
         self.function_id = function_id
-        self.function = function
+        if function is None:
+            self.function = ["","","",""]
+        else:
+            self.function = function
 
         row_layout = QHBoxLayout(self)
         row_layout.setContentsMargins(5, 5, 5, 5)

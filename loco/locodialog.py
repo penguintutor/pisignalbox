@@ -5,8 +5,11 @@ from PySide6.QtCore import Qt, Signal, Slot, QFile
 from PySide6.QtGui import QPixmap
 from PySide6.QtWidgets import QDialog, QVBoxLayout, QFileDialog, QMessageBox
 from PySide6.QtUiTools import QUiLoader
+import logging
 from .functionsdialog import FunctionsDialog
 from common import ImageExistDialog
+
+logger = logging.getLogger(__name__)
 
 # Dialog to get details about a loco
 # Also allows upload of an image
@@ -88,7 +91,6 @@ class LocoDialog(QDialog):
             'class': {
                 'ui': self.ui.classEdit,
                 'tooltip': "Class eg. J72 / A4 / 47",
-                'get': lambda self: self.loco_id,
                 'get': lambda self: self.ui.classEdit.text().strip(),
                 'set': lambda self, val: self.ui.classEdit.setText(val)
             },
@@ -311,13 +313,11 @@ class LocoDialog(QDialog):
    
    # check if a filepath is in the locosdir
     def is_locosdir(self, filepath):
-        #print (f"Checking {filepath} in {self.locosdir}")
         try:
-            dir = os.path.dirname(filepath)
-            #print (f"Test {dir}")
-            return dir == self.locosdir
+            this_dir = os.path.dirname(filepath)
+            return this_dir == self.locosdir
         except Exception as e:
-            #print(f"Error checking path: {e}")
+            logger.debug(f"LocoDialog, Error checking path: {e}")
             return False
 
 

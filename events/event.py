@@ -10,12 +10,7 @@ class Event:
         
     # Allow event_type or get_type to allow consistancy
     def event_type(self):
-        if "event_type" in self.data:
-            return self.data["event_type"]
-        elif hasattr (self, 'event_type'):
-            return self.event_type
-        else:
-            print ("Event does not have an event_type")
+        return self.get_type()
 
     def get_type(self):
         # first check for self.data - if not try self.event_type
@@ -43,7 +38,7 @@ class Event:
     def __dict__ (self):
         # Create a dict with event_type added
         return_dict = copy.copy(self.data)
-        if not 'event_type' in return_dict:
+        if 'event_type' not in return_dict:
             return_dict['event_type'] = self.event_type
         return return_dict
 

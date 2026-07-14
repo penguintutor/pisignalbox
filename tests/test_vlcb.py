@@ -4,7 +4,7 @@ import os
 
 from pyvlcb import VLCB, VLCBformat, VLCBopcode
 from loco import Loco
-from trackviewnode import TrackViewNode
+from trackview import TrackViewNode
 from core import device_model
 
 ## Test for VLCB library

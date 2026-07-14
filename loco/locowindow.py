@@ -126,9 +126,10 @@ class LocoWindow(QMainWindow):
     # Gets summary from file
     def load_file (self, filename):
         with open(filename, 'r') as data_file:
-            loco_data = json.load(data_file)
+            self.loco_data = json.load(data_file)
         loco_id = self.loco_data["address"]
         loco_name = self.loco_data["display-name"]
+        return ([loco_id, loco_name])
 
 
     def add_loco_entry(self, loco_id, loco_name, loco_image_path, filename):

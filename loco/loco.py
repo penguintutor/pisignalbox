@@ -2,6 +2,9 @@
 # Typically a single loco being controlled by the GUI, but multiple instances can be created for
 # automation etc.
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Loco:
     # All arguments have default allowing creation of a dummy loco
@@ -17,12 +20,11 @@ class Loco:
         # If it's "manual" or "automate" then ignore
         self.acquired_by = ""   
         self.loco_id = loco_id
-        #self.loco_class = ""
         self.loco_name = ""	# This needs to be unique (no checking so if not then the first will be returned)
-        #					todo - need to remove this unique depencency use filename instead
+        # Future - look to remove this unique dependency, perhaps use filename instead
         self.loco_data = {}
         self.session = session # If session == 0 then no session allocated (don't support none DCC)
-        self.direction = direction # 1 = forward, 0 = reverse
+        self.direction = direction # Values 1 = forward, 0 = reverse
         self.speed = speed # Allow 0 to 128 but maximum sent is 127. Speed 1 = emergency stop (not used - instead status = stop)
         # Track all functions. Only F0 to F12 are found from PLOC - rest assume start off
         self.function_status = [0] * 29
@@ -114,7 +116,19 @@ class Loco:
         try:
             with open(filename, 'w') as data_file:
                 json.dump(self.loco_data, data_file, indent=4)
-        except:
+        # JSON serialization
+        except TypeError as e:
+            logger.warning (f"Loco save, JSON Serialization failed {e}")
+            return False
+        except PermissionError as e:
+            logger.warning (f"Loco save, Permission denied {e}")
+            return False
+        except FileNotFoundError as e:
+            logger.warning (f"Loco save, directory path does not exist {e}")
+            return False
+        # Catch all other system errors
+        except OSError as e:
+            logger.warning (f"Loco save, OS error writing to file {e}")
             return False
         return True
             
@@ -126,7 +140,6 @@ class Loco:
         else:
             # If none then return 5 (just none defined)
             return 5
-            #return 0
         
     # Resets the functions - sets to all 0
     def function_reset (self):
@@ -202,7 +215,6 @@ class Loco:
     # Takes combined speed & dir and updates direction / speed
     # This is often used based on external values, so add 1
     def set_speeddir (self, speed_dir):
-        speed = self.speed
         self.direction = speed_dir >> 7
         self.speed = speed_dir & 0x7F
         if self.speed > 1:

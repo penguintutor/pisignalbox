@@ -67,10 +67,9 @@ class DeviceEvent (Event):
     def get_event_id (self):
         return self.data['event_id']
         
-    def get_value (self):
+    def get_name (self):
         if 'value' in self.data:
             return self.data['value']
-        # Todo - this returns node_id rather than actual state / value
         elif 'ev_object' in self.data:
             return self.data["ev_object"].get_name()
         else:
@@ -80,9 +79,9 @@ class DeviceEvent (Event):
     # Does this event match
     def matches (self, event):
         if self.get_node() == event.get_node() or self.get_node_id() == event.get_node_id():
-            if self.get_event_id() == event.get_event_id() and self.get_value() == event.get_value():
+            if self.get_event_id() == event.get_event_id() and self.get_name() == event.get_value():
                 return True
         return False
         
     def __str__ (self):
-        return (f"{self.get_type()} {self.get_node()} {self.get_event()} {self.get_value()}")
+        return (f"{self.get_type()} {self.get_node()} {self.get_event()} {self.get_name()}")
