@@ -254,61 +254,65 @@ class LocoDialog(QDialog):
         # Get filename
         if file_dialog.exec():
             selected_file = file_dialog.selectedFiles()[0]
-            #print (f"Selected file {selected_file}")
             # later we will save just filename into self.image_filename
             filename = os.path.basename(selected_file)
+        else:
+            # if cancelled then return
+            return
             
-            # Is the file in the locosdir
-            if self.is_locosdir(selected_file):
-                #print (f"{filename} in data directory")
-                self.image_filename = filename
-            # if not and doesn't exist in locosdir then copy
-            else:
-                # New path - includes filename
-                new_path = os.path.join(self.locosdir, filename)
-                if not (os.path.exists(new_path)):
+        # Is the file in the locosdir
+        if self.is_locosdir(selected_file):
+            #print (f"{filename} in data directory")
+            self.image_filename = filename
+        # if not and doesn't exist in locosdir then copy
+        else:
+            # New path - includes filename
+            new_path = os.path.join(self.locosdir, filename)
+            if not (os.path.exists(new_path)):
+                try:
                     shutil.copyfile (selected_file, new_path)
-                    # Todo wrap above in try clause
-                    self.image_filename = filename
-                # File is not in locos directory and already matching file
-                # Create new dialog to get new filename
-                # Todo implement this
-                else:
-                    exist_dialog = ImageExistDialog (self, self.locosdir)
-                    if exist_dialog.exec() == QDialog.Accepted:
-                        # Handle dialog response here
-                        # saved in self.dialog.action
-                        if exist_dialog.action == "overwrite":
-                            # copy over existing
-                            shutil.copyfile (selected_file, new_path)
-                            self.image_filename = filename
-                        elif exist_dialog.action == "existing":
-                            # just use the current filename
-                            self.image_filename = filename
-                        # For new file to be selected then we should have already checked
-                        # that the filename is valid
-                        elif exist_dialog.action == "save":
-                            self.image_filename = exist_dialog.ui.filenameEdit.text()
-                            new_path = os.path.join(self.locosdir, self.image_filename)
-                            #print (f"Copying {selected_file} to {new_path}")
-                            shutil.copyfile (selected_file, new_path)
-                        else:
-                            # Unknown state
-                            return
-                    # Most likely cancel pressed just ignore
+                except OSError as e:
+                    logger.exception(f"LocoDialog, failed to copy file {e}")
+                    return
+                self.image_filename = filename
+            # File is not in locos directory and already matching file
+            # Create new dialog to get new filename
+            else:
+                exist_dialog = ImageExistDialog (self, self.locosdir)
+                if exist_dialog.exec() == QDialog.Accepted:
+                    # Handle dialog response here
+                    # saved in self.dialog.action
+                    if exist_dialog.action == "overwrite":
+                        # copy over existing
+                        shutil.copyfile (selected_file, new_path)
+                        self.image_filename = filename
+                    elif exist_dialog.action == "existing":
+                        # just use the current filename
+                        self.image_filename = filename
+                    # For new file to be selected then we should have already checked
+                    # that the filename is valid
+                    elif exist_dialog.action == "save":
+                        self.image_filename = exist_dialog.ui.filenameEdit.text()
+                        new_path = os.path.join(self.locosdir, self.image_filename)
+                        #print (f"Copying {selected_file} to {new_path}")
+                        shutil.copyfile (selected_file, new_path)
                     else:
+                        # Unknown state
                         return
-                
+                # Most likely cancel pressed just ignore
+                else:
+                    return
             
-            # Update the preview with the new image
-            #image_preview_label = self.ui_widget.findChild(QLabel, "image_preview_label")
-            image_preview_label = self.ui.imageLabel
-            if image_preview_label:
-                pixmap = QPixmap(os.path.join(self.locosdir, self.image_filename))
-                if not pixmap.isNull():
-                    image_preview_label.setPixmap(pixmap.scaled(
-                        image_preview_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation
-                    ))
+        
+        # Update the preview with the new image
+        #image_preview_label = self.ui_widget.findChild(QLabel, "image_preview_label")
+        image_preview_label = self.ui.imageLabel
+        if image_preview_label:
+            pixmap = QPixmap(os.path.join(self.locosdir, self.image_filename))
+            if not pixmap.isNull():
+                image_preview_label.setPixmap(pixmap.scaled(
+                    image_preview_label.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation
+                ))
 
    
    # check if a filepath is in the locosdir
@@ -334,7 +338,7 @@ class LocoDialog(QDialog):
         try:
             dcc_id_value = int(dcc_id_text)
         # Any errors warn and do not accept (submit)
-        except:
+        except ValueError:
             QMessageBox.warning(
                 self, 
                 "Input Error", # The title of the dialog
@@ -363,11 +367,10 @@ class LocoDialog(QDialog):
     
     # Update dialogs from a dict
     def from_dict(self, data_dict):
-        #print (f"Loading {data_dict}")
         for key, value in data_dict.items():
             if key in self.field_map:
                 self.field_map[key]['set'](self, value)
-        # Todo - if applicable update the image display based on image filename
+        # Future - if applicable update the image display based on image filename
 
 
         
