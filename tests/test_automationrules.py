@@ -15,7 +15,7 @@ from layout.layoutdialog import LayoutDialog
 from loco import Loco
 
 from trackview import TrackViewNode
-from core import device_manager
+from device import device_manager
 
 from automate import AutomationRule
 
@@ -24,7 +24,8 @@ app = QApplication.instance() or QApplication(sys.argv)
 
 # Import the module to be tested
 # We specifically import the module-level singleton instance
-from core import serialize_event, deserialize_event, event_bus
+#from core import serialize_event, deserialize_event, event_bus
+from core import event_bus 
 
 
 

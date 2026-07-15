@@ -1,23 +1,29 @@
+import os
+import sys
 import unittest
-import os, sys
+from pathlib import Path
 
 if __name__ == '__main__':
-
+    # Disable verbose Qt debug logging output
     os.environ["QT_LOGGING_RULES"] = "*.debug=false"
     
-    # Get the directory of the run_tests.py file
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    # Go up one level to the project root directory
-    project_root = os.path.join(current_dir, '..')
-    # Add the project root to the system path
-    sys.path.insert(0, project_root)
+    # --- THE MAGIC HEADLESS FIX ---
+    # Force Qt to run in memory without connecting to a display server
+    os.environ["QT_QPA_PLATFORM"] = "offscreen"
     
-    # Create a TestLoader
+    # Calculate the project root (one folder up from this script)
+    project_root = Path(__file__).resolve().parent.parent
+    
+    # Force the Current Working Directory (CWD) to the project root
+    os.chdir(project_root)
+    
+    # Ensure the root is in the Python path
+    if str(project_root) not in sys.path:
+        sys.path.insert(0, str(project_root))
+    
+    # Discover and run tests
     loader = unittest.TestLoader()
-    # Discover tests starting from the current directory ('.')
-    # This finds all files matching 'test_*.py'
-    suite = loader.discover('.')    
-    # Create a TestRunner
+    suite = loader.discover(start_dir="tests")    
+    
     runner = unittest.TextTestRunner(verbosity=2)
-    # Run the discovered suite
     runner.run(suite)
