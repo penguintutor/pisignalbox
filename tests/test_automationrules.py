@@ -6,12 +6,18 @@ from PySide6.QtCore import QObject
 from PySide6.QtTest import QSignalSpy
 from PySide6.QtWidgets import QApplication
 
-from pyvlcb import VLCB, VLCBformat, VLCBopcode
+from pyvlcb import VLCB, VLCBFormat, VLCBOpcode
+
+
+# Force-initialize layout first to mimic your main program's import order
+from layout import LayoutDialog 
+# Now import the class you actually want to test
 from loco import Loco
+
 from trackview import TrackViewNode
 from core import device_manager
 
-from automate.automationrule import AutomationRule
+from automate import AutomationRule
 
 # A global QApplication instance is required for signal/slot testing
 app = QApplication.instance() or QApplication(sys.argv)
@@ -19,6 +25,7 @@ app = QApplication.instance() or QApplication(sys.argv)
 # Import the module to be tested
 # We specifically import the module-level singleton instance
 from core import serialize_event, deserialize_event, event_bus
+
 
 
 ## Test creation of rules, including importing and handling recursion
