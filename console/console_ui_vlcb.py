@@ -1,5 +1,4 @@
 # UI for the console window - vlcb tab
-from PySide6.QtWidgets import QMainWindow, QTextBrowser, QTableWidget, QTableWidgetItem
 from pyvlcb import VLCB
 from pyvlcb import VLCBOpcode
 

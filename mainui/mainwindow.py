@@ -18,17 +18,22 @@ from trackview import TrackViewDisplay
 from loco import ControlLoco
 from core import ApiHandler
 from events import AppEvent
-from loco import LocoWindow, StealDialog
-from rules import RulesWindow
+from loco.locowindow import LocoWindow
+from loco.stealdialog import StealDialog
+from rules.ruleswindow import RulesWindow
 from device import device_manager
-from common import ImageExistDialog
-from automate import AutomationManager, AutomationManagerDialog
+from common.imageexistdialog import ImageExistDialog
+from automate import AutomationManager
+from automate.automationmanagerdialog import AutomationManagerDialog
 from core import global_app_vars
 # UI code is split into Mixin classes so they can be placed in their own
 # package but access the MainWindow as though native to MainWindow
-from trackview import UITrackViewMixin, AddTrackViewNodeDialog, AddLabelDialog, AddButtonDialog
-from loco import UILocoMixin
-from automate import UIAutomateMixin
+from trackview.ui_trackview import UITrackViewMixin
+from trackview.addtrackviewnodedialog import AddTrackViewNodeDialog
+from trackview.addlabeldialog import AddLabelDialog
+from trackview.addbuttondialog import AddButtonDialog
+from loco.ui_loco import UILocoMixin
+from automate.ui_automate import UIAutomateMixin
 from .systemexplorer import SystemExplorer
 
 # Setup file paths

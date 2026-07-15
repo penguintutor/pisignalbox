@@ -9,9 +9,9 @@ from PySide6.QtWidgets import QApplication
 from pyvlcb import VLCB, VLCBFormat, VLCBOpcode
 
 
-# Force-initialize layout first to mimic your main program's import order
-from layout import LayoutDialog 
-# Now import the class you actually want to test
+# Force-initialize layout first to mimic the main program's import order
+from layout.layoutdialog import LayoutDialog 
+# Now import the class to test
 from loco import Loco
 
 from trackview import TrackViewNode

@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QDialog, QVBoxLayout, QFileDialog, QMessageBox
 from PySide6.QtUiTools import QUiLoader
 import logging
 from .functionsdialog import FunctionsDialog
-from common import ImageExistDialog
+from common.imageexistdialog import ImageExistDialog
 
 logger = logging.getLogger(__name__)
 

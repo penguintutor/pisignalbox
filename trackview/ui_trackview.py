@@ -15,8 +15,8 @@ from PySide6.QtUiTools import QUiLoader
 import logging
 from pathlib import Path 
 from core import event_bus
-from common import ImageExistDialog
-from layout import LayoutDialog
+from common.imageexistdialog import ImageExistDialog
+from layout.layoutdialog import LayoutDialog
 
 # As this is a Mixin it will report as this file rather than the file it's imported into
 logger = logging.getLogger(__name__)
