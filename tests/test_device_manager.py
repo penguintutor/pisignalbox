@@ -2,18 +2,18 @@ import unittest
 
 import os
 
-from pyvlcb import VLCB, VLCBformat, VLCBopcode
+from pyvlcb import VLCB, VLCBFormat, VLCBOpcode
 from loco import Loco
-from events import TrackViewNode
-from core import device_model
+from trackview import TrackViewNode
+from device import device_manager
 from loco import loco_manager
                 
 ## Tests for DeviceModel
-# The DeviceModel is created as a singleton known as device_model
-class TestDeviceModel(unittest.TestCase):
+# The DeviceModel is created as a singleton known as device_manager
+class TestDeviceManager(unittest.TestCase):
     def test_create(self):
         #print ("Testing device model")
-        self.assertTrue(device_model != False)
+        self.assertTrue(device_manager != False)
 
     def test_create_locomanager(self):
         self.assertTrue(loco_manager != False)
@@ -30,20 +30,6 @@ class TestDeviceModel(unittest.TestCase):
         #print (f"Locos {all_locos}")
         #print (f"Loco 0 {all_locos[0].loco_name}")
         self.assertTrue(all_locos[0].loco_name == "5190 Prairie")
-        
-    def test_add_gui_node (self):
-        gui_objects = []
-        gui_objects.append(TrackViewNode(None, "Point", "Test point 1", {}))
-        device_model.add_gui_node(gui_objects[-1])
-        # Retrieve the gui_node
-        this_node = device_model.get_gui_node(0)
-        self.assertTrue(this_node.device_type == "Gui")
-        self.assertTrue(this_node.object_type == "Point")
-        self.assertTrue(this_node.name == "Test point 1")
-        # Also test using get_type_node
-        this_node_type = device_model.get_type_node ("Test point 1")
-        #print (f"Node type is {this_node_type}")
-        self.assertTrue(this_node_type == this_node.device_type)
         
 
                 

@@ -79,7 +79,7 @@ class DeviceEvent (Event):
     # Does this event match
     def matches (self, event):
         if self.get_node() == event.get_node() or self.get_node_id() == event.get_node_id():
-            if self.get_event_id() == event.get_event_id() and self.get_name() == event.get_value():
+            if self.get_event_id() == event.get_event_id() and self.get_name() == event.get_name():
                 return True
         return False
         

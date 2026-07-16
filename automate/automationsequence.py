@@ -20,14 +20,9 @@ class AutomationSequence (QRunnable):
         super(AutomationSequence, self).__init__()
         # steps are provided as a list so save as list_steps, but then use self.steps when AutomationStep object created
         list_steps = steps
-        #self.mainwindow = mainwindow
-        #self.vars = appvariables
         self.title = title
         self.steps = []  # List of AutomationStep objects
         self.settings = settings or {}
-        #print (f"AutomationSequence {self.vars}")
-        #self.num_locos = settings.get('num_locos', 0) # 0 to 3 locos required
-        #self.vars = settings.get("appvar", {})
         # Store the index of any labels to allow jumps (loops)
         # If order changes then labels needs to be updated
         self.labels = {}
@@ -55,6 +50,8 @@ class AutomationSequence (QRunnable):
             if step_data['type'] == "Label":
                 self.labels[step_data['data'].get('labelid')] = i
             ## Variables need to be added through automationmanager to use the mainwindow and so be included in managers
+
+            # Add to Automation Steps
             self.steps.append(AutomationStep(self.title, step_data['type'], step_data['name'], step_data, check_stop_func=self.check_stop))
 
     def get_locos (self):
@@ -66,17 +63,17 @@ class AutomationSequence (QRunnable):
             # Gets a loco_id from the step
             # Todo - does this need to be changed to a loco object?
             new_loco = step.get_loco_id()
-            if new_loco != "" and not new_loco in locos:
+            if new_loco != "" and new_loco not in locos:
                 locos.append (new_loco)
         return locos
          
     def get_variables (self):
-        vars = []
+        return_vars = []
         for step in self.steps:
             variable = step.get_variable()
             if variable != "":
-                vars.append(variable)
-        return vars
+                return_vars.append(variable)
+        return return_vars
 
     @Slot()
     def run (self, seq_num=None, locos={}):
@@ -147,7 +144,6 @@ class AutomationSequence (QRunnable):
                     'description': f"Label {self.steps[position].get_name()}"
                     }
                 ))
-                pass
             elif self.steps[position].step_type == "Jump":
                 # parse the condition and get the result
                 result = self.steps[position].test_condition()

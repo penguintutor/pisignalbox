@@ -17,12 +17,15 @@ class AutomationStep:
     # all other parameters are included in settings
     # rule is not normally provided - unless loading from json
     # Only used if this has an instance of AutomationRule
-    def __init__(self, sequence_name, step_type, step_name, data={}, rule=None, check_stop_func=None):
+    def __init__(self, sequence_name, step_type, step_name, data=None, rule=None, check_stop_func=None):
         #print (f"\n\nCreating step type {step_type} with {data} rule {rule}")
         self.sequence_name = sequence_name # Name of parent sequence (creator)
         self.step_type = step_type
         self.step_name = step_name
-        self.data = data
+        if data == None:
+            self.data = {}
+        else:
+            self.data = data
         #self.vars = appvariables
         self.rule = rule # Only used if this has an instance of AutomationRule
         self.check_stop = check_stop_func   # Used if the step takes a long time to run (eg. wait)
@@ -201,7 +204,7 @@ class AutomationStep:
                 'level':6, # Info
                 'sequence': self.sequence_name, 
                 'step': f" {self.step_name}",
-                'description': f"Running Automation Rule {self.rule.name} of type {self.rule.ruletype}"
+                'description': f"Running Automation Rule {self.rule.rule_name} of type {self.rule.rule_type}"
                 }
             ))
             # check any value fields for variables

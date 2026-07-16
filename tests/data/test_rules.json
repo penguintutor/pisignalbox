@@ -1,0 +1,138 @@
+[
+    [
+        {
+            "node_id": 201,
+            "event_id": 2,
+            "node": "Node: 201",
+            "event": "0x000015",
+            "value": "on",
+            "event_type": "VLCB",
+            "action": "device"
+        },
+        {
+            "node": "Point 5",
+            "event": "Set",
+            "value": "on",
+            "event_type": "Gui"
+        }
+    ],
+    [
+        {
+            "node_id": 201,
+            "event_id": 2,
+            "node": "Node: 201",
+            "event": "0x000015",
+            "value": "off",
+            "event_type": "VLCB",
+            "action": "device"
+        },
+        {
+            "node": "Point 5",
+            "event": "Set",
+            "value": "off",
+            "event_type": "Gui"
+        }
+    ],
+    [
+        {
+            "node": "Point 5",
+            "event": "Set",
+            "value": "on",
+            "event_type": "Gui"
+        },
+        {
+            "node_id": 201,
+            "event_id": 2,
+            "node": "Node: 201",
+            "event": "0x000015",
+            "value": "on",
+            "event_type": "VLCB",
+            "action": "device"
+        }
+    ],
+    [
+        {
+            "node": "Point 5",
+            "event": "Set",
+            "value": "off",
+            "event_type": "Gui"
+        },
+        {
+            "node_id": 201,
+            "event_id": 2,
+            "node": "Node: 201",
+            "event": "0x000015",
+            "value": "off",
+            "event_type": "VLCB",
+            "action": "device"
+        }
+    ],
+    [
+        {
+            "node_id": 201,
+            "event_id": 3,
+            "node": "Node: 201",
+            "event": "0x000016",
+            "value": "on",
+            "event_type": "VLCB",
+            "action": "device"
+        },
+        {
+            "node": "Point 4",
+            "event": "Set",
+            "value": "on",
+            "event_type": "Gui"
+        }
+    ],
+    [
+        {
+            "node_id": 201,
+            "event_id": 3,
+            "node": "Node: 201",
+            "event": "0x000016",
+            "value": "off",
+            "event_type": "VLCB",
+            "action": "device"
+        },
+        {
+            "node": "Point 4",
+            "event": "Set",
+            "value": "off",
+            "event_type": "Gui"
+        }
+    ],
+    [
+        {
+            "node": "Point 4",
+            "event": "Set",
+            "value": "on",
+            "event_type": "Gui"
+        },
+        {
+            "node_id": 201,
+            "event_id": 3,
+            "node": "Node: 201",
+            "event": "0x000016",
+            "value": "on",
+            "event_type": "VLCB",
+            "action": "device"
+        }
+    ],
+    [
+        {
+            "node": "Point 4",
+            "event": "Set",
+            "value": "off",
+            "event_type": "Gui"
+        },
+        {
+            "node_id": 201,
+            "event_id": 3,
+            "node": "Node: 201",
+            "event": "0x000016",
+            "value": "off",
+            "event_type": "VLCB",
+            "action": "device"
+        }
+    ]
+]
