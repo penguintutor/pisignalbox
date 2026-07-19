@@ -8,7 +8,12 @@ class AppEvent (Event):
         if data_dict is None:
             data_dict = {}
         self.data = data_dict
-        self.action = self.data['action']
+        # Allow action within the data or as a separate data object
+        # New preferred method is for it to be within self.data['data']['action']
+        if "action" in self.data:
+            self.action = self.data['action']
+        else:
+            self.action = self.data['data'].get('action')
         self.data['event_type'] = "App"
         
     def type (self):

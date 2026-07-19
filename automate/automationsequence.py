@@ -77,6 +77,12 @@ class AutomationSequence (QRunnable):
 
     @Slot()
     def run (self, seq_num=None, locos={}):
+        """
+        Runs the sequence.
+        If there is some kind of branch logic then eg. jump then
+        it's handled directly here, otherwise it's normally passed
+        on to the step's run method to run the action requested
+        """
         #print (f"Starting sequence {self.title}, locos {locos}")
         log_description = f"Starting sequence: {self.title}"
         if len(locos) > 0:
@@ -177,6 +183,8 @@ class AutomationSequence (QRunnable):
                             }
                         ))
                 #else condition is not met
+                # no action required - send a condition not met to the log
+                # then continue
                 else: 
                     event_bus.broadcast(LogEvent(
                         {'type':"Automation",
@@ -196,8 +204,10 @@ class AutomationSequence (QRunnable):
                     'description': f"{self.steps[position].get_name()}"
                     }
                 ))
+                # Run by calling the step run method
                 self.steps[position].run(self.signals.notify, self.signals.notify_wait,self.signals.status, locos)
             position += 1
+        # While loop ended
         # Emit a signal to indicate the thread has finished
         event_bus.broadcast(LogEvent(
             {'type':"Automation",

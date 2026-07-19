@@ -1,9 +1,9 @@
-import unittest
+import pytest
 
 import os, sys
 # Setup PySide6 environment for testing
 from PySide6.QtCore import QObject
-from PySide6.QtTest import QSignalSpy
+#from PySide6.QtTest import QSignalSpy
 from PySide6.QtWidgets import QApplication
 
 from pyvlcb import VLCB, VLCBFormat, VLCBOpcode
@@ -20,7 +20,7 @@ from device import device_manager
 from automate import AutomationRule
 
 # A global QApplication instance is required for signal/slot testing
-app = QApplication.instance() or QApplication(sys.argv)
+#app = QApplication.instance() or QApplication(sys.argv)
 
 # Import the module to be tested
 # We specifically import the module-level singleton instance
@@ -28,39 +28,33 @@ app = QApplication.instance() or QApplication(sys.argv)
 from core import event_bus 
 
 
+@pytest.fixture
+def setup_tests():
+    """ run each time that a code as for setup_tests"""
+    dev_rule1 = AutomationRule ("Set point 1 to A", "VLCB", {"node_id":301, "event": 1, "value": 1})
+    dev_rule2 = AutomationRule ("Set point 1 to B", "VLCB", {"node_id":301, "event": 1, "value": "off"})
 
-## Test creation of rules, including importing and handling recursion
-class TestAutomationRules(unittest.TestCase):
+    yield dev_rule1, dev_rule2
 
-    def setUp(self):
-        pass
+# Test the very basic rule elements
+def test_rule_dev_1 (qtbot, setup_tests):
+  
+    rule_1, _ = setup_tests
+    
+    # Use qtbot as a context manager to spy on the signal
+    with qtbot.waitSignal(event_bus.device_event_signal) as blocker:
+        rule_1.run()
+    
+    assert str(blocker.args[0]) == "VLCB 301 1 1"
 
-    def tearDown(self):
-        pass
-        
+def test_rule_dev_2 (qtbot, setup_tests):
+  
+    _, rule_2 = setup_tests
+    
+    # Use qtbot as a context manager to spy on the signal
+    with qtbot.waitSignal(event_bus.device_event_signal) as blocker:
+        rule_2.run()
+    
+    assert str(blocker.args[0]) == "VLCB 301 1 off"
+    
 
-
-
-    # Test the very basic rule elements
-    # Each event type is tested
-    def test_rule_dev_1 (self):
-        # Set Signal spy to watch for signal sent to device
-        dev_spy = QSignalSpy(event_bus.device_event_signal)
-        
-        # Create a rule - needs values for the Event
-        dev_rule = AutomationRule ("Set point 1 to A", "VLCB", {"node_id":301, "event": 1, "value": 1})
-        
-        dev_rule.run()
-        
-        # Test that the event_bus count has increased, that it equals the event we created
-        # and that the values match the expected string
-        self.assertEqual(dev_spy.count(), 1)
-        #Detect 
-        self.assertEqual(dev_spy.at(0)[0], dev_rule.event)
-        self.assertEqual(str(dev_spy.at(0)[0]), "VLCB 301 1 1")
-        
-        
-
-                
-if __name__ == '__main__':
-    unittest.main()

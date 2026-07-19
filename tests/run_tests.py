@@ -1,7 +1,7 @@
 import os
 import sys
-import unittest
 from pathlib import Path
+import pytest  # Replaces unittest
 
 if __name__ == '__main__':
     # Disable verbose Qt debug logging output
@@ -21,9 +21,10 @@ if __name__ == '__main__':
     if str(project_root) not in sys.path:
         sys.path.insert(0, str(project_root))
     
-    # Discover and run tests
-    loader = unittest.TestLoader()
-    suite = loader.discover(start_dir="tests")    
+    # Run Pytest programmatically
+    # "-s" disables output capturing (shows all print statements)
+    # "-v" is verbose mode (equivalent to unittest verbosity=2)
+    # "tests" points to your test directory
+    exit_code = pytest.main(["-s", "-v", "tests"])
     
-    runner = unittest.TextTestRunner(verbosity=2)
-    runner.run(suite)
+    sys.exit(exit_code)

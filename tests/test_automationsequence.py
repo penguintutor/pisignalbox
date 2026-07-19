@@ -81,10 +81,13 @@ class TestAutomationRules(unittest.TestCase):
         steps = []
         
         # Create a dict for a rule: 
-        rule0 = {"type": "Rule", "name": "Set point 1 to A", "ruletype": "VLCB", "data": {"node_id":301, "event": 1, "value": 1}}
-        rule1 = {"type": "Rule", "name": "Set point 1 to B", "ruletype": "VLCB", "data": {"node_id":301, "event": 1, "value": 0}}
+        rule0 = {"type": "Rule", "name": "Set point 1 to A", "ruletype": "VLCB", "data": 
+                 {"node_id":301, "event": 1, "value": 1}}
+        rule1 = {"type": "Rule", "name": "Set point 1 to B", "ruletype": "VLCB", "data": 
+                 {"node_id":301, "event": 1, "value": 0}}
         # This is an unusual thing for automation, but allows testing of an AppEvent 
-        rule2 = {"type": "Rule", "name": "Show Console", "ruletype": "App", "action":"showconsole", "data": {}}
+        rule2 = {"type": "Rule", "name": "Show Console", "ruletype": "App", "data": 
+                 {"action":"showconsole"}}
         
         # Combine steps into sequence
         steps.append(rule0)
@@ -118,10 +121,14 @@ class TestAutomationRules(unittest.TestCase):
         
         # Create a dict for a rule:
         steps = [
-            {"type": "Var", "name": "Create test var", "varname": "test", "action": "set", "value": 0},
-            {"type": "Rule", "name": "Set point 1 to A", "ruletype": "VLCB", "node_id":301, "event": 1, "value": "{test}"},
-            {"type": "Var", "name": "Increase test variable by 1", "varname": "test", "action": "inc", "value": 1},
-            {"type": "Rule", "name": "Set point 1 to B", "ruletype": "VLCB", "node_id":301, "event": 1, "value": "{test}"}
+            {"type": "App", "name": "Create test var", "data": 
+                {"command": "Set Variable", "variable": "test", "value": 0}},
+            {"type": "Rule", "name": "Set point 1 to A", "ruletype": "VLCB", "data":
+                {"node_id":301, "event": 1, "value": "{test}"}},
+            {"type": "App", "name": "Increase test variable by 1", "data":
+                {"variable": "test", "command": "Increment Variable", "value": 1}},
+            {"type": "Rule", "name": "Set point 1 to B", "ruletype": "VLCB", "data": 
+                {"node_id":301, "event": 1, "value": "{test}"}}
             ]
         
         # Create a rule - needs values for the Event
@@ -155,7 +162,7 @@ class TestAutomationRules(unittest.TestCase):
         
         # Create a dict for a rule:
         steps = [
-            {"type": "Var", "name": "Create test var", "varname": "test", "action": "set", "value": 0},
+            {"type": "App", "name": "Create test var", "data": {"varname": "test", "action": "set", "value": 0}},
             {"type": "Label", "name": "Label: loopstart", "data": {"labelid": "loopstart"}},
             {"type": "Rule", "name": "Set point 1 to A", "ruletype": "VLCB", "node_id":301, "event": 1, "value": 1},
             {"type": "Var", "name": "Increase test variable by 1", "varname": "test", "action": "inc", "value": 1},
