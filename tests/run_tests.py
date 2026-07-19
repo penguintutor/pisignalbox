@@ -22,9 +22,11 @@ if __name__ == '__main__':
         sys.path.insert(0, str(project_root))
     
     # Run Pytest programmatically
+    #exit_code = pytest.main(["-v", "tests"])
     # "-s" disables output capturing (shows all print statements)
     # "-v" is verbose mode (equivalent to unittest verbosity=2)
     # "tests" points to your test directory
+    #eg.
     exit_code = pytest.main(["-s", "-v", "tests"])
     
     sys.exit(exit_code)

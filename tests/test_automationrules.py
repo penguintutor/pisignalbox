@@ -28,33 +28,27 @@ from automate import AutomationRule
 from core import event_bus 
 
 
-@pytest.fixture
-def setup_tests():
-    """ run each time that a code as for setup_tests"""
-    dev_rule1 = AutomationRule ("Set point 1 to A", "VLCB", {"node_id":301, "event": 1, "value": 1})
-    dev_rule2 = AutomationRule ("Set point 1 to B", "VLCB", {"node_id":301, "event": 1, "value": "off"})
+@pytest.mark.parametrize ("rule_name, rule_type, rule_data, expected_string", [
+    # Run 1: Point 1 to 1
+    ("Set point 1 to 1", "VLCB", {"node_id":301, "event": 1, "value": 1}, "VLCB 301 1 1"),
+    # Run 2: Point 1 to "off"
+    ("Set point 1 to off", "VLCB", {"node_id":301, "event": 1, "value": "off"}, "VLCB 301 1 off"),
+    # Run 3: Point 1 invalid string
+    ("Set point 2 to 0", "VLCB", {"node_id":301, "event": 0x000002, "value": "0"}, "VLCB 301 2 0")
+])
 
-    yield dev_rule1, dev_rule2
-
-# Test the very basic rule elements
-def test_rule_dev_1 (qtbot, setup_tests):
+# Test the basic rule elements
+def test_rule_dev_1 (qtbot, rule_name, rule_type, rule_data, expected_string):
   
-    rule_1, _ = setup_tests
+    # Create the rule using the parameters
+    dev_rule = AutomationRule(rule_name, rule_type, rule_data)
     
-    # Use qtbot as a context manager to spy on the signal
+    # Wait for the signal and run the rule
     with qtbot.waitSignal(event_bus.device_event_signal) as blocker:
-        rule_1.run()
+        dev_rule.run()
     
-    assert str(blocker.args[0]) == "VLCB 301 1 1"
+    assert len(blocker.args) == 1
+    assert str(blocker.args[0]) == expected_string
 
-def test_rule_dev_2 (qtbot, setup_tests):
-  
-    _, rule_2 = setup_tests
-    
-    # Use qtbot as a context manager to spy on the signal
-    with qtbot.waitSignal(event_bus.device_event_signal) as blocker:
-        rule_2.run()
-    
-    assert str(blocker.args[0]) == "VLCB 301 1 off"
     
 
