@@ -41,7 +41,7 @@ from core import event_bus
 def test_rule_dev_1 (qtbot, rule_name, rule_type, rule_data, expected_string):
   
     # Create the rule using the parameters
-    dev_rule = AutomationRule(rule_name, rule_type, rule_data)
+    dev_rule = AutomationRule(rule_name, rule_type, {"data": rule_data})
     
     # Wait for the signal and run the rule
     with qtbot.waitSignal(event_bus.device_event_signal) as blocker:
