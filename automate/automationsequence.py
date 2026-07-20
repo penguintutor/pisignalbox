@@ -249,7 +249,7 @@ class AutomationSequence (QRunnable):
     # from json also needs mainwindow - pass as optional argument
     @classmethod
     def from_json(cls, json_str: str, check_stop_func=None):
-        print (f"Loading AutomationSequence from JSON")
+        #print (f"Loading AutomationSequence from JSON")
         """Deserialize JSON string to AutomationSequence."""
         d = json.loads(json_str)
         return cls.from_dict(d, check_stop_func=check_stop_func)

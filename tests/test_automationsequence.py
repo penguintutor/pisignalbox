@@ -165,17 +165,22 @@ def test_sequence_wait(mock_window, qtbot):
 
 def test_sequence_save(mock_window, qtbot):
     steps = [
-        {"type": "Var", "name": "Create test var", "varname": "test", "action": "set", "value": 0},
-        {"type": "Label", "name": ":loopstart"},
-        {"type": "Rule", "name": "Set point 1 to A", "ruletype": "VLCB", "node_id":301, "event": 1, "value": 1},
-        {"type": "Var", "name": "Increase test variable by 1", "varname": "test", "action": "inc", "value": 1},
-        {"type": "Rule", "name": "Set point 1 to B", "ruletype": "VLCB", "node_id":301, "event": 1, "value": 0},
-        {"type": "Jump", "name": "Until loop end (if value1 <= value2 jump)", "test": "<=", "value1": "{test}", "value2": 10, "label": ":loopstart"}
+        {"type": "App", "name": "Create test var", "data": 
+            {"command": "Set Variable", "variable": "test", "value": 0}},
+        {"type": "Rule", "name": "Set point 1 to A", "ruletype": "VLCB", "data": 
+            {"node_id":301, "event": 1, "value": "{test}"}},
+        {"type": "App", "name": "Increase test variable by 1", "data":
+            {"variable": "test", "command": "Increment Variable", "value": 1}},
+        {"type": "Wait", "name": "Wait 0.5 seconds", "data" : 
+            {"waittype": "delay", "time": 0.5}},
+        {"type": "Rule", "name": "Set point 1 to B", "ruletype": "VLCB", "data": 
+            {"node_id":301, "event": 1, "value": "{test}"}}
     ]
     
     sequence_1 = AutomationSequence("Test save seq", steps, {})
     json_data = sequence_1.to_json()
-    new_sequence = AutomationSequence.from_json(json_data, mock_window, check_stop_func=lambda: False)
+    #new_sequence = AutomationSequence.from_json(json_data, mock_window, check_stop_func=lambda: False)
+    new_sequence = AutomationSequence.from_json(json_data, check_stop_func=lambda: False)
     
     assert sequence_1.title == "Test save seq"
     assert new_sequence.title == "Test save seq"
