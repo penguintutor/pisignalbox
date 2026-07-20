@@ -104,7 +104,7 @@ class EventBus(QObject):
             target_signal = getattr(self, signal_name)
             target_signal.emit(event)
         else:
-            print(f"Warning: Unhandled event type published: {type(event)}")
+            print(f"Event Bus Warning: Unhandled event type published: {type(event)}")
         
     # Consume is used to handle incoming events
     # It does not publish a new event
@@ -132,7 +132,6 @@ class EventBus(QObject):
         # Get the event type to save making multiple calls to type method
         event_type = type(event)
         # Apply across all rules
-        #print (f"Event {event}")
         for rule in self.event_rules:
             # rule[0] is the event we are monitoring for
             if isinstance(rule[0], event_type):
@@ -146,9 +145,7 @@ class EventBus(QObject):
         self.automation_count -= 1
 
     def add_rule (self, event, action):
-        #print (f"Event {event.__class__.__name__} : Action {action.__class__.__name__}")
         self.event_rules.append([event, action])
-        #print (f"Last rule {self.event_rules[-1]}")
         
     def num_rules (self):
         return len(self.event_rules)
@@ -161,7 +158,6 @@ class EventBus(QObject):
         try:
             with open(self.rules_filename, 'r') as data_file:
                 raw_data = json.load(data_file)
-                #print (f"Data {new_data}")
                 
                 self.event_rules = [
                     [deserialize_event(event_data) for event_data in rule_pair]

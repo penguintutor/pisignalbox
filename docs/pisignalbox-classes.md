@@ -109,3 +109,24 @@ The others are standalone events
 
 
 
+## Automation
+
+### Automation Sequence
+Handle the creation of steps & rules
+Ensures that locomotives are allocated if required
+Handles the sequence flow - eg. loops 
+
+
+#### Automation Step
+Creates and handles rules 
+Looks up and updates variables
+Handles wait commands
+Runs the rules, typically through sending broadcast (eg. to VLCB)
+
+
+
+
+
+
+
+

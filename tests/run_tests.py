@@ -4,6 +4,9 @@ from pathlib import Path
 import pytest  # Replaces unittest
 
 if __name__ == '__main__':
+    # Clear previous messages 
+    os.system('clear' if os.name == 'posix' else 'cls')
+
     # Disable verbose Qt debug logging output
     os.environ["QT_LOGGING_RULES"] = "*.debug=false"
     

@@ -16,7 +16,7 @@ from core import global_app_vars
 # Settings is used to pass the locos,
 class AutomationSequence (QRunnable):
     def __init__(self, title, steps, settings = None, check_stop_func=None):
-        #print (f"\n\nCreating AutomationSequence titled {title} with steps {steps} and settings {settings} and check_stop_func={check_stop_func}")
+    
         super(AutomationSequence, self).__init__()
         # steps are provided as a list so save as list_steps, but then use self.steps when AutomationStep object created
         list_steps = steps
@@ -32,7 +32,7 @@ class AutomationSequence (QRunnable):
         if self.check_stop is None:
             print ("No stop function provided")
             event_bus.broadcast(LogEvent(
-                {'type':"Automation",
+                {'event_type':"Automation",
                 'level':3, # Non critical error
                 'sequence': self.title,
                 'step': "00 - Init",
@@ -42,10 +42,7 @@ class AutomationSequence (QRunnable):
             self.check_stop = lambda: False
         
         # Each step contains self.step = {"step_type": rule_type, "step_name": step_name, data : data_dict}
-        #print ("Loading into Auatomation Sequence")
         for i, step_data in enumerate(list_steps):
-            #print (f"Adding {step_data} to sequence")
-            #print (f"{step_data}")
             # If it's a label then add to dict of labels
             if step_data['type'] == "Label":
                 self.labels[step_data['data'].get('labelid')] = i
@@ -83,7 +80,6 @@ class AutomationSequence (QRunnable):
         it's handled directly here, otherwise it's normally passed
         on to the step's run method to run the action requested
         """
-        #print (f"Starting sequence {self.title}, locos {locos}")
         log_description = f"Starting sequence: {self.title}"
         if len(locos) > 0:
             # Get loco IDs and names as strings
@@ -92,7 +88,7 @@ class AutomationSequence (QRunnable):
             log_description += ", locos: " + ", ".join(loco_strings)
 
         event_bus.broadcast(LogEvent(
-            {'type':"Automation",
+            {'event_type':"Automation",
              'level':5, # Normal major event
              'sequence': self.title,
              'step': "00 - Start",
@@ -126,9 +122,8 @@ class AutomationSequence (QRunnable):
         while position < len(self.steps):
             # Check if we need to stop
             if self.check_stop():
-                #print ("AutomationSequence stopping as requested")
                 event_bus.broadcast(LogEvent(
-                    {'type':"Automation",
+                    {'event_type':"Automation",
                     'level':5, # Normal major event
                     'sequence': self.title,
                     'step': f"{position+1:02d} - Stop",
@@ -143,7 +138,7 @@ class AutomationSequence (QRunnable):
             # If it's a label then ignore
             if self.steps[position].step_type == "Label":
                 event_bus.broadcast(LogEvent(
-                    {'type':"Automation",
+                    {'event_type':"Automation",
                     'level':6, # Information
                     'sequence': self.title,
                     'step': f"{position+1:02d} - Label",
@@ -156,13 +151,11 @@ class AutomationSequence (QRunnable):
                 condition_string = self.steps[position].test_condition_str()
                 # If the result is in the labels then jump to that 
                 if result != None and result == True:
-                    #print ("Test true")
                     label = self.steps[position].get_value("labelid")
-                    #print (f"Label {label}")
                     if label != None and label in self.labels:
-                        #print ("Jump to label")
+                        # Jump to label
                         event_bus.broadcast(LogEvent(
-                            {'type':"Automation",
+                            {'event_type':"Automation",
                             'level':5, # Normal major event
                             'sequence': self.title,
                             'step': f"{position+1:02d} - Jump",
@@ -175,7 +168,7 @@ class AutomationSequence (QRunnable):
                         print (f"Invalid label {label} - from {self.labels}")
                         # otherwise jump is ignored (eg. if loop then until no longer met)
                         event_bus.broadcast(LogEvent(
-                            {'type':"Automation",
+                            {'event_type':"Automation",
                             'level':4,  # Warning
                             'sequence': self.title,
                             'step': f"{position:02d} - Invalid Jump",
@@ -187,7 +180,7 @@ class AutomationSequence (QRunnable):
                 # then continue
                 else: 
                     event_bus.broadcast(LogEvent(
-                        {'type':"Automation",
+                        {'event_type':"Automation",
                         'level':6, # Info
                         'sequence': self.title,
                         'step': f"{position+1:02d} - Jump",
@@ -197,7 +190,7 @@ class AutomationSequence (QRunnable):
             else:
                 # Otherwise run it  
                 event_bus.broadcast(LogEvent(
-                    {'type':"Automation",
+                    {'event_type':"Automation",
                     'level':6, # Normal routine
                     'sequence': self.title,
                     'step': f"{position+1:02d} - {self.steps[position].get_type()}",
@@ -210,7 +203,7 @@ class AutomationSequence (QRunnable):
         # While loop ended
         # Emit a signal to indicate the thread has finished
         event_bus.broadcast(LogEvent(
-            {'type':"Automation",
+            {'event_type':"Automation",
             'level':5, # Normal major event
             'sequence': self.title,
             'step': f"{position+1:02d} - End",
@@ -231,7 +224,6 @@ class AutomationSequence (QRunnable):
 
     def to_dict(self) -> dict:
         """Convert AutomationSequence to dict."""
-        #print ("Creating AutomationSequence dict")
         return {
             "title": self.title,
             "settings": self.settings,
@@ -245,8 +237,6 @@ class AutomationSequence (QRunnable):
     @classmethod
     def from_dict(cls, d: dict, check_stop_func=None):
         """Create AutomationSequence from dict."""
-        #print (f"Loading AutomationSequence from dict {check_stop_func}")
-        #steps = [AutomationStep.from_dict(s, self) for s in d.get("steps", [])]
         steps = d.get("steps", [])
         return cls(
             title=d.get("title", ""),

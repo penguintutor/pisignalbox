@@ -18,7 +18,6 @@ class AutomationStep:
     # rule is not normally provided - unless loading from json
     # Only used if this has an instance of AutomationRule
     def __init__(self, sequence_name, step_type, step_name, data=None, rule=None, check_stop_func=None):
-        #print (f"\n\nCreating step type {step_type} with {data} rule {rule}")
         self.sequence_name = sequence_name # Name of parent sequence (creator)
         self.step_type = step_type
         self.step_name = step_name
@@ -26,7 +25,7 @@ class AutomationStep:
             self.data = {}
         else:
             self.data = data
-        #self.vars = appvariables
+
         self.rule = rule # Only used if this has an instance of AutomationRule
         self.check_stop = check_stop_func   # Used if the step takes a long time to run (eg. wait)
         
@@ -34,17 +33,16 @@ class AutomationStep:
         if self.rule == None and self.step_type == "Rule":
             #self.rule = AutomationRule(self.step_name, self.step_type, self.data)
             # If ruletype not in the step then look in step.data['data']
+            # New location is within self.data['data']
             ruletype = self.data.get('ruletype', '')
             if ruletype == "":
                 ruletype = self.data['data'].get('ruletype', '')
-            #print (f"Creating Automation Rule: {self.step_name} of type {ruletype}")
             self.rule = AutomationRule(self.step_name, ruletype, self.data)
         #  Variables are not created / updated here - only when run
 
     def get_variable (self):
         if 'variable' in self.data['data']:
             varname = self.data['data'].get("variable", "")
-            #print (f"Variable name found: {varname}")
             return varname
         return ""
     
@@ -61,9 +59,11 @@ class AutomationStep:
                 var_data = True
                 var_name = value[1:-1]
                 if vars == None:
-                    print (f"Variable detected {var_name} but no AppVar created")
+                    # Future: remove if no longer required
+                    # Should always have a global variable 
+                    print ("Automation Step - Deprecated Vars are now mandatory")
                     event_bus.broadcast(LogEvent(
-                        {'type':"Automation",
+                        {'event_type':"Automation",
                         'level':3, # None critical error
                         'sequence': self.sequence_name, 
                         'step': f" {self.step_name}",
@@ -83,180 +83,21 @@ class AutomationStep:
 
     # If any variable tokens are found they are handled in the run        
     def run (self, notify_signal, notify_wait_signal, status_signal, locos):
-        run_data = self.parse_var()
-        # Now use run_data - which has any variables parsed
         if self.step_type == "App":
-            app_command = run_data.get("command", "")
-            if app_command == "Set Variable":
-                # check we have an appvar
-                if global_app_vars == None:
-                    #print ("Warning: Attempt to set a variable with no AppVar configured")
-                    event_bus.broadcast(LogEvent(
-                        {'type':"Automation",
-                        'level':3, # None critical error
-                        'sequence': self.sequence_name, 
-                        'step': f" {self.step_name}",
-                        'description': "Attempt to set a variable with no AppVar configured"
-                        }
-                    ))
-                    return
-                var_name = run_data.get("variable", "")
-                var_value = run_data.get("value", "")
-                global_app_vars.set_variable(var_name, var_value)
-                event_bus.broadcast(LogEvent(
-                    {'type':"Automation",
-                    'level':7, # Debug
-                    'sequence': self.sequence_name, 
-                    'step': f" {self.step_name}",
-                    'description': f"Set Variable {var_name} = {var_value}"
-                    }
-                ))
-                
-            elif app_command == "Increment Variable":
-                # check we have an appvar
-                if global_app_vars == None:
-                    #print ("Warning: Attempt to increment a variable with no AppVar configured")
-                    event_bus.broadcast(LogEvent(
-                        {'type':"Automation",
-                        'level':3, # None critical error
-                        'sequence': self.sequence_name, 
-                        'step': f" {self.step_name}",
-                        'description': "Attempt to set a variable with no AppVar configured"
-                        }
-                    ))
-                    return
-                var_name = run_data.get("variable", "")
-                inc_value = run_data.get("value", 1)
-                global_app_vars.inc_variable(var_name, inc_value)
-            elif app_command == "Notify User":
-                message = run_data.get("message", "")
-                blocking = run_data.get("blocking", "True")
-
-                event_bus.broadcast(LogEvent(
-                    {'type':"Automation",
-                    'level':6, # Info
-                    'sequence': self.sequence_name, 
-                    'step': f" {self.step_name}",
-                    'description': f"User notification: {message} (blocking={blocking})"
-                    }
-                ))
-
-                if blocking == "True" or blocking == True:
-                    resume_event = threading.Event()
-                    notify_wait_signal.emit("User Notification", message, resume_event)
-                    # Wait for the user to click OR for the stop flag to be raised
-                    while not resume_event.wait(timeout=0.1):
-                        if self.check_stop and self.check_stop():
-                            #print ("User notification interrupted by stop signal")
-                            event_bus.broadcast(LogEvent(
-                                {'type':"Automation",
-                                'level':5, # Notice
-                                'sequence': self.sequence_name, 
-                                'step': f" {self.step_name}",
-                                'description': "User notification interrupted by stop signal"
-                                }
-                            ))
-                            # Optional: You might want to emit a signal here to auto-close 
-                            # the user notification dialog since the task is dead.
-                            return
-                else:
-                    notify_signal.emit("User Notification", message)
-            elif app_command == "Wait":
-                # Need to check every 0.1 sec for stop signal
-                total_delay = int(run_data.get("delay", 1))
-                event_bus.broadcast(LogEvent(
-                    {'type':"Automation",
-                    'level':6, # Info
-                    'sequence': self.sequence_name, 
-                    'step': f" {self.step_name}",
-                    'description': f"Wait for {total_delay} seconds"
-                    }
-                ))
-                elapsed = 0
-                while elapsed < total_delay:
-                    if self.check_stop and self.check_stop():
-                        #print ("Wait interrupted by stop signal")
-                        event_bus.broadcast(LogEvent(
-                                {'type':"Automation",
-                                'level':5, # Notice
-                                'sequence': self.sequence_name, 
-                                'step': f" {self.step_name}",
-                                'description': "Wait interrupted by stop signal"
-                                }
-                            ))
-                        break
-                    time.sleep(0.1)
-                    elapsed += 0.1
-            else:
-                #print (f"Unknown App command: {app_command}")
-                event_bus.broadcast(LogEvent(
-                    {'type':"Automation",
-                    'level':4, # Warning
-                    'sequence': self.sequence_name, 
-                    'step': f" {self.step_name}",
-                    'description': f"Unknown App command: {app_command}"
-                    }
-                ))
+            self._run_app_step  (notify_signal, notify_wait_signal, status_signal, locos)
         elif self.step_type == "Rule":
-            #print (f"Running Automation Rule: {self.rule}")
-            event_bus.broadcast(LogEvent(
-                {'type':"Automation",
-                'level':6, # Info
-                'sequence': self.sequence_name, 
-                'step': f" {self.step_name}",
-                'description': f"Running Automation Rule {self.rule.rule_name} of type {self.rule.rule_type}"
-                }
-            ))
-            # check any value fields for variables
-            if ("var_data" in run_data and run_data["var_data"]):
-                # remove it from the dict
-                del run_data['var_data']
-                # If new data (ie. variable) then replace data within the rule object
-                self.rule.run(run_data)
-            else:
-                self.rule.run()
+            self._run_rule_step  (notify_signal, notify_wait_signal, status_signal, locos)
         # Variable can be "set" (which create or set value)
         # or "inc" - allows increase without needing to query current value
         elif self.step_type == "Var":
-            # check we have an appvar
-            if global_app_vars == None:
-                event_bus.broadcast(LogEvent(
-                    {'type':"Automation",
-                    'level':3, # None critical error
-                    'sequence': self.sequence_name, 
-                    'step': f" {self.step_name}",
-                    'description': "Attempt to set a variable with no AppVar configured"
-                    }
-                ))
-                return
-            if run_data["action"] == "set":
-                event_bus.broadcast(LogEvent(
-                    {'type':"Automation",
-                    'level':6, # Info
-                    'sequence': self.sequence_name, 
-                    'step': f" {self.step_name}",
-                    'description': f"Set variable {run_data['varname']} to {run_data['value']}"
-                    }
-                ))
-                global_app_vars.set_variable(run_data["varname"], run_data["value"])
-            elif run_data["action"] == "inc":
-                # value is optional for inc - default to 1
-                event_bus.broadcast(LogEvent(
-                    {'type':"Automation",
-                    'level':6, # Info
-                    'sequence': self.sequence_name, 
-                    'step': f" {self.step_name}",
-                    'description': f"Increment variable {run_data['varname']} by {run_data.get('value', 1)}"
-                    }
-                ))
-                global_app_vars.inc_variable(run_data["varname"], run_data.get("value",1))
+            self._run_var_step  (notify_signal, notify_wait_signal, status_signal, locos)
         elif self.step_type == "Wait":
             # default 1 second
             delay_time = self.data.get("time", 1)
             # If this is a basic wait / delay (which is default) then sleep and continue
-            waittype = self.data.get("waittype", "delay")
+            waittype = self.data['data'].get("waittype", "delay")
             event_bus.broadcast(LogEvent(
-                    {'type':"Automation",
+                    {'event_type':"Automation",
                     'level':6, # Info
                     'sequence': self.sequence_name, 
                     'step': f" {self.step_name}",
@@ -293,7 +134,7 @@ class AutomationStep:
             except Exception as e:
                 #print ("Loco error - possibly disconnected")
                 event_bus.broadcast(LogEvent(
-                    {'type':"Automation",
+                    {'event_type':"Automation",
                     'level':3, # None critical error
                     'sequence': self.sequence_name, 
                     'step': f" {self.step_name}",
@@ -310,7 +151,7 @@ class AutomationStep:
                 # If not function number then cannot proceed
                 if func_index == "":
                     event_bus.broadcast(LogEvent(
-                        {'type':"Automation",
+                        {'event_type':"Automation",
                         'level':3, # None critical error
                         'sequence': self.sequence_name, 
                         'step': f" {self.step_name}",
@@ -320,7 +161,7 @@ class AutomationStep:
                     return
                 
                 event_bus.broadcast(LogEvent(
-                    {'type':"Automation",
+                    {'event_type':"Automation",
                     'level':6, # Info
                     'sequence': self.sequence_name, 
                     'step': f" {self.step_name}",
@@ -338,7 +179,7 @@ class AutomationStep:
                 # If don't get current state then can't work out new signal to send
                 if new_byte1_2 == None:
                     event_bus.broadcast(LogEvent(
-                        {'type':"Automation",
+                        {'event_type':"Automation",
                         'level':3, # None critical error
                         'sequence': self.sequence_name, 
                         'step': f" {self.step_name}",
@@ -356,7 +197,7 @@ class AutomationStep:
                     }))
                 # Debug message with actual data sent
                 event_bus.broadcast(LogEvent(
-                    {'type':"Automation",
+                    {'event_type':"Automation",
                     'level':7, # Debug
                     'sequence': self.sequence_name, 
                     'step': f" {self.step_name}",
@@ -376,7 +217,7 @@ class AutomationStep:
                     }))
                 # Debug message with actual data sent
                 event_bus.broadcast(LogEvent(
-                    {'type':"Automation",
+                    {'event_type':"Automation",
                     'level':7, # Debug
                     'sequence': self.sequence_name, 
                     'step': f" {self.step_name}",
@@ -402,7 +243,7 @@ class AutomationStep:
                     }))
                 # Debug message with actual data sent
                 event_bus.broadcast(LogEvent(
-                    {'type':"Automation",
+                    {'event_type':"Automation",
                     'level':7, # Debug
                     'sequence': self.sequence_name, 
                     'step': f" {self.step_name}",
@@ -423,7 +264,7 @@ class AutomationStep:
                     'direction': direction_value
                     }))
                 event_bus.broadcast(LogEvent(
-                    {'type':"Automation",
+                    {'event_type':"Automation",
                     'level':6, # Info
                     'sequence': self.sequence_name, 
                     'step': f" {self.step_name}",
@@ -437,7 +278,7 @@ class AutomationStep:
                 # except Exception as e:
                 #     #print ("Loco error - possibly disconnected")
                 #     event_bus.broadcast(LogEvent(
-                #         {'type':"Automation",
+                #         {'event_type':"Automation",
                 #         'level':3, # None critical error
                 #         'sequence': self.sequence_name, 
                 #         'step': f" {self.step_name}",
@@ -464,7 +305,7 @@ class AutomationStep:
                     }
                 ))
                 event_bus.broadcast(LogEvent(
-                    {'type':"Automation",
+                    {'event_type':"Automation",
                     'level':6, # Info
                     'sequence': self.sequence_name, 
                     'step': f" {self.step_name}",
@@ -476,13 +317,201 @@ class AutomationStep:
                 # Still log to automation log events
                 print (f"Unknown Loco command: {loco_command}")
                 event_bus.broadcast(LogEvent(
-                    {'type':"Automation",
+                    {'event_type':"Automation",
                     'level':3, # None critical error
                     'sequence': self.sequence_name, 
                     'step': f" {self.step_name}",
                     'description': f"Unknown Loco command: {loco_command} for loco {loco_id}"
                     }
                 ))
+
+    ### End of run - handle the internals here
+    
+    def _run_app_step (self, notify_signal, notify_wait_signal, status_signal, locos):
+        """ Within Run - this is if it's an Step of type App"""
+        # First look through the data see if there are any values to be replaced with variable values
+        run_data = self.parse_var()
+        # Now use run_data - which has any variables parsed
+
+        app_command = run_data.get("command", "")
+        if app_command == "Set Variable":
+            # check we have an appvar
+            if global_app_vars == None:
+                # Future: remove if not required anymore
+                print ("Automation Step - Deprecated - should always be a global_app_vars")
+                event_bus.broadcast(LogEvent(
+                    {'event_type':"Automation",
+                    'level':3, # None critical error
+                    'sequence': self.sequence_name, 
+                    'step': f" {self.step_name}",
+                    'description': "Attempt to set a variable with no AppVar configured"
+                    }
+                ))
+                return
+            var_name = run_data.get("variable", "")
+            var_value = run_data.get("value", "")
+            global_app_vars.set_variable(var_name, var_value)
+            event_bus.broadcast(LogEvent(
+                {'event_type':"Automation",
+                'level':7, # Debug
+                'sequence': self.sequence_name, 
+                'step': f" {self.step_name}",
+                'description': f"Set Variable {var_name} = {var_value}"
+                }
+            ))
+            
+        elif app_command == "Increment Variable":
+            # check we have an appvar
+            if global_app_vars == None:
+                #print ("Warning: Attempt to increment a variable with no AppVar configured")
+                event_bus.broadcast(LogEvent(
+                    {'event_type':"Automation",
+                    'level':3, # None critical error
+                    'sequence': self.sequence_name, 
+                    'step': f" {self.step_name}",
+                    'description': "Attempt to set a variable with no AppVar configured"
+                    }
+                ))
+                return
+            var_name = run_data.get("variable", "")
+            inc_value = run_data.get("value", 1)
+            global_app_vars.inc_variable(var_name, inc_value)
+        elif app_command == "Notify User":
+            message = run_data.get("message", "")
+            blocking = run_data.get("blocking", "True")
+
+            event_bus.broadcast(LogEvent(
+                {'event_type':"Automation",
+                'level':6, # Info
+                'sequence': self.sequence_name, 
+                'step': f" {self.step_name}",
+                'description': f"User notification: {message} (blocking={blocking})"
+                }
+            ))
+
+            if blocking == "True" or blocking == True:
+                resume_event = threading.Event()
+                notify_wait_signal.emit("User Notification", message, resume_event)
+                # Wait for the user to click OR for the stop flag to be raised
+                while not resume_event.wait(timeout=0.1):
+                    if self.check_stop and self.check_stop():
+                        #print ("User notification interrupted by stop signal")
+                        event_bus.broadcast(LogEvent(
+                            {'event_type':"Automation",
+                            'level':5, # Notice
+                            'sequence': self.sequence_name, 
+                            'step': f" {self.step_name}",
+                            'description': "User notification interrupted by stop signal"
+                            }
+                        ))
+                        # Optional: You might want to emit a signal here to auto-close 
+                        # the user notification dialog since the task is dead.
+                        return
+            else:
+                notify_signal.emit("User Notification", message)
+        elif app_command == "Wait":
+            # Need to check every 0.1 sec for stop signal
+            total_delay = int(run_data.get("delay", 1))
+            event_bus.broadcast(LogEvent(
+                {'event_type':"Automation",
+                'level':6, # Info
+                'sequence': self.sequence_name, 
+                'step': f" {self.step_name}",
+                'description': f"Wait for {total_delay} seconds"
+                }
+            ))
+            elapsed = 0
+            while elapsed < total_delay:
+                if self.check_stop and self.check_stop():
+                    #print ("Wait interrupted by stop signal")
+                    event_bus.broadcast(LogEvent(
+                            {'event_type':"Automation",
+                            'level':5, # Notice
+                            'sequence': self.sequence_name, 
+                            'step': f" {self.step_name}",
+                            'description': "Wait interrupted by stop signal"
+                            }
+                        ))
+                    break
+                time.sleep(0.1)
+                elapsed += 0.1
+        else:
+            #print (f"Unknown App command: {app_command}")
+            event_bus.broadcast(LogEvent(
+                {'event_type':"Automation",
+                'level':4, # Warning
+                'sequence': self.sequence_name, 
+                'step': f" {self.step_name}",
+                'description': f"Unknown App command: {app_command}"
+                }
+            ))
+
+
+    def _run_rule_step (self, notify_signal, notify_wait_signal, status_signal, locos):
+        """ Within run() - this is a rule"""
+        # First look through the data see if there are any values to be replaced with variable values
+        run_data = self.parse_var()
+        # Now use run_data - which has any variables parsed
+        event_bus.broadcast(LogEvent(
+            {'event_type':"Automation",
+            'level':6, # Info
+            'sequence': self.sequence_name, 
+            'step': f" {self.step_name}",
+            'description': f"Running Automation Rule {self.rule.rule_name} of type {self.rule.rule_type}"
+            }
+        ))
+        # check any value fields for variables
+        if ("var_data" in run_data and run_data["var_data"]):
+            # remove it from the dict
+            del run_data['var_data']
+            # If new data (ie. variable) then replace data within the rule object
+            self.rule.run(run_data)
+        else:
+            self.rule.run()
+
+
+    def _run_var_step (self, notify_signal, notify_wait_signal, status_signal, locos):
+        """ Within run() this is a var"""
+        # First look through the data see if there are any values to be replaced with variable values
+        #run_data = self.parse_var()
+        # Now use run_data - which has any variables parsed
+        # check we have an appvar
+        if global_app_vars == None:
+            event_bus.broadcast(LogEvent(
+                {'event_type':"Automation",
+                'level':3, # None critical error
+                'sequence': self.sequence_name, 
+                'step': f" {self.step_name}",
+                'description': "Attempt to set a variable with no AppVar configured"
+                }
+            ))
+            return
+        if run_data["action"] == "set":
+            event_bus.broadcast(LogEvent(
+                {'event_type':"Automation",
+                'level':var_data6, # Info
+                'sequence': self.sequence_name, 
+                'step': f" {self.step_name}",
+                'description': f"Set variable {run_data['varname']} to {run_data['value']}"
+                }
+            ))
+            global_app_vars.set_variable(run_data["varname"], run_data["value"])
+        elif run_data["action"] == "inc":
+            # value is optional for inc - default to 1
+            event_bus.broadcast(LogEvent(
+                {'event_type':"Automation",
+                'level':6, # Info
+                'sequence': self.sequence_name, 
+                'step': f" {self.step_name}",
+                'description': f"Increment variable {run_data['varname']} by {run_data.get('value', 1)}"
+                }
+            ))
+            global_app_vars.inc_variable(run_data["varname"], run_data.get("value",1))
+
+
+
+    ### End run methods
+
 
     def get_loco_id (self):
         """ If step uses loco then return loco, else return "" """
@@ -518,6 +547,7 @@ class AutomationStep:
     # "notequal" "!=" or "<=" or ">=" (no long version of those)
     # Returns True / False
     def test_condition (self):
+        #print (f"Automation Step Jump Test - {self.test_condition_str()}")
         #Jump can be either variable & value - or value1 & value2
         # if we have variable and value then convert to value1 and value2
         # this will remove any values already in value1 and value2

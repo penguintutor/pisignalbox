@@ -27,11 +27,14 @@ class AutomationRule:
         # Create the corresponding event
         if rule_type == "VLCB" or rule_type == "Device" or rule_type == "App":
             #print (f"Triggering event for {self}")
-            self.event = event_bus.event_map[self.rule_type](self.data)
+            self.event = event_bus.event_map[self.rule_type](self.data.get("data"))
+        # Todo: remove this when testing complete
         elif rule_type == "Var":
+            print ("AutomationRule - Deprecated variable handling - this is now handled by AutomationStep")
             if "event" not in data:
                 print ("No var event found - has AppVar been passed to the sequence?")
             self.event = data["event"]
+        # To implement this
         elif rule_type == "Loco":
             pass #Not yet implemented
         else:
@@ -43,8 +46,12 @@ class AutomationRule:
     def run (self, update=None):
         # If update has a value then use to replace self.data
         if update:
-            self.data = copy.copy(update)
-            self.event.update(self.data)
+            # Replace any self.data entries with values from the update
+            self.data['data'].update(update)
+            # Regenerate the event object with the new data
+            self.event = event_bus.event_map[self.rule_type](self.data.get("data"))
+            #self.data = copy.copy(update)
+            #self.event = self.data["event"]
         # Assuming this is an event then broadcast to event_bus
         #print (f"Run event {self.event}")
         event_bus.broadcast(self.event)

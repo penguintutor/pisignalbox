@@ -30,15 +30,14 @@ class VarEvent(Event):
     def get_node (self):
         return self.get_variable_name()
     
-    # Event would normally be new or change
-    def get_event (self):
-        if 'event' in self.data:
-            return self.data['event']
-        else:
-            return 0
+    # def get_event (self):
+    #     if 'event' in self.data:
+    #         return self.data['event']
+    #     else:
+    #         return 0
     
     def get_value (self):
         return self.data['value']
     
     def __str__ (self):
-        return (f"{self.get_type()} {self.get_node()} {self.get_event()} {self.get_value()}")
+        return (f"{self.get_type()} {self.get_variable()} {self.get_value()}")

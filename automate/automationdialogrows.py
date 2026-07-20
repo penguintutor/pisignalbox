@@ -302,6 +302,7 @@ class AutomationDialogRows:
             if index != -1:
                 combo.setCurrentIndex(index)
             else:
+                # Todo this triggers if no VLCB devices seen
                 print(f"Entry '{entry}' not found in combo box at row {row}")
 
     def set_lineedit_text (self, row, text):
