@@ -5,7 +5,10 @@ import pytest  # Replaces unittest
 
 if __name__ == '__main__':
     # Clear previous messages 
-    os.system('clear' if os.name == 'posix' else 'cls')
+    # \033[2J = clear visible screen
+    # \033[3J = clear scrollback buffer (crucial for VS Code)
+    # \033[H  = move cursor to top left
+    print('\033[2J\033[3J\033[H', end='', flush=True)
 
     # Disable verbose Qt debug logging output
     os.environ["QT_LOGGING_RULES"] = "*.debug=false"

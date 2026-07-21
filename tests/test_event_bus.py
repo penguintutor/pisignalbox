@@ -1,4 +1,5 @@
 # test_eventbus.py
+from pathlib import Path
 import unittest
 import sys
 import os
@@ -10,15 +11,14 @@ from PySide6.QtCore import QObject
 from PySide6.QtTest import QSignalSpy
 from PySide6.QtWidgets import QApplication
 
-# Get the directory of the run_tests.py file
-current_dir = os.path.dirname(os.path.abspath(__file__))
-# Go up one level to the project root directory
-project_root = os.path.join(current_dir, '..')
-# Add the project root to the system path
-sys.path.insert(0, project_root)
-
 # Import from application
 from events import DeviceEvent, AppEvent, GuiEvent, LocoEvent, TimerEvent
+
+
+# Get the directory of the current test file
+CURRENT_DIR = Path(__file__).parent
+# Get the path to your data directory
+DATA_DIR = CURRENT_DIR / "data"
 
 # A global QApplication instance is required for signal/slot testing
 app = QApplication.instance() or QApplication(sys.argv)
@@ -37,7 +37,7 @@ class TestEventBus(unittest.TestCase):
         self.bus.automation_enabled = True
         self.bus.automation_count = 0
         self.bus.max_automation_count = 100 # Reset to default
-        self.test_filename = "test_rules.json"
+        self.test_filename = DATA_DIR / "test_rules.json"
 
     def tearDown(self):
         # Clean up any created files
@@ -257,4 +257,4 @@ class TestEventBus(unittest.TestCase):
         # as it just sets the filename
         with patch('builtins.print') as mock_print:
             self.bus.load_rules(self.test_filename)
-            mock_print.assert_called_with(f"File not found {self.test_filename}")
+            mock_print.assert_called_with(f"File not found {self.test_filename} - [Errno 2] No such file or directory: '{self.test_filename}'")
