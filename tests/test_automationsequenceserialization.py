@@ -1,10 +1,6 @@
-import unittest
+import pytest
 import json
 import os, sys
-# Setup PySide6 environment for testing
-from PySide6.QtCore import QObject, Signal
-from PySide6.QtTest import QSignalSpy
-from PySide6.QtWidgets import QApplication
 
 from core.appvar import AppVar
 from events import VarEvent
@@ -12,104 +8,66 @@ from automate.automationsequence import AutomationSequence, AutomationStep
 from automate.automationstepdialog import AutomationStepDialog
 from automate.automationrule import AutomationRule
 
-# A global QApplication instance is required for signal/slot testing
-app = QApplication.instance() or QApplication(sys.argv)
-
 # Import the module to be tested
 # We specifically import the module-level singleton instance
 from core import event_bus
 
 
-class MockWindow:
-    pass
 
-class TestAutomationSequenceSerialization(unittest.TestCase):
-    def setUp(self):
-        # Mock mainwindow and event bus if needed
-        self.mainwindow = MockWindow()
-        self.mainwindow.appvariables = AppVar(event_bus.var_event_signal)
+def create_sample_sequence():
+    
+    steps = [
+        {"type": "App", "name": "Create test var", "data": 
+            {"command": "Set Variable", "variable": "test", "value": 0}},
+        {"type": "Label", "name": "Label: loopstart", "data": 
+            {"labelid": "loopstart"}},
+        {"type": "Rule", "name": "Set point 1 to A", "data": 
+            {"ruletype": "VLCB", "node_id":301, "event": 1, "value": 1}},
+        {"type": "App", "name": "Increase test variable by 1", "data":
+            {"variable": "test", "command": "Increment Variable", "value": 1}},
+        {"type": "Rule", "name": "Set point 1 to B", "data": 
+            {"ruletype": "VLCB", "node_id":301, "event": 1, "value": 0}},
+        {"type": "Jump", "name": "Until loop end (if value1 <= value2 jump)", "data": 
+            {"condition": "<=", "value1": "{test}", "value2": 10, "labelid": "loopstart"}}
+    ]
 
-    def create_sample_sequence(self):
-        # Create a rule
-#         rule = AutomationRule("VLCB", {"node_id": 301, "event": 1, "value": 1})
-# 
-#         # Create steps
-#         step1 = AutomationStep("Var", "Create test var", {"varname": "test", "action": "set", "value": 0, "appvar": "temp"})
-#         step2 = AutomationStep("Label", ":loopstart", {})
-#         step3 = AutomationStep("Rule", "Set point 1 to A", {"node_id": 301, "event": 1, "value": 1}, rule)
+    #return AutomationSequence("Test save seq", {"retry": True}, [step1, step2, step3])
+    return AutomationSequence("Test save seq", steps, {})
 
-        # Need to have a fake mainwindow for testing
-        # For testing AutomationSequence / AutomationStep then this only needs to house a link to
-        # appvariable
-        mainwindow = MockWindow()
-        mainwindow.appvariables = AppVar(event_bus.var_event_signal)
-        
-        steps = [
-            {"type": "Var", "name": "Create test var", "varname": "test", "action": "set", "value": 0},
-            {"type": "Label", "name": ":loopstart"},
-            {"type": "Rule", "name": "Set point 1 to A", "ruletype": "VLCB", "node_id":301, "event": 1, "value": 1},
-            {"type": "Var", "name": "Increase test variable by 1", "varname": "test", "action": "inc", "value": 1},
-            {"type": "Rule", "name": "Set point 1 to B", "ruletype": "VLCB", "node_id":301, "event": 1, "value": 0},
-            {"type": "Jump", "name": "Until loop end (if value1 <= value2 jump)", "test": "<=", "value1": "${test}", "value2": 10, "label": ":loopstart"}
-            ]
+def test_sequence_serialization_deserialization(qtbot):
+    
+    sequence = create_sample_sequence()
 
-        #return AutomationSequence("Test save seq", {"retry": True}, [step1, step2, step3])
-        return AutomationSequence(mainwindow, "Test save seq", steps, {})
+    # Serialize to JSON
+    json_data = sequence.to_json()
+    assert isinstance(json_data, str)
 
-    def test_sequence_serialization_deserialization(self):
-        
-        # Need to have a fake mainwindow for testing
-        # For testing AutomationSequence / AutomationStep then this only needs to house a link to
-        # appvariable
-        mainwindow = MockWindow()
-        mainwindow.appvariables = AppVar(event_bus.var_event_signal)
-        
-        sequence = self.create_sample_sequence()
+    # Validate JSON structure
+    parsed = json.loads(json_data)
+    #print (f"Parsed: {parsed}")
+    assert("title" in parsed)
+    assert("steps" in parsed)
+    assert(parsed["title"] == "Test save seq")
+    assert(len(parsed["steps"]) == 6)
 
-        # Serialize to JSON
-        json_data = sequence.to_json()
-        self.assertIsInstance(json_data, str)
+    # Check appvar excluded
+    assert("appvar" not in parsed["steps"][0].get("data", {}))
 
-        # Validate JSON structure
-        parsed = json.loads(json_data)
-        #print (f"Parsed: {parsed}")
-        self.assertIn("title", parsed)
-        self.assertIn("steps", parsed)
-        self.assertEqual(parsed["title"], "Test save seq")
-        self.assertEqual(len(parsed["steps"]), 6)
+    # Deserialize back
+    new_sequence = AutomationSequence.from_json(json_data, check_stop_func=lambda: False)
+    assert(new_sequence.title == sequence.title)
+    assert(new_sequence.settings == sequence.settings)
+    assert(len(new_sequence.steps) == len(sequence.steps))
 
-        # Check appvar excluded
-        self.assertNotIn("appvar", parsed["steps"][0].get("data", {}))
+    # Check step details
+    assert(new_sequence.steps[0].step_name == "Create test var")
+    assert(new_sequence.steps[2].rule.rule_type == "VLCB")
 
-        # Deserialize back
-        new_sequence = AutomationSequence.from_json(json_data, mainwindow, check_stop_func=lambda: False)
-        self.assertEqual(new_sequence.title, sequence.title)
-        self.assertEqual(new_sequence.settings, sequence.settings)
-        self.assertEqual(len(new_sequence.steps), len(sequence.steps))
+def test_empty_steps(qtbot):
+    
+    
+    sequence = AutomationSequence("Empty Seq", [], {})
+    json_data = sequence.to_json()
+    new_sequence = AutomationSequence.from_json(json_data, check_stop_func=lambda: False)
+    assert(len(new_sequence.steps) == 0)
 
-        # Check step details
-        self.assertEqual(new_sequence.steps[0].step_name, "Create test var")
-        self.assertEqual(new_sequence.steps[2].rule.rule_type, "VLCB")
-
-    def test_empty_steps(self):
-        
-        # Need to have a fake mainwindow for testing
-        # For testing AutomationSequence / AutomationStep then this only needs to house a link to
-        # appvariable
-        mainwindow = MockWindow()
-        mainwindow.appvariables = AppVar(event_bus.var_event_signal)
-        
-        sequence = AutomationSequence(mainwindow, "Empty Seq", [], {})
-        json_data = sequence.to_json()
-        new_sequence = AutomationSequence.from_json(json_data, mainwindow, check_stop_func=lambda: False)
-        self.assertEqual(len(new_sequence.steps), 0)
-
-#     def test_step_without_rule(self):
-#         step = AutomationStep("Var", "Simple Step", {"param": 123})
-#         self.assertIsNone(step.rule)
-#         json_data = json.dumps(step.to_dict())
-#         parsed = json.loads(json_data)
-#         self.assertIsNone(parsed["rule"])
-
-if __name__ == "__main__":
-    unittest.main()
