@@ -11,7 +11,7 @@ class DeviceEvent (Event):
         Or will provide "node_object" which contains those details
         If an action is not provided then treat as a "device" action
         indicating it is directly related to a device hardware trigger
-        Other actions include "new_node", "update_node", "new_ev", "update_ev"
+        Other actions include "new_node", "update_nodeInvalid label", "new_ev", "update_ev"
         Values set in the dict will typically override ones in the object
         """
         super().__init__()

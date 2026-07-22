@@ -1,37 +1,30 @@
-import unittest
-
-import os
-
+import pytest
+from pathlib import Path
 from pyvlcb import VLCB, VLCBFormat, VLCBOpcode
+from layout import Layout
 from trackview import TrackViewNode
 from trackview import track_view_manager
-                
-## Tests for DeviceModel
-# The DeviceModel is created as a singleton known as track_view_manager
-class TestDeviceManager(unittest.TestCase):
-    def test_create(self):
-        #print ("Testing device model")
-        self.assertTrue(track_view_manager != False)
 
+CURRENT_DIR = Path(__file__).parent
+DATA_DIR = CURRENT_DIR / "data"
+LAYOUT_FILE = "test_layout.json"
 
-        
-    def test_add_gui_node (self):
-        # Node needs to be added through Layout
-        gui_objects = []
-        gui_objects.append(TrackViewNode(None, "Point", "Test point 1", 0, {}))
-        track_view_manager.add_gui_node(gui_objects[-1])
-        # Retrieve the gui_node
-        this_node = track_view_manager.get_gui_node(0)
-        self.assertTrue(this_node.device_type == "Gui")
-        self.assertTrue(this_node.object_type == "Point")
-        self.assertTrue(this_node.name == "Test point 1")
-        # Also test using get_type_node
-        this_node_type = track_view_manager.get_type_node ("Test point 1")
-        #print (f"Node type is {this_node_type}")
-        self.assertTrue(this_node_type == this_node.device_type)
-        
+@pytest.fixture
+def base_layout():
+    """Fixture to provide a fresh Layout instance for each test."""
+    # Since we removed the class, 'self' no longer exists.
+    # If Layout expects a parent object (common in PySide6 GUI architectures), 
+    # passing None is usually the correct approach for tests.
+    return Layout(None, DATA_DIR, LAYOUT_FILE)
 
-                
-                
-if __name__ == '__main__':
-    unittest.main()
+def test_create(base_layout):
+    assert track_view_manager is not False
+
+def test_add_track_view_node(base_layout):
+    base_layout.add_track_view_node("Point", "Test point 1")
+    
+    this_node = base_layout.get_node_from_name("Test point 1")
+    
+    assert this_node.device_type == "TrackView"
+    assert this_node.node_type == "Point"
+    assert this_node.name == "Test point 1"
