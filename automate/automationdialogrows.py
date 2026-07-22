@@ -50,7 +50,7 @@ class AutomationDialogRows:
         # Set large range if required validate in save
         # Removed validator to allow variables etc.
         #self.lineedits[3].setValidator(QIntValidator(1, 99999, self.lineedits[3]))
-        self.fieldlabels = [QLabel() for i in range (6)]
+        self.fieldlabels = [QLabel() for _ in range (6)]
         self.fieldlabels[3].setText("Allocated when run")  # Event alternative label if DCC not selected
         # Can sometimes swap out combo for spinbox - eg. loco speed
         self.row5_spinbox = QSpinBox()
@@ -322,7 +322,6 @@ class AutomationDialogRows:
     def loco_action_setup (self, action, data=None):
         """Setup the action combo for loco actions and return the list of items."""
         # Data is a dict as different fields use different keys
-        action_items = []
         if action == "Set Speed":
             self.show_hide_row(5, True, "Speed:")
             self.set_field_type(5, 'spinbox')

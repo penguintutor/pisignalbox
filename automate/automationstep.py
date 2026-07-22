@@ -84,270 +84,49 @@ class AutomationStep:
     # If any variable tokens are found they are handled in the run        
     def run (self, notify_signal, notify_wait_signal, status_signal, locos):
         if self.step_type == "App":
-            self._run_app_step  (notify_signal, notify_wait_signal, status_signal, locos)
+            self._run_app_step  (notify_signal, notify_wait_signal)
         elif self.step_type == "Rule":
-            self._run_rule_step  (notify_signal, notify_wait_signal, status_signal, locos)
+            self._run_rule_step  ()
         # Variable can be "set" (which create or set value)
         # or "inc" - allows increase without needing to query current value
         elif self.step_type == "Var":
-            self._run_var_step  (notify_signal, notify_wait_signal, status_signal, locos)
+            print ("Automation Step - Deprecated Var should now be an App command")
+            #self._run_var_step  ()
         elif self.step_type == "Wait":
-            # default 1 second
-            delay_time = self.data.get("time", 1)
-            # If this is a basic wait / delay (which is default) then sleep and continue
-            waittype = self.data['data'].get("waittype", "delay")
-            event_bus.broadcast(LogEvent(
-                    {'event_type':"Automation",
-                    'level':6, # Info
-                    'sequence': self.sequence_name, 
-                    'step': f" {self.step_name}",
-                    'description': f"Wait for {delay_time} seconds - type {waittype}"
-                    }
-                ))
-
-            if waittype == "delay":
-                time.sleep(delay_time)
-            else:
-                loop_num = 0
-                # max_loop 0 means no maximum (keep looping)
-                # this is not subject to variable substitution 
-                max_loop = self.data.get("maxloop", 0)
-                # Create a loop until the condition is met
-                while self.test_condition():
-                    time.sleep(delay_time)
-                    loop_num += 1
-                    if max_loop > 0 and loop_num > max_loop:
-                        break
+            print ("Automation Step - Deprecated Wait should now be an App command")
+            #self._run_wait_step  ()
+            
         elif self.step_type == "Loco":
-            # Loco step 
-            # Is the Loco connected
-            #Todo check loco connected and active
-            loco_id = self.get_loco_id()
-            #print (f"Running Loco Step: {self.step_name} with data {run_data}, locos {locos}")
-            loco_command = run_data.get("action", "")
-            # If there are any actions that just require loco_id
-            # Add them here and wrap the following in an else
-            # Get session id
-            try:
-                loco = locos[loco_id]
-                session_id = loco.session
-            except Exception as e:
-                #print ("Loco error - possibly disconnected")
-                event_bus.broadcast(LogEvent(
-                    {'event_type':"Automation",
-                    'level':3, # None critical error
-                    'sequence': self.sequence_name, 
-                    'step': f" {self.step_name}",
-                    'description': f"Loco error - possibly disconnected {loco_id}"
-                    }
-                ))
-
-            if loco_command == "Function":
-                #print ("Loco function - todo testing")
-
-                func_index = run_data.get("function", "")
-                func_type = run_data.get("type", "trigger")
-                func_value = run_data.get("value", 1)
-                # If not function number then cannot proceed
-                if func_index == "":
-                    event_bus.broadcast(LogEvent(
-                        {'event_type':"Automation",
-                        'level':3, # None critical error
-                        'sequence': self.sequence_name, 
-                        'step': f" {self.step_name}",
-                        'description': f"Loco error - Invalid function request {func_index} {func_type} {func_value}"
-                        }
-                    ))
-                    return
-                
-                event_bus.broadcast(LogEvent(
-                    {'event_type':"Automation",
-                    'level':6, # Info
-                    'sequence': self.sequence_name, 
-                    'step': f" {self.step_name}",
-                    'description': f"Loco action - Loco {loco_id} - Function {func_index} {func_type} {func_value}"
-                    }
-                ))
-
-                # Get current function status
-                # Need to send state of other functions in the function group
-                # status = self.loco.get_function_status(func_index)
-                # using set_function_dfun calculates based on existing
-                current_byte1_2 = loco.set_function_dfun (func_index)
-                # get off status if required (used by trigger)
-                new_byte1_2 = loco.set_function_dfun (func_index, func_value)
-                # If don't get current state then can't work out new signal to send
-                if new_byte1_2 == None:
-                    event_bus.broadcast(LogEvent(
-                        {'event_type':"Automation",
-                        'level':3, # None critical error
-                        'sequence': self.sequence_name, 
-                        'step': f" {self.step_name}",
-                        'description': f"Loco error - Function request failed - unknown current state"
-                        }
-                    ))
-                    return
-                event_bus.publish(LocoEvent('api', {
-                    'command': 'function',
-                    'session': session_id,
-                    'function': func_index,
-                    'type': func_type,
-                    'currentvalue': current_byte1_2,
-                    'newvalue': new_byte1_2
-                    }))
-                # Debug message with actual data sent
-                event_bus.broadcast(LogEvent(
-                    {'event_type':"Automation",
-                    'level':7, # Debug
-                    'sequence': self.sequence_name, 
-                    'step': f" {self.step_name}",
-                    'description': f"Loco action - Loco {loco_id} - Function {func_index} {func_type} {func_value} - Value {new_byte1_2}"
-                    }
-                ))                
-            elif loco_command == "Set Speed":
-                #print ("Set speed - implement here")
-                speed_value = run_data.get("speed", 1)
-                # Need to know current direction to send correct speed / direction command
-                direction_value = loco.get_direction()
-                event_bus.publish(LocoEvent('api', {
-                    'command': 'speed_dir',
-                    'session': session_id,
-                    'speed': speed_value,
-                    'direction': direction_value
-                    }))
-                # Debug message with actual data sent
-                event_bus.broadcast(LogEvent(
-                    {'event_type':"Automation",
-                    'level':7, # Debug
-                    'sequence': self.sequence_name, 
-                    'step': f" {self.step_name}",
-                    'description': f"Loco action - Loco {loco_id} - Set Speed {speed_value} - Direction {direction_value}"
-                    }
-                ))    
-            elif loco_command == "Set Direction":
-                print ("Set direction - implement here")
-                direction_string = run_data.get("direction", "forward")
-                # default direction is forward - if reverse then set - otherwise default to forward
-                if direction_string.lower() == "reverse":
-                    direction_value = 0
-                else:
-                    direction_value = 1
-                # Need to know current speed 
-                # Should be stopped or very slow (but some DCC locos will stop and reverse)
-                speed_value = loco.get_speed()
-                event_bus.publish(LocoEvent('api', {
-                    'command': 'speed_dir',
-                    'session': session_id,
-                    'speed': speed_value,
-                    'direction': direction_value
-                    }))
-                # Debug message with actual data sent
-                event_bus.broadcast(LogEvent(
-                    {'event_type':"Automation",
-                    'level':7, # Debug
-                    'sequence': self.sequence_name, 
-                    'step': f" {self.step_name}",
-                    # Log entry is worded differently - direction first, speed second
-                    'description': f"Loco action - Loco {loco_id} - Set Direction {direction_value} - Speed {speed_value}"
-                    }
-                ))
-            elif loco_command == "Stop":
-                # Stop = Emergency stop
-                # For normal stop, set speed to 0 )
-                # Although stop has no direction
-                # need to know current direction to send correct speed / direction command
-                direction_value = loco.get_direction()
-                event_bus.publish(LocoEvent('api', {
-                    'command': 'speed_dir',
-                    'session': session_id,
-                    'speed': 1, # Sends an emergency stop
-                    'direction': direction_value
-                    }))
-                event_bus.broadcast(LogEvent(
-                    {'event_type':"Automation",
-                    'level':6, # Info
-                    'sequence': self.sequence_name, 
-                    'step': f" {self.step_name}",
-                    'description': f"Stopping loco {loco_id}"
-                    }
-                ))
-                # # get loco object for this step
-                # try:
-                #     loco = locos[loco_id]
-                #     session_id = loco.session
-                # except Exception as e:
-                #     #print ("Loco error - possibly disconnected")
-                #     event_bus.broadcast(LogEvent(
-                #         {'event_type':"Automation",
-                #         'level':3, # None critical error
-                #         'sequence': self.sequence_name, 
-                #         'step': f" {self.step_name}",
-                #         'description': f"Loco error - possibly disconnected {loco_id}"
-                #         }
-                #     ))
-                # event_bus.publish(LocoEvent('api', {
-                #     'command': 'speed_dir',
-                #     'session': session_id,
-                #     'speed': 0,
-                #     'direction': loco.direction
-                #     }))
-
-                # #self.api.start_request(self.api.vlcb.loco_speeddir(self.control_loco.get_session(), self.control_loco.get_speeddir()))
-            elif loco_command == "All Stop":
-                # All Stop = Emergency stop all locos
-                # For normal stop, set speed to 0 )
-                # Although stop has no direction
-                # need to know current direction to send correct speed / direction command
-                direction_value = loco.get_direction()
-                event_bus.publish(LocoEvent('api', {
-                    'command': 'All Stop',
-                    'session': session_id
-                    }
-                ))
-                event_bus.broadcast(LogEvent(
-                    {'event_type':"Automation",
-                    'level':6, # Info
-                    'sequence': self.sequence_name, 
-                    'step': f" {self.step_name}",
-                    'description': f"All Stop"
-                    }
-                ))
-            else:
-                # TODO: remove this print when testing complete
-                # Still log to automation log events
-                print (f"Unknown Loco command: {loco_command}")
-                event_bus.broadcast(LogEvent(
-                    {'event_type':"Automation",
-                    'level':3, # None critical error
-                    'sequence': self.sequence_name, 
-                    'step': f" {self.step_name}",
-                    'description': f"Unknown Loco command: {loco_command} for loco {loco_id}"
-                    }
-                ))
+            self._run_loco_step (locos)
+            
 
     ### End of run - handle the internals here
     
-    def _run_app_step (self, notify_signal, notify_wait_signal, status_signal, locos):
+    def _run_app_step (self, notify_signal, notify_wait_signal):
         """ Within Run - this is if it's an Step of type App"""
         # First look through the data see if there are any values to be replaced with variable values
         run_data = self.parse_var()
         # Now use run_data - which has any variables parsed
 
+        # Apps often rely on global_app_vars
+        # Ensure that this is created
+        # TODO: This can likely be removed as it's mandatory to have
+        # a global_app_vars
+        if global_app_vars == None:
+            # Future: remove if not required anymore
+            print ("Automation Step - Deprecated - should always be a global_app_vars")
+            event_bus.broadcast(LogEvent(
+                {'event_type':"Automation",
+                'level':3, # None critical error
+                'sequence': self.sequence_name, 
+                'step': f" {self.step_name}",
+                'description': "Attempt to set a variable with no AppVar configured"
+                }
+            ))
+            return
+
         app_command = run_data.get("command", "")
         if app_command == "Set Variable":
-            # check we have an appvar
-            if global_app_vars == None:
-                # Future: remove if not required anymore
-                print ("Automation Step - Deprecated - should always be a global_app_vars")
-                event_bus.broadcast(LogEvent(
-                    {'event_type':"Automation",
-                    'level':3, # None critical error
-                    'sequence': self.sequence_name, 
-                    'step': f" {self.step_name}",
-                    'description': "Attempt to set a variable with no AppVar configured"
-                    }
-                ))
-                return
             var_name = run_data.get("variable", "")
             var_value = run_data.get("value", "")
             global_app_vars.set_variable(var_name, var_value)
@@ -361,18 +140,6 @@ class AutomationStep:
             ))
             
         elif app_command == "Increment Variable":
-            # check we have an appvar
-            if global_app_vars == None:
-                #print ("Warning: Attempt to increment a variable with no AppVar configured")
-                event_bus.broadcast(LogEvent(
-                    {'event_type':"Automation",
-                    'level':3, # None critical error
-                    'sequence': self.sequence_name, 
-                    'step': f" {self.step_name}",
-                    'description': "Attempt to set a variable with no AppVar configured"
-                    }
-                ))
-                return
             var_name = run_data.get("variable", "")
             inc_value = run_data.get("value", 1)
             global_app_vars.inc_variable(var_name, inc_value)
@@ -447,7 +214,7 @@ class AutomationStep:
             ))
 
 
-    def _run_rule_step (self, notify_signal, notify_wait_signal, status_signal, locos):
+    def _run_rule_step (self):
         """ Within run() - this is a rule"""
         # First look through the data see if there are any values to be replaced with variable values
         run_data = self.parse_var()
@@ -470,10 +237,10 @@ class AutomationStep:
             self.rule.run()
 
 
-    def _run_var_step (self, notify_signal, notify_wait_signal, status_signal, locos):
+    def _run_var_step (self):
         """ Within run() this is a var"""
         # First look through the data see if there are any values to be replaced with variable values
-        #run_data = self.parse_var()
+        run_data = self.parse_var()
         # Now use run_data - which has any variables parsed
         # check we have an appvar
         if global_app_vars == None:
@@ -489,7 +256,7 @@ class AutomationStep:
         if run_data["action"] == "set":
             event_bus.broadcast(LogEvent(
                 {'event_type':"Automation",
-                'level':var_data6, # Info
+                'level':6, # Info
                 'sequence': self.sequence_name, 
                 'step': f" {self.step_name}",
                 'description': f"Set variable {run_data['varname']} to {run_data['value']}"
@@ -508,6 +275,250 @@ class AutomationStep:
             ))
             global_app_vars.inc_variable(run_data["varname"], run_data.get("value",1))
 
+
+    def _run_wait_step (self):
+        """ Within run() this is a wait"""
+        # First look through the data see if there are any values to be replaced with variable values
+        run_data = self.parse_var()
+        # Now use run_data - which has any variables parsed
+        # default 1 second
+        delay_time = self.data.get("time", 1)
+        # If this is a basic wait / delay (which is default) then sleep and continue
+        waittype = self.data['data'].get("waittype", "delay")
+        event_bus.broadcast(LogEvent(
+                {'event_type':"Automation",
+                'level':6, # Info
+                'sequence': self.sequence_name, 
+                'step': f" {self.step_name}",
+                'description': f"Wait for {delay_time} seconds - type {waittype}"
+                }
+            ))
+
+        if waittype == "delay":
+            time.sleep(delay_time)
+        else:
+            loop_num = 0
+            # max_loop 0 means no maximum (keep looping)
+            # this is not subject to variable substitution 
+            max_loop = self.data.get("maxloop", 0)
+            # Create a loop until the condition is met
+            while self.test_condition():
+                time.sleep(delay_time)
+                loop_num += 1
+                if max_loop > 0 and loop_num > max_loop:
+                    break
+
+    def _run_loco_step (self, locos):
+        """ Within run() this is a loco"""
+        # Loco step 
+        # First look through the data see if there are any values to be replaced with variable values
+        run_data = self.parse_var()
+        # Now use run_data - which has any variables parsed
+
+        # Is the Loco connected
+        #Todo check loco connected and active
+        loco_id = self.get_loco_id()
+        #print (f"Running Loco Step: {self.step_name} with data {run_data}, locos {locos}")
+        loco_command = run_data.get("action", "")
+        # If there are any actions that just require loco_id
+        # Add them here and wrap the following in an else
+        # Get session id
+        try:
+            loco = locos[loco_id]
+            session_id = loco.session
+        except Exception as e:
+            #print ("Loco error - possibly disconnected")
+            event_bus.broadcast(LogEvent(
+                {'event_type':"Automation",
+                'level':3, # None critical error
+                'sequence': self.sequence_name, 
+                'step': f" {self.step_name}",
+                'description': f"Loco error - possibly disconnected {loco_id}"
+                }
+            ))
+
+        if loco_command == "Function":
+            #print ("Loco function - todo testing")
+
+            func_index = run_data.get("function", "")
+            func_type = run_data.get("type", "trigger")
+            func_value = run_data.get("value", 1)
+            # If not function number then cannot proceed
+            if func_index == "":
+                event_bus.broadcast(LogEvent(
+                    {'event_type':"Automation",
+                    'level':3, # None critical error
+                    'sequence': self.sequence_name, 
+                    'step': f" {self.step_name}",
+                    'description': f"Loco error - Invalid function request {func_index} {func_type} {func_value}"
+                    }
+                ))
+                return
+            
+            event_bus.broadcast(LogEvent(
+                {'event_type':"Automation",
+                'level':6, # Info
+                'sequence': self.sequence_name, 
+                'step': f" {self.step_name}",
+                'description': f"Loco action - Loco {loco_id} - Function {func_index} {func_type} {func_value}"
+                }
+            ))
+
+            # Get current function status
+            # Need to send state of other functions in the function group
+            # status = self.loco.get_function_status(func_index)
+            # using set_function_dfun calculates based on existing
+            current_byte1_2 = loco.set_function_dfun (func_index)
+            # get off status if required (used by trigger)
+            new_byte1_2 = loco.set_function_dfun (func_index, func_value)
+            # If don't get current state then can't work out new signal to send
+            if new_byte1_2 == None:
+                event_bus.broadcast(LogEvent(
+                    {'event_type':"Automation",
+                    'level':3, # None critical error
+                    'sequence': self.sequence_name, 
+                    'step': f" {self.step_name}",
+                    'description': f"Loco error - Function request failed - unknown current state"
+                    }
+                ))
+                return
+            event_bus.publish(LocoEvent('api', {
+                'command': 'function',
+                'session': session_id,
+                'function': func_index,
+                'type': func_type,
+                'currentvalue': current_byte1_2,
+                'newvalue': new_byte1_2
+                }))
+            # Debug message with actual data sent
+            event_bus.broadcast(LogEvent(
+                {'event_type':"Automation",
+                'level':7, # Debug
+                'sequence': self.sequence_name, 
+                'step': f" {self.step_name}",
+                'description': f"Loco action - Loco {loco_id} - Function {func_index} {func_type} {func_value} - Value {new_byte1_2}"
+                }
+            ))                
+        elif loco_command == "Set Speed":
+            #print ("Set speed - implement here")
+            speed_value = run_data.get("speed", 1)
+            # Need to know current direction to send correct speed / direction command
+            direction_value = loco.get_direction()
+            event_bus.publish(LocoEvent('api', {
+                'command': 'speed_dir',
+                'session': session_id,
+                'speed': speed_value,
+                'direction': direction_value
+                }))
+            # Debug message with actual data sent
+            event_bus.broadcast(LogEvent(
+                {'event_type':"Automation",
+                'level':7, # Debug
+                'sequence': self.sequence_name, 
+                'step': f" {self.step_name}",
+                'description': f"Loco action - Loco {loco_id} - Set Speed {speed_value} - Direction {direction_value}"
+                }
+            ))    
+        elif loco_command == "Set Direction":
+            print ("Set direction - implement here")
+            direction_string = run_data.get("direction", "forward")
+            # default direction is forward - if reverse then set - otherwise default to forward
+            if direction_string.lower() == "reverse":
+                direction_value = 0
+            else:
+                direction_value = 1
+            # Need to know current speed 
+            # Should be stopped or very slow (but some DCC locos will stop and reverse)
+            speed_value = loco.get_speed()
+            event_bus.publish(LocoEvent('api', {
+                'command': 'speed_dir',
+                'session': session_id,
+                'speed': speed_value,
+                'direction': direction_value
+                }))
+            # Debug message with actual data sent
+            event_bus.broadcast(LogEvent(
+                {'event_type':"Automation",
+                'level':7, # Debug
+                'sequence': self.sequence_name, 
+                'step': f" {self.step_name}",
+                # Log entry is worded differently - direction first, speed second
+                'description': f"Loco action - Loco {loco_id} - Set Direction {direction_value} - Speed {speed_value}"
+                }
+            ))
+        elif loco_command == "Stop":
+            # Stop = Emergency stop
+            # For normal stop, set speed to 0 )
+            # Although stop has no direction
+            # need to know current direction to send correct speed / direction command
+            direction_value = loco.get_direction()
+            event_bus.publish(LocoEvent('api', {
+                'command': 'speed_dir',
+                'session': session_id,
+                'speed': 1, # Sends an emergency stop
+                'direction': direction_value
+                }))
+            event_bus.broadcast(LogEvent(
+                {'event_type':"Automation",
+                'level':6, # Info
+                'sequence': self.sequence_name, 
+                'step': f" {self.step_name}",
+                'description': f"Stopping loco {loco_id}"
+                }
+            ))
+            # # get loco object for this step
+            # try:
+            #     loco = locos[loco_id]
+            #     session_id = loco.session
+            # except Exception as e:
+            #     #print ("Loco error - possibly disconnected")
+            #     event_bus.broadcast(LogEvent(
+            #         {'event_type':"Automation",
+            #         'level':3, # None critical error
+            #         'sequence': self.sequence_name, 
+            #         'step': f" {self.step_name}",
+            #         'description': f"Loco error - possibly disconnected {loco_id}"
+            #         }
+            #     ))
+            # event_bus.publish(LocoEvent('api', {
+            #     'command': 'speed_dir',
+            #     'session': session_id,
+            #     'speed': 0,
+            #     'direction': loco.direction
+            #     }))
+
+            # #self.api.start_request(self.api.vlcb.loco_speeddir(self.control_loco.get_session(), self.control_loco.get_speeddir()))
+        elif loco_command == "All Stop":
+            # All Stop = Emergency stop all locos
+            # For normal stop, set speed to 0 )
+            # Although stop has no direction
+            # need to know current direction to send correct speed / direction command
+            direction_value = loco.get_direction()
+            event_bus.publish(LocoEvent('api', {
+                'command': 'All Stop',
+                'session': session_id
+                }
+            ))
+            event_bus.broadcast(LogEvent(
+                {'event_type':"Automation",
+                'level':6, # Info
+                'sequence': self.sequence_name, 
+                'step': f" {self.step_name}",
+                'description': f"All Stop"
+                }
+            ))
+        else:
+            # TODO: remove this print when testing complete
+            # Still log to automation log events
+            print (f"Unknown Loco command: {loco_command}")
+            event_bus.broadcast(LogEvent(
+                {'event_type':"Automation",
+                'level':3, # None critical error
+                'sequence': self.sequence_name, 
+                'step': f" {self.step_name}",
+                'description': f"Unknown Loco command: {loco_command} for loco {loco_id}"
+                }
+            ))
 
 
     ### End run methods

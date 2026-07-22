@@ -29,13 +29,7 @@ class VarEvent(Event):
     # Used by __str__ as based on Gui event
     def get_node (self):
         return self.get_variable_name()
-    
-    # def get_event (self):
-    #     if 'event' in self.data:
-    #         return self.data['event']
-    #     else:
-    #         return 0
-    
+        
     def get_value (self):
         return self.data['value']
     
