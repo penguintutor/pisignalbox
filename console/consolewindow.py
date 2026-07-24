@@ -88,7 +88,6 @@ class ConsoleWindowUI(QMainWindow):
         self.command_changed()
         
     def app_update (self, app_event):
-        print (f"App Event {app_event.data}")
         if app_event.action == "newdata":
             ui_vlcb.add_log(self, app_event.get_response())
             ui_vlcb.update_log(self)
@@ -99,7 +98,6 @@ class ConsoleWindowUI(QMainWindow):
             self.activateWindow()
         
     def log_update (self, log_event):
-        print (f"Log Event {log_event.data}")
         if log_event.get_log_type() == "Automation":
             ui_auto.add_log(self, log_event)
             ui_auto.update_log(self)

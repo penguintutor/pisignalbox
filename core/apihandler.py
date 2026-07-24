@@ -9,7 +9,6 @@ from pyvlcb import VLCB
 from pyvlcb import VLCBOpcode
 from device import device_manager, VLCBNode
 
-
 logger = logging.getLogger(__name__)
 
 class ApiHandler(QObject):
@@ -54,7 +53,6 @@ class ApiHandler(QObject):
         self.start_request(self.vlcb.accessory_command(event.get_node_id(), event.get_event(), event.get_value()))
 
     def loco_event (self, event):
-        #print ("Loco event in API")
         """ The API action allows direct instructions to the API
         This can be particularly useful from automation step
         which doesn't have direct access to the mainwindow class to call 
@@ -64,7 +62,6 @@ class ApiHandler(QObject):
             # loco_id is common, although many use session_id and some don't need either
             loco_id = event.get_loco_id()
             command = event.get_command()
-            #print (f"Command in API loco_event {command}")
             if command == "acquire":
                 self.start_request(self.api.vlcb.allocate_loco(loco_id))
             # Allow share or steal
@@ -89,7 +86,6 @@ class ApiHandler(QObject):
                 else:
                     self.start_request(request_new)
             elif command == "speed_dir":
-                #print ("Setting speed_dir")
                 self.start_request(self.vlcb.loco_speed_dir(
                     event.get_session_id(),
                     event.get_arg("speed"),
@@ -122,7 +118,6 @@ class ApiHandler(QObject):
     # Adding priority pushes to front of queue
     def start_request (self, request, type="send", priority=False):
         # add type to request
-        #print (f"Starting request {request}")
         # Priority ignores list length and just inserts at front
         # pushes other priority items further down the list as well
         if priority:
@@ -131,7 +126,6 @@ class ApiHandler(QObject):
         if len(self.send_queue) > 10:
             return False
         self.send_queue.append(request)
-        #print (f"New queue {self.send_queue}")
         return True
 
         
@@ -167,7 +161,6 @@ class ApiHandler(QObject):
         # see if there is a specific request
         request = self.get_request()
         if request != False:
-            #print (f"Sending request {request}")
             response = self.server.send (request)
             if response == None:
                 self.update_in_progress = False
@@ -176,7 +169,6 @@ class ApiHandler(QObject):
             else:
                 self.status = "Connected"
             
-        #print ("Reading response")
         # Get updates since last_packet
         response = self.server.read (self.last_packet)
         # If response None then error getting update - skip for now and
@@ -209,8 +201,7 @@ class ApiHandler(QObject):
             # to just get a fixed number of entries
             packets_received = int (header[3])
             if packets_received < 0:
-                #print (f"Out of step with server, {self.last_packet} {packets_received}")
-                print ("Restarting after possible server restart")
+                logger.warning ("Restarting after possible server restart")
                 self.last_packet = None
                 self.update_in_progress = False
                 return
@@ -218,30 +209,27 @@ class ApiHandler(QObject):
             # need end to know what our last stored value is
             this_last_packet = int(header[2])
             if self.last_packet == None or self.last_packet < this_last_packet:
-                self.last_packet = this_last_packet
-            #print (f"Status {status_data}")                
+                self.last_packet = this_last_packet      
             data_packets = status_data[1].split('\n')
-            #print (f"Data packets: {data_packets}")
             for data_packet in data_packets:
                 # if data_packet is empty then skip completely - without any notice as most likely due to \n at end
                 if data_packet == '':
                     continue
                 
                 if len(data_packet) < 5:    # If data too short (perhaps empty line) - in reality this is much longer as includes date
-                    print ("Skipping empty packet")
-                    print (f"This packet {data_packet}")
-                    print (f"Data packets {data_packets}")
+                    logger.warning("Skipping empty packet")
+                    logger.warning (f"This packet {data_packet}")
+                    logger.warning (f"Data packets {data_packets}")
                     continue
                 self.handle_incoming_data(data_packet)
         else:
-            print (f"Unrecognised response {response}")
+            logger.warning (f"Unrecognised response {response}")
         self.update_in_progress = False
 
 
     def poll_server(self):
         # Only allow one check_responses thread to run at a time
         if self.update_in_progress == True:
-            #print ("Still running - skipping")
             return
         
         worker = Worker(self.thread_getupdate)
@@ -261,7 +249,7 @@ class ApiHandler(QObject):
         # strip date off (don't need except for the log)
         id_date_data = response.split(',',3)
         if (len(id_date_data) < 4):
-            print (f"Invalid entry - skipping {response}")
+            logger.warning(f"Invalid entry - skipping {response}")
             return
         vlcb_entry = self.vlcb.parse_input(id_date_data[3])
         # If not a valid entry then ignore
@@ -320,7 +308,7 @@ class ApiHandler(QObject):
                 data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
                 # If we don't already have this node then didn't see a PNN response - so likely error
                 if not device_manager.node_exists(data_entry['NN']):
-                    print (f"NUMV response from Unknown node {data_entry['NN']}")
+                    logger.warning (f"NUMV response from Unknown node {data_entry['NN']}")
                     return
                 # Update node with evnum value
                 device_manager.set_numev(data_entry['NN'], data_entry['NumEvents'])
@@ -328,7 +316,7 @@ class ApiHandler(QObject):
                 data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
                 # If we don't already have this node then didn't see a PNN response - so likely error
                 if not device_manager.node_exists(data_entry['NN']):
-                    print (f"EVNLF response from Unknown node {data_entry['NN']}")
+                    logger.warning (f"EVNLF response from Unknown node {data_entry['NN']}")
                     return
                 # Update node with evnum value
                 device_manager.set_evspc(data_entry['NN'], data_entry['EVSPC'])
@@ -348,7 +336,6 @@ class ApiHandler(QObject):
             # Indicates allocation of loco - need to verify this is expected
             case 'PLOC':
                 data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
-                #print (f"PLOC received {data_entry}")
                 # Session,AddrHigh_AddrLow,SpeedDir,Fn1,Fn2,Fn3'
                 loco_id = data_entry['AddrHigh_AddrLow'] & 0x3FFF
                 event_bus.publish(LocoEvent('PLOC', {

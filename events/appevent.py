@@ -1,7 +1,9 @@
 # Tracks events for app - open, close, update windows
 # Used to update api objects from events
-
+import logging
 from .event import Event
+
+logger = logging.getLogger(__name__)
 
 class AppEvent (Event):
     def __init__(self, data_dict=None):

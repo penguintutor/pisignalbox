@@ -4,18 +4,19 @@
 
 from PySide6.QtCore import Qt, QTimer, QObject, Signal, Slot
 import json
+import logging
 from events import Event, DeviceEvent, AppEvent, GuiEvent, LocoEvent, TimerEvent, VarEvent, LogEvent
+
+logger = logging.getLogger(__name__)
 
 # The serialize_event function must be defined before it is used.
 def serialize_event(obj):
     if isinstance(obj, Event):
         return obj.__dict__()
-    print ("Trying to serialize from EventBus")
     raise TypeError(f'Object of type {obj.__class__.__name__} is not JSON serializable')
 
 def deserialize_event(data):
     return EventBus.event_map[data["event_type"]] (data)
-
 
 
 class EventBus(QObject):
@@ -88,7 +89,8 @@ class EventBus(QObject):
     def publish(self, event):
         # Apply automation rules by consuming the input
         self.consume(event)
-        print (f"Broadcasting event: {event}")
+        # Warning: Enabling debug will show all messages sent
+        logger.debug (f"Broadcasting event: {event}")
         # broadcast the signal
         self.broadcast(event)
         
@@ -102,10 +104,10 @@ class EventBus(QObject):
         if signal_name:
             # Use getattr(self, ...) to grab the BOUND signal, which has .emit()
             target_signal = getattr(self, signal_name)
-            print (f"Event Bus: Sending {signal_name}")
+            logger.debug (f"Event Bus: Sending {signal_name}")
             target_signal.emit(event)
         else:
-            print(f"Event Bus Warning: Unhandled event type published: {type(event)}")
+            logger.warning(f"Event Bus Warning: Unhandled event type published: {type(event)}")
         
     # Consume is used to handle incoming events
     # It does not publish a new event
@@ -125,7 +127,7 @@ class EventBus(QObject):
         self.automation_count += 1
         # Have we reached maximum
         if self.automation_count >= self.max_automation_count:
-            print ("*** Warning automation events exceeded ***")
+            logger.error ("*** Warning automation events exceeded ***")
             # Todo call a gui event to notify user
             self.automation_enabled = False
             # Allowed to continue for this event, but then stop
@@ -167,7 +169,7 @@ class EventBus(QObject):
 
         except Exception as e:
             # Could be new file
-            print (f"File not found {self.rules_filename} - {e}")
+            logger.warning (f"File not found {self.rules_filename} - {e}")
         
 
     def save_rules (self):
@@ -180,10 +182,10 @@ class EventBus(QObject):
 
         except Exception as e:
             # Could be new file
-            print (f"Save failed {self.rules_filename} - {e}")
+            logger.info (f"Save failed {self.rules_filename} - {e}")
 
     def __del__(self):
-        print("⚠️ EventBus WAS DESTROYED")
+        logger.info("⚠️ EventBus WAS DESTROYED")
 
 
 # Access the singleton EventBus

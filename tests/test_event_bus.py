@@ -1,6 +1,7 @@
 # test_eventbus.py
 import pytest
 import os
+import logging
 from pathlib import Path
 from unittest.mock import patch
 
@@ -190,7 +191,7 @@ def test_rule_matching_logic(bus, qtbot):
     assert gui_spy.count() == 1
 
 
-def test_automation_limit(bus, qtbot):
+def test_automation_limit(bus, qtbot, caplog):
     test_limit = 5
     bus.max_automation_count = test_limit
 
@@ -210,7 +211,9 @@ def test_automation_limit(bus, qtbot):
         with patch('builtins.print') as mock_print:
             bus.consume(recursive_trigger1)
             # Check that the warning was printed
-            mock_print.assert_called_with("*** Warning automation events exceeded ***")
+            expected_log = ("core.eventbus", logging.ERROR, "*** Warning automation events exceeded ***")
+            assert expected_log in caplog.record_tuples
+            #mock_print.assert_called_with("*** Warning automation events exceeded ***")
 
         # Check assertions
         assert not bus.automation_enabled, "Automation should be disabled"
@@ -248,7 +251,7 @@ def test_automation_limit(bus, qtbot):
 #         serialize_event(NotAnEvent())
 
 
-def test_save_and_load_rules(bus, test_filename, qtbot):
+def test_save_and_load_rules(bus, test_filename, qtbot, caplog):
     # Add rules
     rule1_event = DeviceEvent({"title": "Test dev event", 'node_id': 100, 'event_id': 10})
     rule1_action = GuiEvent({"title": "Test Gui event"})
@@ -262,4 +265,6 @@ def test_save_and_load_rules(bus, test_filename, qtbot):
     # as it just sets the filename
     with patch('builtins.print') as mock_print:
         bus.load_rules(test_filename)
-        mock_print.assert_called_with(f"File not found {test_filename} - [Errno 2] No such file or directory: '{test_filename}'")
+        #mock_print.assert_called_with(f"File not found {test_filename} - [Errno 2] No such file or directory: '{test_filename}'")
+        expected_log = ("core.eventbus", logging.WARNING, f"File not found {test_filename} - [Errno 2] No such file or directory: '{test_filename}'")
+        assert expected_log in caplog.record_tuples
