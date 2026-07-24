@@ -32,6 +32,9 @@ To setup using virtual environment:
     pip install flask.wtf
     pip install pyserial
 
+Then clone this repository onto your computer. You can use the GitHub download or to be able to get the latest update then use:
+
+    git clone https://github.com/penguintutor/pisignalbox.git ~/pisignalbox
 
 # Upgrade July 2026
 
@@ -71,6 +74,10 @@ Start the server using
 After starting the server then from another terminal session run 
 
     python3 app.py 
+
+Alternatively to run it all together run 
+
+    ./pisignalbox
 
 
 # Tests
