@@ -14,12 +14,11 @@ For more details about VLCB / CBUS see: [PenguinTutor MERG page](https://www.pen
 The GUI requires PySide6.
 
 To install on Raspberry Pi OS Trixie (or later)
-sudo apt install python3-pyside6.qtgui python3-pyside6.qtwidgets python3-pyside6.qtuitools  
 
-First update the Raspberry Pi using:
+Install PySide6 using:
 
     sudo apt update
-    sudo apt install python3-venv python3-pip
+    sudo apt install python3-pyside6.qtgui python3-pyside6.qtwidgets python3-pyside6.qtuitools  
 
 
 To setup using virtual environment:
@@ -27,6 +26,7 @@ To setup using virtual environment:
     mkdir ~/venv
     python3 -m venv ~/venv/pyvlcb --system-site-packages
     source ~/venv/pyvlcb/bin/activate
+    pip install pyvlcb
     pip install strip_tags
     pip install flask
     pip install flask.wtf
