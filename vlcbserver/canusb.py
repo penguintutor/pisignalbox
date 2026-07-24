@@ -43,8 +43,7 @@ class CanUSB4 ():
 
     # Data can either be string or bytestring
     def send_data(self, data):
-        if self.debug:
-            print (f"Sending {data}")
+        logger.debug(f"Sending {data}")
         self.ser.write(data.encode())
         
     
@@ -88,8 +87,7 @@ class CanUSB4 ():
                     continue
                 
                 self.current_buffer += this_char
-                if self.debug:
-                    print(f"Read {self.current_buffer}")
+                logger.debug(f"Read {self.current_buffer}")
                     
                 received_data.append(self.current_buffer)
                 received_data[0] += 1

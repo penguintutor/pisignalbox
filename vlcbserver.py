@@ -43,8 +43,7 @@ def mainThread(debug=False):
         try:
             usb.connect()
         except DeviceConnectionError as e:
-            if debug:
-                print (f"Error connecting to {port} - {e}")
+            logging.error (f"Error connecting to {port} - {e}")
             # At the moment stop - perhaps update in future
             break
 
@@ -114,8 +113,7 @@ def _process_inbound_data(in_data, debug):
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     for this_input in in_data[1:]:
         vlcbserver.data.append(f"{timestamp},i,{this_input}")
-        if debug:
-            print(f"Received {this_input}")
+        logging.debug(f"Received {this_input}")
             
 
 if __name__ == "__main__":
