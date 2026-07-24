@@ -88,7 +88,7 @@ class EventBus(QObject):
     def publish(self, event):
         # Apply automation rules by consuming the input
         self.consume(event)
-        #print (f"Broadcasting event: {event}")
+        print (f"Broadcasting event: {event}")
         # broadcast the signal
         self.broadcast(event)
         
@@ -102,6 +102,7 @@ class EventBus(QObject):
         if signal_name:
             # Use getattr(self, ...) to grab the BOUND signal, which has .emit()
             target_signal = getattr(self, signal_name)
+            print (f"Event Bus: Sending {signal_name}")
             target_signal.emit(event)
         else:
             print(f"Event Bus Warning: Unhandled event type published: {type(event)}")

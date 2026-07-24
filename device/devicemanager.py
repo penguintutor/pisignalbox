@@ -43,7 +43,17 @@ class DeviceManager(QObject):
             node.name for node in self.nodes.values() 
             if null_events or node.numev > 0
         )
+        return node_list
 
+    def get_nodes_ids(self, null_events=True):
+        """Get list of nodes by ids
+        null_events determines whether to check if the nodes must have events"""
+        node_list = []
+
+        node_list.extend(
+            node.node_id for node in self.nodes.values() 
+            if null_events or node.numev > 0
+        )
         return node_list
     
     # From name to key for DeviceEvents

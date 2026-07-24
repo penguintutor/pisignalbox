@@ -1,7 +1,7 @@
 # UI for the console window - vlcb tab
 from pyvlcb import VLCB
 from pyvlcb import VLCBOpcode
-
+from device import device_manager
 
 def setup_ui (self):
     # Set column width for first column to ensure data fits
@@ -43,7 +43,7 @@ def command_changed (self):
         num_args = 1
         # Add nodes to arg1
         self.ui.arg1Select.clear()
-        for node_id in sorted(self.mainwindow.nodes.keys()):
+        for node_id in sorted(device_manager.get_nodes_ids()):
             self.ui.arg1Select.addItem(str(node_id))
     # Command that takes node_id, EV ID and State (on/off)
     elif (command == "Accessory Command"):

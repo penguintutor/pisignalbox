@@ -279,7 +279,7 @@ class AutomationStep:
     def _run_wait_step (self):
         """ Within run() this is a wait"""
         # First look through the data see if there are any values to be replaced with variable values
-        run_data = self.parse_var()
+        # run_data = self.parse_var()
         # Now use run_data - which has any variables parsed
         # default 1 second
         delay_time = self.data.get("time", 1)
@@ -333,7 +333,7 @@ class AutomationStep:
                 'level':3, # None critical error
                 'sequence': self.sequence_name, 
                 'step': f" {self.step_name}",
-                'description': f"Loco error - possibly disconnected {loco_id}"
+                'description': f"Loco error - possibly disconnected {loco_id} - {e}"
                 }
             ))
 
@@ -378,7 +378,7 @@ class AutomationStep:
                     'level':3, # None critical error
                     'sequence': self.sequence_name, 
                     'step': f" {self.step_name}",
-                    'description': f"Loco error - Function request failed - unknown current state"
+                    'description': "Loco error - Function request failed - unknown current state"
                     }
                 ))
                 return
@@ -504,7 +504,7 @@ class AutomationStep:
                 'level':6, # Info
                 'sequence': self.sequence_name, 
                 'step': f" {self.step_name}",
-                'description': f"All Stop"
+                'description': "All Stop"
                 }
             ))
         else:
@@ -601,7 +601,7 @@ class AutomationStep:
                 return (float(value1) <= float(value2))
             else:
                 return False
-        except Exception as e:
+        except Exception:
             return False
         
     def get_type (self):
@@ -617,10 +617,7 @@ class AutomationStep:
 
     def to_dict(self) -> dict:
         """Convert the object to a dictionary, excluding 'appvar' from data."""
-        #print (f"\nReturning AutomationStep as dict {self.data}")
-        #filtered_data = {k: v for k, v in self.data.items() if k != 'appvars'}
-        #print ("Converting Step to Dict")
-        #print (f"Filtered data {filtered_data}")
+        # This is the dict format:
         # return_dict = {
         #     "type": self.step_type,
         #     "name": self.step_name,

@@ -78,6 +78,9 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin):
     def __init__(self, dirs, files, settings=None):
         super().__init__()
 
+        # Trigger initial message to stay app starting
+        event_bus.publish(AppEvent({"action":"status", "state":"PiSignalBox Gui application starting"}))
+
         # Loader used to load the ui files
         loader = QUiLoader()
         loader.registerCustomWidget(TrackViewDisplay)
