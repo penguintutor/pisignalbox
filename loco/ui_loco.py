@@ -312,7 +312,7 @@ class UILocoMixin:
         if msg == False:
             msg = "STOP!"
         # Need to check we have a valid session (although issue stop regardless of speed)
-        if (self.control_loco.stop(msg)):
+        if (self.control_loco.stop()):
             self.api.start_request(self.api.vlcb.loco_speeddir(self.control_loco.get_session(), self.control_loco.get_speeddir()))
         self.ui.locoStatusLabel.setText (msg)
         self.update_lcd()
