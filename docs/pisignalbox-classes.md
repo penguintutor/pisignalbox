@@ -95,41 +95,84 @@ application to listen to. These are used to broadcast thread based
 messages.
 
 
-## layout package
+## layout - directory
 
-### UILayoutMixin - Mixin pattern class with UI parts from MainWindow (Layout related)
+### Layout - layout.py - Single Layout
 
-Includes actions related to the Layout and the main layout area of the screen.
+Holds a layout, which is used to manage active elements. 
 
+Holds the track_view_nodes which are added and managed through the 
+Layout class
+
+### LayoutDialog - layoutdialog.py
+
+Used to select a layout and create a new layout.
+
+### Layouts - layouts.py
+
+Used to list and manage the layouts. 
+Currently limited in use as don't allow editing layout unless actively 
+loaded. Could be expanded in future if required.
+
+
+## trackview - directory
+
+Track view adds graphical / app related elements, such as points, 
+labels etc.
 Creates dialogs based on the following ui files
 
-* editguidialog.ui
-* editglabeldialog.ui
-* editgbuttondialog.ui
+* AddDeviceDialog uses editguidialog.ui
+* AddLabelDialog uses editglabeldialog.ui
+* AddButtonDialog uses editgbuttondialog.ui
 
-### Layout / Layouts
-
-* Layout
-* Layouts (multiple Layout objects)
-
-### Dialogs for adding layout objects
-
-* AddButtonDialog
-* AddDeviceDialog
-* AddLabelDialog
-
-### GUI Objects
+Includes the following object types
 
 * TrackViewNode (Groups TrackViewNodes into a TrackViewNode)
 * TrackViewNode (Parent class for following classes)
-* LayoutButton
-* LayoutDialog
-* LayoutDisplay
-* LayoutLabel
+* TrackViewDisplay (used to hold and display the objects)
+* TrackViewButton
+* TrackViewLabel
+
+### UITrackViewMixin - Mixin pattern class with UI parts from MainWindow (Layout related)
+
+Includes actions related to the Layout and the main layout area of the 
+screen.
+
+### track_view_manager - trackviewmanager.py
+
+Holds the track view elements
+
+### TrackViewDisplay - trackviewdisplay.py - Manages display of track view objects
+
+Handles the layout of the track view objects within the screen. 
+
+### TrackViewNode - trackviewnode.py
+
+A node is a high level object, such as a point or a signal. This will
+then have child nodes (elements) such as labels and buttons. 
+
+### TrackViewElement - trackviewelement.py - Abstract element class
+
+This is an abstract class used for the child objects such as
+TrackViewButtons and TrackViewLabels
+
+### TrackViewLabel - trackviewlabel.py
+
+A label is usually a text string used to identify a particular node.
+For example one may be called "point 1". When clicked these will 
+typically toggle the status through the different node states.
+
+### TrackViewButton - trackviewbutton.py
+
+Typically a clickable image. Typically used to indicate the position 
+of a point, or a signal etc. It has it's own state and can change
+it's appearance accordingly (eg. red / green). When clicked it will 
+typically set that element to the active state.
 
 
 
-## loco package
+
+## loco - directory
 
 ### UILocoMixin - Mixin pattern class with UI parts from MainWindow (Loco related)
 

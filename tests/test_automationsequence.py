@@ -14,36 +14,8 @@ from automate.automationrule import AutomationRule
 from core import event_bus
 
 
-class MockWindow:
-    """Stub window providing variable access for automation sequences."""
-    def get_variable(self, var_name):
-        if hasattr(self, 'vars'):
-            return self.vars.get_variable(var_name)
-        return 0
 
-    def set_variable(self, var_name, var_value):
-        if hasattr(self, 'vars'):
-            return self.vars.set_variable(var_name, var_value)
-        return var_value
-        
-    def inc_variable(self, var_name, inc_value=1):
-        if hasattr(self, 'vars'):
-            return self.vars.inc_variable(var_name, inc_value)
-        return inc_value
-
-
-@pytest.fixture
-def mock_window():
-    """
-    Fixture that provides a fresh MockWindow with AppVar initialized.
-    Request this in any test function by adding 'mock_window' as an argument.
-    """
-    window = MockWindow()
-    window.vars = AppVar()
-    return window
-
-
-def test_sequence_1(mock_window, qtbot):
+def test_sequence_1(qtbot):
     # qtbot fixture automatically handles the QApplication lifecycle
     
     dev_spy = QSignalSpy(event_bus.device_event_signal)
@@ -65,7 +37,7 @@ def test_sequence_1(mock_window, qtbot):
     assert dev_spy.at(0)[0] == sequence_1.steps[0].rule.event
 
 
-def test_sequence_vars(mock_window, qtbot):
+def test_sequence_vars(qtbot):
     dev_spy = QSignalSpy(event_bus.device_event_signal)
     var_spy = QSignalSpy(event_bus.var_event_signal)
     
@@ -91,7 +63,7 @@ def test_sequence_vars(mock_window, qtbot):
     assert str(dev_spy.at(1)[0]) == "VLCB 301 1 1"
 
 
-def test_sequence_loop(mock_window, qtbot):
+def test_sequence_loop(qtbot):
     dev_spy = QSignalSpy(event_bus.device_event_signal)
     var_spy = QSignalSpy(event_bus.var_event_signal)
     
@@ -135,7 +107,7 @@ def test_sequence_loop(mock_window, qtbot):
     assert str(dev_spy.at(1)[0]) == "VLCB 301 1 0"
 
             
-def test_sequence_wait(mock_window, qtbot):
+def test_sequence_wait(qtbot):
     dev_spy = QSignalSpy(event_bus.device_event_signal)
     var_spy = QSignalSpy(event_bus.var_event_signal)
     
@@ -163,7 +135,7 @@ def test_sequence_wait(mock_window, qtbot):
     assert str(dev_spy.at(1)[0]) == "VLCB 301 1 1"
 
 
-def test_sequence_save(mock_window, qtbot):
+def test_sequence_save(qtbot):
     steps = [
         {"type": "App", "name": "Create test var", "data": 
             {"command": "Set Variable", "variable": "test", "value": 0}},
@@ -179,7 +151,7 @@ def test_sequence_save(mock_window, qtbot):
     
     sequence_1 = AutomationSequence("Test save seq", steps, {})
     json_data = sequence_1.to_json()
-    #new_sequence = AutomationSequence.from_json(json_data, mock_window, check_stop_func=lambda: False)
+    #new_sequence = AutomationSequence.from_json(json_data, check_stop_func=lambda: False)
     new_sequence = AutomationSequence.from_json(json_data, check_stop_func=lambda: False)
     
     assert sequence_1.title == "Test save seq"
