@@ -98,7 +98,7 @@ class ConsoleWindowUI(QMainWindow):
             self.activateWindow()
         
     def log_update (self, log_event):
-        if log_event.get_log_type() == "Automation":
+        if log_event.get_log_source() == "Automation":
             ui_auto.add_log(self, log_event)
             ui_auto.update_log(self)
         #Future other logs could be handled if desired

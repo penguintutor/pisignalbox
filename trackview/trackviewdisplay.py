@@ -1,10 +1,11 @@
-# Layout display handles the layout area of the screen - showing the layout image
+# Track View Display handles the layout area of the screen - showing the layout image
 # and then other buttons etc.
 # This is a subclass of a QLabel class (which is used to house the image)
 
-# The components that are placed on the layoutdisplay are based on track_view_nodes - which in turn are layoutobjects
+# The components that are placed on the layoutdisplay are based on track_view_nodes
 
-# This is ui.layoutDisplayLabel
+# This is ui.layoutDisplayLabel - within the UI file
+# Note that the ui file uses layout rather than trackview
 
 import sys, os
 import json

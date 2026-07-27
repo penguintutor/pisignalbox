@@ -63,7 +63,7 @@ class AutomationStep:
                     # Should always have a global variable 
                     print ("Automation Step - Deprecated Vars are now mandatory")
                     event_bus.broadcast(LogEvent(
-                        {'event_type':"Automation",
+                        {'source':"Automation",
                         'level':3, # None critical error
                         'sequence': self.sequence_name, 
                         'step': f" {self.step_name}",
@@ -116,7 +116,7 @@ class AutomationStep:
             # Future: remove if not required anymore
             print ("Automation Step - Deprecated - should always be a global_app_vars")
             event_bus.broadcast(LogEvent(
-                {'event_type':"Automation",
+                {'source':"Automation",
                 'level':3, # None critical error
                 'sequence': self.sequence_name, 
                 'step': f" {self.step_name}",
@@ -131,7 +131,7 @@ class AutomationStep:
             var_value = run_data.get("value", "")
             global_app_vars.set_variable(var_name, var_value)
             event_bus.broadcast(LogEvent(
-                {'event_type':"Automation",
+                {'source':"Automation",
                 'level':7, # Debug
                 'sequence': self.sequence_name, 
                 'step': f" {self.step_name}",
@@ -148,7 +148,7 @@ class AutomationStep:
             blocking = run_data.get("blocking", "True")
 
             event_bus.broadcast(LogEvent(
-                {'event_type':"Automation",
+                {'source':"Automation",
                 'level':6, # Info
                 'sequence': self.sequence_name, 
                 'step': f" {self.step_name}",
@@ -164,7 +164,7 @@ class AutomationStep:
                     if self.check_stop and self.check_stop():
                         #print ("User notification interrupted by stop signal")
                         event_bus.broadcast(LogEvent(
-                            {'event_type':"Automation",
+                            {'source':"Automation",
                             'level':5, # Notice
                             'sequence': self.sequence_name, 
                             'step': f" {self.step_name}",
@@ -180,7 +180,7 @@ class AutomationStep:
             # Need to check every 0.1 sec for stop signal
             total_delay = int(run_data.get("delay", 1))
             event_bus.broadcast(LogEvent(
-                {'event_type':"Automation",
+                {'source':"Automation",
                 'level':6, # Info
                 'sequence': self.sequence_name, 
                 'step': f" {self.step_name}",
@@ -192,7 +192,7 @@ class AutomationStep:
                 if self.check_stop and self.check_stop():
                     #print ("Wait interrupted by stop signal")
                     event_bus.broadcast(LogEvent(
-                            {'event_type':"Automation",
+                            {'source':"Automation",
                             'level':5, # Notice
                             'sequence': self.sequence_name, 
                             'step': f" {self.step_name}",
@@ -205,7 +205,7 @@ class AutomationStep:
         else:
             #print (f"Unknown App command: {app_command}")
             event_bus.broadcast(LogEvent(
-                {'event_type':"Automation",
+                {'source':"Automation",
                 'level':4, # Warning
                 'sequence': self.sequence_name, 
                 'step': f" {self.step_name}",
@@ -220,7 +220,7 @@ class AutomationStep:
         run_data = self.parse_var()
         # Now use run_data - which has any variables parsed
         event_bus.broadcast(LogEvent(
-            {'event_type':"Automation",
+            {'source':"Automation",
             'level':6, # Info
             'sequence': self.sequence_name, 
             'step': f" {self.step_name}",
@@ -245,7 +245,7 @@ class AutomationStep:
         # check we have an appvar
         if global_app_vars == None:
             event_bus.broadcast(LogEvent(
-                {'event_type':"Automation",
+                {'source':"Automation",
                 'level':3, # None critical error
                 'sequence': self.sequence_name, 
                 'step': f" {self.step_name}",
@@ -255,7 +255,7 @@ class AutomationStep:
             return
         if run_data["action"] == "set":
             event_bus.broadcast(LogEvent(
-                {'event_type':"Automation",
+                {'source':"Automation",
                 'level':6, # Info
                 'sequence': self.sequence_name, 
                 'step': f" {self.step_name}",
@@ -266,7 +266,7 @@ class AutomationStep:
         elif run_data["action"] == "inc":
             # value is optional for inc - default to 1
             event_bus.broadcast(LogEvent(
-                {'event_type':"Automation",
+                {'source':"Automation",
                 'level':6, # Info
                 'sequence': self.sequence_name, 
                 'step': f" {self.step_name}",
@@ -286,7 +286,7 @@ class AutomationStep:
         # If this is a basic wait / delay (which is default) then sleep and continue
         waittype = self.data['data'].get("waittype", "delay")
         event_bus.broadcast(LogEvent(
-                {'event_type':"Automation",
+                {'source':"Automation",
                 'level':6, # Info
                 'sequence': self.sequence_name, 
                 'step': f" {self.step_name}",
@@ -329,13 +329,15 @@ class AutomationStep:
         except Exception as e:
             #print ("Loco error - possibly disconnected")
             event_bus.broadcast(LogEvent(
-                {'event_type':"Automation",
+                {'source':"Automation",
                 'level':3, # None critical error
                 'sequence': self.sequence_name, 
                 'step': f" {self.step_name}",
                 'description': f"Loco error - possibly disconnected {loco_id} - {e}"
                 }
             ))
+            # If no loco then can't run this step so return
+            return
 
         if loco_command == "Function":
             #print ("Loco function - todo testing")
@@ -346,7 +348,7 @@ class AutomationStep:
             # If not function number then cannot proceed
             if func_index == "":
                 event_bus.broadcast(LogEvent(
-                    {'event_type':"Automation",
+                    {'source':"Automation",
                     'level':3, # None critical error
                     'sequence': self.sequence_name, 
                     'step': f" {self.step_name}",
@@ -356,7 +358,7 @@ class AutomationStep:
                 return
             
             event_bus.broadcast(LogEvent(
-                {'event_type':"Automation",
+                {'source':"Automation",
                 'level':6, # Info
                 'sequence': self.sequence_name, 
                 'step': f" {self.step_name}",
@@ -374,7 +376,7 @@ class AutomationStep:
             # If don't get current state then can't work out new signal to send
             if new_byte1_2 == None:
                 event_bus.broadcast(LogEvent(
-                    {'event_type':"Automation",
+                    {'source':"Automation",
                     'level':3, # None critical error
                     'sequence': self.sequence_name, 
                     'step': f" {self.step_name}",
@@ -392,7 +394,7 @@ class AutomationStep:
                 }))
             # Debug message with actual data sent
             event_bus.broadcast(LogEvent(
-                {'event_type':"Automation",
+                {'source':"Automation",
                 'level':7, # Debug
                 'sequence': self.sequence_name, 
                 'step': f" {self.step_name}",
@@ -412,7 +414,7 @@ class AutomationStep:
                 }))
             # Debug message with actual data sent
             event_bus.broadcast(LogEvent(
-                {'event_type':"Automation",
+                {'source':"Automation",
                 'level':7, # Debug
                 'sequence': self.sequence_name, 
                 'step': f" {self.step_name}",
@@ -438,7 +440,7 @@ class AutomationStep:
                 }))
             # Debug message with actual data sent
             event_bus.broadcast(LogEvent(
-                {'event_type':"Automation",
+                {'source':"Automation",
                 'level':7, # Debug
                 'sequence': self.sequence_name, 
                 'step': f" {self.step_name}",
@@ -459,7 +461,7 @@ class AutomationStep:
                 'direction': direction_value
                 }))
             event_bus.broadcast(LogEvent(
-                {'event_type':"Automation",
+                {'source':"Automation",
                 'level':6, # Info
                 'sequence': self.sequence_name, 
                 'step': f" {self.step_name}",
@@ -473,7 +475,7 @@ class AutomationStep:
             # except Exception as e:
             #     #print ("Loco error - possibly disconnected")
             #     event_bus.broadcast(LogEvent(
-            #         {'event_type':"Automation",
+            #         {'source':"Automation",
             #         'level':3, # None critical error
             #         'sequence': self.sequence_name, 
             #         'step': f" {self.step_name}",
@@ -500,7 +502,7 @@ class AutomationStep:
                 }
             ))
             event_bus.broadcast(LogEvent(
-                {'event_type':"Automation",
+                {'source':"Automation",
                 'level':6, # Info
                 'sequence': self.sequence_name, 
                 'step': f" {self.step_name}",
@@ -512,7 +514,7 @@ class AutomationStep:
             # Still log to automation log events
             print (f"Unknown Loco command: {loco_command}")
             event_bus.broadcast(LogEvent(
-                {'event_type':"Automation",
+                {'source':"Automation",
                 'level':3, # None critical error
                 'sequence': self.sequence_name, 
                 'step': f" {self.step_name}",

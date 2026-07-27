@@ -30,9 +30,18 @@ class LogEvent (Event):
         # 0 to 7 (see above)
         self.log_level = self.data['level']
         self.data['event_type'] = "Log"
+        if "source" in self.data:
+            self.source = self.data['source']
+        else:
+            self.source = "default"
 
     def get_log_type(self):
         return self.log_type
+
+    # Source of the log entry - eg. Automation
+    # If not specified then assumed default
+    def get_log_source(self):
+        return self.source
         
     def type(self):
         return "Log"

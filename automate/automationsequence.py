@@ -32,7 +32,7 @@ class AutomationSequence (QRunnable):
         if self.check_stop is None:
             print ("No stop function provided")
             event_bus.broadcast(LogEvent(
-                {'event_type':"Automation",
+                {'source':"Automation",
                 'level':3, # Non critical error
                 'sequence': self.title,
                 'step': "00 - Init",
@@ -88,7 +88,7 @@ class AutomationSequence (QRunnable):
             log_description += ", locos: " + ", ".join(loco_strings)
 
         event_bus.broadcast(LogEvent(
-            {'event_type':"Automation",
+            {'source':"Automation",
              'level':5, # Normal major event
              'sequence': self.title,
              'step': "00 - Start",
@@ -123,7 +123,7 @@ class AutomationSequence (QRunnable):
             # Check if we need to stop
             if self.check_stop():
                 event_bus.broadcast(LogEvent(
-                    {'event_type':"Automation",
+                    {'source':"Automation",
                     'level':5, # Normal major event
                     'sequence': self.title,
                     'step': f"{position+1:02d} - Stop",
@@ -138,7 +138,7 @@ class AutomationSequence (QRunnable):
             # If it's a label then ignore
             if self.steps[position].step_type == "Label":
                 event_bus.broadcast(LogEvent(
-                    {'event_type':"Automation",
+                    {'source':"Automation",
                     'level':6, # Information
                     'sequence': self.title,
                     'step': f"{position+1:02d} - Label",
@@ -155,7 +155,7 @@ class AutomationSequence (QRunnable):
                     if label != None and label in self.labels:
                         # Jump to label
                         event_bus.broadcast(LogEvent(
-                            {'event_type':"Automation",
+                            {'source':"Automation",
                             'level':5, # Normal major event
                             'sequence': self.title,
                             'step': f"{position+1:02d} - Jump",
@@ -168,7 +168,7 @@ class AutomationSequence (QRunnable):
                         print (f"Invalid label {label} - from {self.labels}")
                         # otherwise jump is ignored (eg. if loop then until no longer met)
                         event_bus.broadcast(LogEvent(
-                            {'event_type':"Automation",
+                            {'source':"Automation",
                             'level':4,  # Warning
                             'sequence': self.title,
                             'step': f"{position:02d} - Invalid Jump",
@@ -180,7 +180,7 @@ class AutomationSequence (QRunnable):
                 # then continue
                 else: 
                     event_bus.broadcast(LogEvent(
-                        {'event_type':"Automation",
+                        {'source':"Automation",
                         'level':6, # Info
                         'sequence': self.title,
                         'step': f"{position+1:02d} - Jump",
@@ -190,7 +190,7 @@ class AutomationSequence (QRunnable):
             else:
                 # Otherwise run it  
                 event_bus.broadcast(LogEvent(
-                    {'event_type':"Automation",
+                    {'source':"Automation",
                     'level':6, # Normal routine
                     'sequence': self.title,
                     'step': f"{position+1:02d} - {self.steps[position].get_type()}",
@@ -203,7 +203,7 @@ class AutomationSequence (QRunnable):
         # While loop ended
         # Emit a signal to indicate the thread has finished
         event_bus.broadcast(LogEvent(
-            {'event_type':"Automation",
+            {'source':"Automation",
             'level':5, # Normal major event
             'sequence': self.title,
             'step': f"{position+1:02d} - End",
@@ -249,7 +249,6 @@ class AutomationSequence (QRunnable):
     # from json also needs mainwindow - pass as optional argument
     @classmethod
     def from_json(cls, json_str: str, check_stop_func=None):
-        #print (f"Loading AutomationSequence from JSON")
         """Deserialize JSON string to AutomationSequence."""
         d = json.loads(json_str)
         return cls.from_dict(d, check_stop_func=check_stop_func)

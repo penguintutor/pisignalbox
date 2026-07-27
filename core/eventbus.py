@@ -107,6 +107,7 @@ class EventBus(QObject):
             logger.debug (f"Event Bus: Sending {signal_name}")
             target_signal.emit(event)
         else:
+            print(f"Event Bus Warning: Unhandled event type published: {type(event)}")
             logger.warning(f"Event Bus Warning: Unhandled event type published: {type(event)}")
         
     # Consume is used to handle incoming events
