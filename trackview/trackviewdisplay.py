@@ -147,7 +147,7 @@ class TrackViewDisplay(QLabel):
             self.selected = self.nearest_to_click(click_pos)
             if self.selected == None:
                 return
-            self.selected.controlButtonClick()
+            self.selected.control_button_click()
         elif event.button() == Qt.MouseButton.RightButton:
             # Future - add handling of right button here
             pass

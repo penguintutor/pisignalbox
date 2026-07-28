@@ -9,7 +9,7 @@ from pathlib import Path
 from PySide6.QtWidgets import QApplication, QDialog, QFileDialog, QMessageBox
 from PySide6.QtCore import Qt, QPoint
 from PySide6.QtGui import QFont
-from core import DATA_DIR, RESOURCES_DIR
+from core import DATA_DIR, RESOURCES_DIR 
 from mainui.mainwindow import MainWindowUI
 from loco.locowindow import LocoWindow
 from loco.locodialog import LocoDialog

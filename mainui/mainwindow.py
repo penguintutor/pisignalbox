@@ -34,6 +34,8 @@ from trackview.addlabeldialog import AddLabelDialog
 from trackview.addbuttondialog import AddButtonDialog
 from loco.ui_loco import UILocoMixin
 from automate.ui_automate import UIAutomateMixin
+from automateview import AutomateTableModel
+from automateview.ui_automateview import UIAutomateViewMixin
 from .systemexplorer import SystemExplorer
 
 # Setup file paths
@@ -47,7 +49,7 @@ read_rate = 200
 
 logger = logging.getLogger(__name__)
 
-class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin):
+class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, UIAutomateViewMixin):
     
     steal_dialog_signal = Signal(int)
     # Handle loco selection
@@ -263,12 +265,23 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin):
         # Load the system_explorer for showing Nodes (devices & layout objects)
         self.system_explorer = SystemExplorer (self)
 
+        ## Manage Panel tabs (display automation as tab alongside track view)
+        self.setup_automate_tabs()
+
 
         # Status of the http connection
         self.status = "Not connected"
                           
         # Initial discover request
         self.api.discover()
+
+        # Start tab counter at 1 as always have track view tab
+        self.tab_counter = 1
+        # Todo - this is to test the tab creation and destruction
+        # Need to implement this
+        self.create_test_tab()
+        self.create_test_tab()
+        self.create_test_tab()
 
 
     # Loads and sets up the railway (Layout) and loading locos etc.
@@ -597,4 +610,44 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin):
                 print(f"Closing secondary window: {widget}")
                 widget.close()
 
+    def create_test_tab(self):
+        """Slot to test our UIAutomateViewMixin functionality."""
+        
+        # 1. Generate a unique sequence ID (this would come from your AutomationSequence)
+        sequence_id = f"seq_run_{self.tab_counter}_{int(time.time())}"
+        
+        # 2. Create some demo data that looks like an automation tracking table
+        data = [
+            ["Step", "Action", "Status", "Timestamp"],
+            ["1", "Initialize CAN bus", "Success", "0.00s"],
+            ["2", "Check sensors", "Success", "0.45s"],
+            ["3", "Move to start position", "Running...", "1.20s"],
+            ["4", "Execute sequence", "Pending", "-"],
+            ["5", "Log telemetry", "Pending", "-"]
+        ]
+        model = AutomateTableModel(data)
+        
+        # 3. Define the UI text
+        title = f"Run #{self.tab_counter}"
+        description = f"Tracking Automation Sequence:\nID: {sequence_id}"
+        
+        # 4. Register and create the tab using the Mixin
+        self.start_sequence_tab(
+            sequence_id=sequence_id,
+            tab_title=title,
+            description=description,
+            model=model
+        )
+        
+        # 5. Simulate the thread completing in the future.
+        # In your real code, you would connect your thread's `finished` signal
+        # directly to a slot that calls self.close_sequence_tab(sequence_id).
+        # Here, we use a QTimer to automatically close this specific tab in 5 seconds.
+        QTimer.singleShot(5000, lambda sid=sequence_id: self._simulate_thread_finished(sid))
 
+        self.tab_counter += 1
+
+    def _simulate_thread_finished(self, sequence_id: str):
+        """Simulates the slot that catches your thread's completion signal."""
+        print(f"Sequence {sequence_id} complete. Cleaning up tab.")
+        self.close_sequence_tab(sequence_id)

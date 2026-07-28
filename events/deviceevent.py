@@ -21,6 +21,10 @@ class DeviceEvent (Event):
         if "action" not in self.data:
             self.data["action"] = "device"
 
+    # No specific value, return event
+    def get_value (self):
+        return self.get_event()
+
     # Uses getters to allow different data (eg. node vs node_id)
     # Node may be friendly name
     # If not node then return node_id instead
