@@ -717,23 +717,29 @@
          <attribute name="title">
           <string>Track View</string>
          </attribute>
+         <widget class="TrackViewDisplay" name="layoutDisplayLabel">
+          <property name="geometry">
+           <rect>
+            <x>0</x>
+            <y>0</y>
+            <width>591</width>
+            <height>701</height>
+           </rect>
+          </property>
+          <property name="font">
+           <font>
+            <weight>75</weight>
+            <bold>true</bold>
+           </font>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="scaledContents">
+           <bool>false</bool>
+          </property>
+         </widget>
         </widget>
-       </widget>
-      </item>
-      <item>
-       <widget class="TrackViewDisplay" name="layoutDisplayLabel">
-        <property name="font">
-         <font>
-          <weight>75</weight>
-          <bold>true</bold>
-         </font>
-        </property>
-        <property name="text">
-         <string/>
-        </property>
-        <property name="scaledContents">
-         <bool>false</bool>
-        </property>
        </widget>
       </item>
      </layout>
