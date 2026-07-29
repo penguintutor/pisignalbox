@@ -46,3 +46,5 @@ class UIAutomateMixin:
             self.automation.run_sequence(selected_row, loco_dict)
         else:
             QMessageBox.warning(self, "Selection Error", "Please select a rule sequence to run.")
+
+

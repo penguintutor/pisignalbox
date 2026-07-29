@@ -15,8 +15,10 @@ class AutomationManager (QObject):
     automation_files = {
         "Default": "default.json"
         }
-    
-    global_status = Signal(str)
+
+    # Automation status - used to pass to mainwindow 
+    # seq_num, state, data
+    automation_status = Signal(int, str, dict)
     #sequence_finished = Signal()
     
     # Pass the directory to the init as in future may allow different files
@@ -33,6 +35,9 @@ class AutomationManager (QObject):
 #        self.vars = global_app_vars
         self.sequences = []
 
+
+    def get_sequence(self, index):
+        return self.sequences[index]
         
     # Get sequence variables 
     def get_variables(self):
@@ -46,9 +51,12 @@ class AutomationManager (QObject):
         #print ("Adding sequence to Automation Manager")
 
         sequence = AutomationSequence(**sequence_data, check_stop_func=  lambda: self.mainwindow.stop_automation)
+        # Signals are defined in WorkerSignals
         sequence.signals.notify.connect(self.handle_notify)
         sequence.signals.notify_wait.connect(self.handle_notify_wait)
-        sequence.signals.status.connect(self.handle_status)
+        # Status needs to include id (seq_num), state ("start", "running", "finish")
+        # Start and finished are triggered once per run, running is called each time a step updates
+        sequence.signals.sequence_status.connect(self.handle_status)
         sequence.signals.finished.connect(self.sequence_finished)   
         self.sequences.append(sequence)
 
@@ -60,12 +68,19 @@ class AutomationManager (QObject):
         resume_event.set()
         
 
-    def handle_status(self, status_message):
-        QMessageBox.information(None, "Status", status_message)
+    # Status needs to include id (seq_num), state ("start", "running", "finish")
+    # Rest of information can be queried from the AutomationSequence
+    def handle_status(self, seq_num, state):
+        # QMessageBox.information(None, "Status", status_message)
+        # Data is used for sending other data (eg. step number)
+        data = {}
+        self.automation_status.emit (seq_num, state, data)
 
+    # Finised - now replaced with status
     def sequence_finished(self, seq_num):
+        print ("Automation Manager - sequence_finished deprecated")
         #print (f"Automation Manager: Sequence {seq_num} finished")
-        self.global_status.emit(f"Sequence {seq_num} finished")
+        #self.automation_status.emit(f"Sequence {seq_num} finished")
 
     def update_sequence(self, seq_num, sequence_data):
         if seq_num >= len(self.sequences):
@@ -76,7 +91,7 @@ class AutomationManager (QObject):
         self.sequences[seq_num] = AutomationSequence( **sequence_data, check_stop_func=  lambda: self.mainwindow.stop_automation)
         
         
-    # Return sequence based on sequence number (index in list)
+    # Return sequence based on sequence number (index in returnlist)
     def get_sequence(self, seq_num):
         return self.sequences[seq_num]
 
@@ -151,8 +166,10 @@ class AutomationManager (QObject):
                 this_seq = AutomationSequence.from_dict(item_data, check_stop_func= lambda: self.mainwindow.stop_automation)
                 this_seq.signals.notify.connect(self.handle_notify)
                 this_seq.signals.notify_wait.connect(self.handle_notify_wait)
-                this_seq.signals.status.connect(self.handle_status)
+                #this_seq.signals.status.connect(self.handle_status)
+                this_seq.signals.sequence_status.connect(self.handle_status)
                 this_seq.signals.finished.connect(self.sequence_finished)
+                # Note tht this replaces all sequences when successful
                 restored_sequences.append(this_seq)
             
             self.sequences = restored_sequences
@@ -178,6 +195,6 @@ class AutomationManager (QObject):
                
         worker = Worker(self.thread_start, seq_num, locos)
         self.threadpool.start(worker)
-        return
+
     
     

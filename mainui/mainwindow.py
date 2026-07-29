@@ -275,13 +275,6 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
         # Initial discover request
         self.api.discover()
 
-        # Start tab counter at 1 as always have track view tab
-        self.tab_counter = 1
-        # Todo - this is to test the tab creation and destruction
-        # Need to implement this
-        self.create_test_tab()
-        self.create_test_tab()
-        self.create_test_tab()
 
 
     # Loads and sets up the railway (Layout) and loading locos etc.
@@ -316,7 +309,7 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
             #print (f"Adding variable {var} to AppVar from AutomationManager")
             global_app_vars.add_variable (var, "", False)
 
-        self.automation.global_status.connect(self.update_sequence_status)
+        self.automation.automation_status.connect(self.update_sequence_status)
 
         # Add automation list 
         self.update_automation_list()
@@ -324,9 +317,15 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
         self.ui.automationRunButton.clicked.connect(self.run_selected_sequence)
 
     # Future: handle sequence status updates
-    def update_sequence_status (self, status_message):
-        #print (f"Sequence status update: {status_message}") 
-        pass
+    def update_sequence_status (self, seq_num, status, data=None):
+        # Todo - confirm if data needed as can query direct from seq_num
+        if data == None:
+            data = {}
+        print (f"Sequence status update: {seq_num}, {status}, {data}") 
+        # If it's a start then create a new tab
+        if status == "start":
+            self.create_automation_tab (seq_num, self.automation.get_sequence(seq_num))
+
 
     def gui_event (self, gui_event):
         gui_node = track_view_manager.get_track_view_node_from_name(gui_event.data.get('node'))
@@ -610,44 +609,4 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
                 print(f"Closing secondary window: {widget}")
                 widget.close()
 
-    def create_test_tab(self):
-        """Slot to test our UIAutomateViewMixin functionality."""
-        
-        # 1. Generate a unique sequence ID (this would come from your AutomationSequence)
-        sequence_id = f"seq_run_{self.tab_counter}_{int(time.time())}"
-        
-        # 2. Create some demo data that looks like an automation tracking table
-        data = [
-            ["Step", "Action", "Status", "Timestamp"],
-            ["1", "Initialize CAN bus", "Success", "0.00s"],
-            ["2", "Check sensors", "Success", "0.45s"],
-            ["3", "Move to start position", "Running...", "1.20s"],
-            ["4", "Execute sequence", "Pending", "-"],
-            ["5", "Log telemetry", "Pending", "-"]
-        ]
-        model = AutomateTableModel(data)
-        
-        # 3. Define the UI text
-        title = f"Run #{self.tab_counter}"
-        description = f"Tracking Automation Sequence:\nID: {sequence_id}"
-        
-        # 4. Register and create the tab using the Mixin
-        self.start_sequence_tab(
-            sequence_id=sequence_id,
-            tab_title=title,
-            description=description,
-            model=model
-        )
-        
-        # 5. Simulate the thread completing in the future.
-        # In your real code, you would connect your thread's `finished` signal
-        # directly to a slot that calls self.close_sequence_tab(sequence_id).
-        # Here, we use a QTimer to automatically close this specific tab in 5 seconds.
-        QTimer.singleShot(5000, lambda sid=sequence_id: self._simulate_thread_finished(sid))
 
-        self.tab_counter += 1
-
-    def _simulate_thread_finished(self, sequence_id: str):
-        """Simulates the slot that catches your thread's completion signal."""
-        print(f"Sequence {sequence_id} complete. Cleaning up tab.")
-        self.close_sequence_tab(sequence_id)

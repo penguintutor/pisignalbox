@@ -21,11 +21,14 @@ class AutomationSequence (QRunnable):
         # steps are provided as a list so save as list_steps, but then use self.steps when AutomationStep object created
         list_steps = steps
         self.title = title
+        self.short_title = None # Not currently used - instead shorten existing
         self.steps = []  # List of AutomationStep objects
         self.settings = settings or {}
         # Store the index of any labels to allow jumps (loops)
         # If order changes then labels needs to be updated
         self.labels = {}
+        self.state = "stopped"  # Stopped = not running, also start running and finished
+        self.position = 0
         self.signals = WorkerSignals()
         self.active = False		# Set to true when starting, set back to false to stop
         self.check_stop = check_stop_func
@@ -51,6 +54,12 @@ class AutomationSequence (QRunnable):
             # Add to Automation Steps
             self.steps.append(AutomationStep(self.title, step_data['type'], step_data['name'], step_data, check_stop_func=self.check_stop))
 
+    def get_short_title (self):
+        if self.short_title != None:
+            return self.short_title
+        # else truncate existing title
+        return self.title if len(self.title) <= 8 else f"{self.title[:5]}..."
+
     def get_locos (self):
         """ Get a list of all locos in the sequence
         used by MW when starting automation to check what locos need
@@ -74,11 +83,17 @@ class AutomationSequence (QRunnable):
 
     @Slot()
     def run (self, seq_num=None, locos={}):
+
         """
         Runs the sequence.
         If there is some kind of branch logic then eg. jump then
         it's handled directly here, otherwise it's normally passed
         on to the step's run method to run the action requested
+
+        Note that seq_num is allocated during run (not class variable)
+        allowing class to be created and edited but not placed in active list
+        Warning: if dynamically updating list then consider stopping all existing
+        threads first or unpredictable results
         """
         log_description = f"Starting sequence: {self.title}"
         if len(locos) > 0:
@@ -87,6 +102,8 @@ class AutomationSequence (QRunnable):
             # join the locos comma separated
             log_description += ", locos: " + ", ".join(loco_strings)
 
+        self.state = "start"
+        self.signals.sequence_status.emit(seq_num, self.state)
         event_bus.broadcast(LogEvent(
             {'source':"Automation",
              'level':5, # Normal major event
@@ -118,15 +135,15 @@ class AutomationSequence (QRunnable):
         
         #self.signals.status.emit(f"Starting sequence {self.title}")
         self.active = True
-        position = 0
-        while position < len(self.steps):
+        self.position = 0
+        while self.position < len(self.steps):
             # Check if we need to stop
             if self.check_stop():
                 event_bus.broadcast(LogEvent(
                     {'source':"Automation",
                     'level':5, # Normal major event
                     'sequence': self.title,
-                    'step': f"{position+1:02d} - Stop",
+                    'step': f"{self.position+1:02d} - Stop",
                     'description': "Stopping sequence"
                     }
                 ))
@@ -136,33 +153,33 @@ class AutomationSequence (QRunnable):
             if self.active == False:
                 break
             # If it's a label then ignore
-            if self.steps[position].step_type == "Label":
+            if self.steps[self.position].step_type == "Label":
                 event_bus.broadcast(LogEvent(
                     {'source':"Automation",
                     'level':6, # Information
                     'sequence': self.title,
-                    'step': f"{position+1:02d} - Label",
-                    'description': f"Label {self.steps[position].get_name()}"
+                    'step': f"{self.position+1:02d} - Label",
+                    'description': f"Label {self.steps[self.position].get_name()}"
                     }
                 ))
-            elif self.steps[position].step_type == "Jump":
+            elif self.steps[self.position].step_type == "Jump":
                 # parse the condition and get the result
-                result = self.steps[position].test_condition()
-                condition_string = self.steps[position].test_condition_str()
+                result = self.steps[self.position].test_condition()
+                condition_string = self.steps[self.position].test_condition_str()
                 # If the result is in the labels then jump to that 
                 if result != None and result == True:
-                    label = self.steps[position].get_value("labelid")
+                    label = self.steps[self.position].get_value("labelid")
                     if label != None and label in self.labels:
                         # Jump to label
                         event_bus.broadcast(LogEvent(
                             {'source':"Automation",
                             'level':5, # Normal major event
                             'sequence': self.title,
-                            'step': f"{position+1:02d} - Jump",
+                            'step': f"{self.position+1:02d} - Jump",
                             'description': f"Jump to {label} = {self.labels[label]} - Condition {condition_string}"
                             }
                         ))
-                        position = self.labels[label]
+                        self.position = self.labels[label]
                         continue
                     else:
                         print (f"Invalid label {label} - from {self.labels}")
@@ -171,7 +188,7 @@ class AutomationSequence (QRunnable):
                             {'source':"Automation",
                             'level':4,  # Warning
                             'sequence': self.title,
-                            'step': f"{position:02d} - Invalid Jump",
+                            'step': f"{self.position:02d} - Invalid Jump",
                             'description': f"Jump to unknown label {label}"
                             }
                         ))
@@ -183,7 +200,7 @@ class AutomationSequence (QRunnable):
                         {'source':"Automation",
                         'level':6, # Info
                         'sequence': self.title,
-                        'step': f"{position+1:02d} - Jump",
+                        'step': f"{self.position+1:02d} - Jump",
                         'description': f"Condition not met - {condition_string}"
                         }
                     ))
@@ -193,24 +210,24 @@ class AutomationSequence (QRunnable):
                     {'source':"Automation",
                     'level':6, # Normal routine
                     'sequence': self.title,
-                    'step': f"{position+1:02d} - {self.steps[position].get_type()}",
-                    'description': f"{self.steps[position].get_name()}"
+                    'step': f"{self.position+1:02d} - {self.steps[self.position].get_type()}",
+                    'description': f"{self.steps[self.position].get_name()}"
                     }
                 ))
                 # Run by calling the step run method
-                self.steps[position].run(self.signals.notify, self.signals.notify_wait,self.signals.status, locos)
-            position += 1
+                self.steps[self.position].run(self.signals.notify, self.signals.notify_wait,self.signals.status, locos)
+            self.position += 1
         # While loop ended
         # Emit a signal to indicate the thread has finished
         event_bus.broadcast(LogEvent(
             {'source':"Automation",
             'level':5, # Normal major event
             'sequence': self.title,
-            'step': f"{position+1:02d} - End",
+            'step': f"{self.position+1:02d} - End",
             'description': f"End of sequence {self.title}"
             }
         ))
-        self.signals.finished.emit(seq_num)
+        #self.signals.finished.emit(seq_num)
         
     # return info about the sequence in the form of a dict
     # does not include steps (see get_steps)
