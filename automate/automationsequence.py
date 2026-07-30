@@ -54,6 +54,15 @@ class AutomationSequence (QRunnable):
             # Add to Automation Steps
             self.steps.append(AutomationStep(self.title, step_data['type'], step_data['name'], step_data, check_stop_func=self.check_stop))
 
+    def get_step_data(self):
+        """Constructs a clean list of lists for the GUI model"""
+        gui_data = []
+        for i in range(len(self.steps)):
+            # Columns: [Step Number, Title, Status]
+            # We add a default "" string for the initial status column
+            gui_data.append([i, str(self.steps[i]), ""])
+        return gui_data
+
     def get_short_title (self):
         if self.short_title != None:
             return self.short_title
