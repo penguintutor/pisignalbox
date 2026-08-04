@@ -466,7 +466,7 @@ class AutomationStepDialog(QDialog):
             new_variable = self.create_variable_dialog()
             if new_variable != None and new_variable != "" and global_app_vars.is_variable(new_variable) != True:
                 # Create new variable by setting value to ""
-                self.mainwindow.add_variable(new_variable, "", False)
+                global_app_vars.add_variable(new_variable, "", False)
                 # Update menu
                 variable_list = ["Select Variable"] + global_app_vars.get_variable_names() + ["New Variable"]
                 self.rows.combo_add_items(3, variable_list)
