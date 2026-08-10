@@ -2,10 +2,11 @@ from PySide6.QtCore import Qt, QAbstractTableModel
 
 
 class AutomateTableModel(QAbstractTableModel):
-    """A simple dummy model just so you can test the table view immediately."""
+    """A simple table model"""
     def __init__(self, data):
         super().__init__()
         self._data = data
+        self._headers = ["Step number", "Description", "Comment"]
 
     def rowCount(self, parent=None):
         return len(self._data)
@@ -17,3 +18,10 @@ class AutomateTableModel(QAbstractTableModel):
         if role == Qt.DisplayRole:
             return str(self._data[index.row()][index.column()])
         return None
+
+    def headerData(self, section, orientation, role=Qt.DisplayRole):
+        if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+            return self._headers[section]
+        return super().headerData(section, orientation, role)
+
+    

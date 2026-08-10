@@ -46,6 +46,7 @@ class UIAutomateViewMixin:
 
         table_view = QTableView()
         table_view.setModel(model)
+        table_view.verticalHeader().setVisible(False)
         layout.addWidget(table_view)
 
         # Register the widgets BEFORE adding to the UI
