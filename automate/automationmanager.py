@@ -17,9 +17,9 @@ class AutomationManager (QObject):
         }
 
     # Automation status - used to pass to mainwindow 
-    # seq_num, state, data
-    automation_status = Signal(int, str, dict)
-    #sequence_finished = Signal()
+    # seq_num, state, step_index (or negative for not in a step)
+    automation_status = Signal(int, str, int)
+    # Step position - passed into thread used to update automation
     
     # Pass the directory to the init as in future may allow different files
     # Automation name is the name of the overall collection of sequences (ie. which file to load)
@@ -69,12 +69,12 @@ class AutomationManager (QObject):
         
 
     # Status needs to include id (seq_num), state ("start", "running", "finish")
+    # step is optional - used during running to indicate which step it's on
+    # if negative then not a valid step 
     # Rest of information can be queried from the AutomationSequence
-    def handle_status(self, seq_num, state):
+    def handle_status(self, seq_num, state, step=-1):
         # QMessageBox.information(None, "Status", status_message)
-        # Data is used for sending other data (eg. step number)
-        data = {}
-        self.automation_status.emit (seq_num, state, data)
+        self.automation_status.emit (seq_num, state, step)
 
     # Finised - now replaced with status
     def sequence_finished(self, seq_num):

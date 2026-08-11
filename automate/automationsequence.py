@@ -105,6 +105,8 @@ class AutomationSequence (QRunnable):
         threads first or unpredictable results
         """
         log_description = f"Starting sequence: {self.title}"
+        # Reset position to 0 (if restart)
+        self.position = 0
         if len(locos) > 0:
             # Get loco IDs and names as strings
             loco_strings = (f"{key}={value.get_display_name()}" for key, value in locos.items())
@@ -112,12 +114,13 @@ class AutomationSequence (QRunnable):
             log_description += ", locos: " + ", ".join(loco_strings)
 
         self.state = "start"
-        self.signals.sequence_status.emit(seq_num, self.state)
+        self.signals.sequence_status.emit(seq_num, self.state, self.position)
         event_bus.broadcast(LogEvent(
             {'source':"Automation",
              'level':5, # Normal major event
              'sequence': self.title,
              'step': "00 - Start",
+             'step_index': self.position,
              'description': log_description
              }
         ))
@@ -139,13 +142,16 @@ class AutomationSequence (QRunnable):
         #         "command":"acquire",
         #         "loco_id":loco.loco_id
         #         })
-        #     event_bus.broadcast(self.event)
+        #     event_bus.broadcast(selfself.signals.sequence_status.emit(seq_num, self.state, self.position).event)
 
         
         #self.signals.status.emit(f"Starting sequence {self.title}")
         self.active = True
-        self.position = 0
+        self.state = "running"
         while self.position < len(self.steps):
+            # Send a state update on each pass - state should be running
+            # If the check stops then we report that after stopping
+            self.signals.sequence_status.emit(seq_num, self.state, self.position)
             # Check if we need to stop
             if self.check_stop():
                 event_bus.broadcast(LogEvent(
@@ -153,6 +159,7 @@ class AutomationSequence (QRunnable):
                     'level':5, # Normal major event
                     'sequence': self.title,
                     'step': f"{self.position+1:02d} - Stop",
+                    'step_index': self.position,
                     'description': "Stopping sequence"
                     }
                 ))
@@ -168,6 +175,7 @@ class AutomationSequence (QRunnable):
                     'level':6, # Information
                     'sequence': self.title,
                     'step': f"{self.position+1:02d} - Label",
+                    'step_index': self.position,
                     'description': f"Label {self.steps[self.position].get_name()}"
                     }
                 ))
@@ -185,6 +193,7 @@ class AutomationSequence (QRunnable):
                             'level':5, # Normal major event
                             'sequence': self.title,
                             'step': f"{self.position+1:02d} - Jump",
+                            'step_index': self.position,
                             'description': f"Jump to {label} = {self.labels[label]} - Condition {condition_string}"
                             }
                         ))
@@ -198,6 +207,7 @@ class AutomationSequence (QRunnable):
                             'level':4,  # Warning
                             'sequence': self.title,
                             'step': f"{self.position:02d} - Invalid Jump",
+                            'step_index': self.position,
                             'description': f"Jump to unknown label {label}"
                             }
                         ))
@@ -210,6 +220,7 @@ class AutomationSequence (QRunnable):
                         'level':6, # Info
                         'sequence': self.title,
                         'step': f"{self.position+1:02d} - Jump",
+                        'step_index': self.position,
                         'description': f"Condition not met - {condition_string}"
                         }
                     ))
@@ -220,6 +231,7 @@ class AutomationSequence (QRunnable):
                     'level':6, # Normal routine
                     'sequence': self.title,
                     'step': f"{self.position+1:02d} - {self.steps[self.position].get_type()}",
+                    'step_index': self.position,
                     'description': f"{self.steps[self.position].get_name()}"
                     }
                 ))
@@ -233,10 +245,14 @@ class AutomationSequence (QRunnable):
             'level':5, # Normal major event
             'sequence': self.title,
             'step': f"{self.position+1:02d} - End",
+            'step_index': self.position,
             'description': f"End of sequence {self.title}"
             }
         ))
-        #self.signals.finished.emit(seq_num)
+        # set to finished
+        self.state = "finished"
+        # still include position so can see what position when existed
+        self.signals.sequence_status.emit(seq_num, self.state, self.position)
         
     # return info about the sequence in the form of a dict
     # does not include steps (see get_steps)

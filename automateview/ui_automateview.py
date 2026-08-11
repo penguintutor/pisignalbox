@@ -1,5 +1,6 @@
 from PySide6.QtWidgets import QWidget, QVBoxLayout, QLabel, QTableView, QTabBar
 from PySide6.QtCore import QAbstractTableModel
+from PySide6.QtWidgets import QAbstractItemView
 from automateview import AutomateTableModel
 
 class UIAutomateViewMixin:
@@ -52,7 +53,8 @@ class UIAutomateViewMixin:
         # Register the widgets BEFORE adding to the UI
         self._active_sequences[sequence_id] = {
             'widget': new_tab,
-            'model': model
+            'model': model,
+            'table_view': table_view
         }
 
         # Add to the tab widget
@@ -113,17 +115,7 @@ class UIAutomateViewMixin:
     def create_automation_tab(self, sequence_id, sequence):
         """Slot to test our UIAutomateViewMixin functionality."""
 
-        data = sequence.get_step_data()
-                
-        # # 2. Create some demo data that looks like an automation tracking table
-        # data = [
-        #     ["Step", "Action", "Status", "Timestamp"],
-        #     ["1", "Initialize CAN bus", "Success", "0.00s"],
-        #     ["2", "Check sensors", "Success", "0.45s"],
-        #     ["3", "Move to start position", "Running...", "1.20s"],
-        #     ["4", "Execute sequence", "Pending", "-"],
-        #     ["5", "Log telemetry", "Pending", "-"]
-        # ]
+        data = sequence.get_step_data()                
         model = AutomateTableModel(data)
         
         title = f"Run {sequence.get_short_title()}"
@@ -174,6 +166,32 @@ class UIAutomateViewMixin:
     #     QTimer.singleShot(5000, lambda sid=sequence_id: self._simulate_thread_finished(sid))
 
     #     self.tab_counter += 1
+
+    def update_automation_position(self, sequence_id, index):
+        #print (f"Active sequences {self._active_sequences}")
+        #print (f"Running Sequence {sequence_id}, {index}")
+        self.select_and_scroll(sequence_id, index)
+
+
+    def select_and_scroll(self, sequence_id, row):
+        """selects a row by highlighting and scrolls to that row"""
+        # Check that sequence_id is valid (could have been destroyed)
+        if sequence_id not in self._active_sequences: 
+            return
+        # Update the model to highlight the row
+        self._active_sequences[sequence_id]['model'].set_selected(row)
+        
+        # Generate a QModelIndex for the row (column 0 is fine)
+        index = self._active_sequences[sequence_id]['model'].index(row, 0)
+        
+        # Command the view to scroll to that index
+        # Options are 
+        #   EnsureVisible: If the row is already visible on the screen, it does nothing. If it's off-screen, it scrolls just enough to bring it into view.
+        #   PositionAtCenter: Always scrolls the table so the highlighted row is exactly in the middle of the view.
+        #   PositionAtTop: Always scrolls so the highlighted row is the very first row at the top of the table.
+        #   PositionAtBottom: Always scrolls so the highlighted row is at the very bottom of the table.
+        self._active_sequences[sequence_id]['table_view'].scrollTo(index, QAbstractItemView.EnsureVisible)
+
 
     def _simulate_thread_finished(self, sequence_id: str):
         """Simulates the slot that catches your thread's completion signal."""

@@ -55,6 +55,10 @@ class LogEvent (Event):
 
     def get_step(self):
         return self.data.get('step', "")
+
+    def get_step_index(self):
+        """ Returns index position - or None if not set """
+        return self.data.get('step_index', None)
         
     # Optional methods for safe return of optional values
     def get_description(self):

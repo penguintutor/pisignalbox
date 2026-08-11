@@ -468,9 +468,9 @@ class SystemExplorer:
         item = self.ui.nodeTable.item(4,0)
         item.setText(f"{node_item.long_string()}")
 
-    # Used to add a device to the TreeView
-    # Needed to ensure this is run on the GUI thread
-    # First create QStandardItem on the api thread, then send signal
-    # to GUI thread with the parent and the child details
-    def add_to_tree (self, parent, child):
-        parent.appendRow(child)
+    # # Used to add a device to the TreeView
+    # # Needed to ensure this is run on the GUI thread
+    # # First create QStandardItem on the api thread, then send signal
+    # # to GUI thread with the parent and the child details
+    # def add_to_tree (self, parent, child):
+    #     parent.appendRow(child)

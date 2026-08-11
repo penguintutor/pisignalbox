@@ -173,6 +173,7 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
         # Gui signal
         event_bus.gui_event_signal.connect(self.gui_event)
         # Listen to device_model signal for treeview updates
+        # Moved to SystemExplorer
         #device_model.add_node_signal.connect (self.add_to_tree)
         # Save setings
         self.save_settings_signal.connect (self.save_settings)
@@ -317,14 +318,14 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
         self.ui.automationRunButton.clicked.connect(self.run_selected_sequence)
 
     # Future: handle sequence status updates
-    def update_sequence_status (self, seq_num, status, data=None):
-        # Todo - confirm if data needed as can query direct from seq_num
-        if data == None:
-            data = {}
-        print (f"Sequence status update: {seq_num}, {status}, {data}") 
+    def update_sequence_status (self, seq_num, status, step=-1):
+        print (f"Main Window Sequence status update: {seq_num}, {status}, {step}") 
         # If it's a start then create a new tab
         if status == "start":
             self.create_automation_tab (seq_num, self.automation.get_sequence(seq_num))
+        # If it's running then notify ui_automateview to update
+        if status == "running":
+            self.update_automation_position (seq_num, step)
 
 
     def gui_event (self, gui_event):
@@ -608,5 +609,4 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
             if widget.isVisible():
                 print(f"Closing secondary window: {widget}")
                 widget.close()
-
 
