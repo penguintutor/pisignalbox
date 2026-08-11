@@ -9,3 +9,4 @@ from .apihandler import ApiHandler
 from .worker import Worker
 from .workersignals import WorkerSignals
 from .settings import Settings
+from .varsub import substitute_variables

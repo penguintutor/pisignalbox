@@ -52,7 +52,7 @@ def test_sequence_vars(qtbot):
             {"ruletype": "VLCB", "node_id":301, "event": 1, "value": "{test}"}}
     ]
     
-    sequence_1 = AutomationSequence("Test sequence 1", steps, {}, check_stop_func=lambda: False)
+    sequence_1 = AutomationSequence("Test sequence Vars", steps, {}, check_stop_func=lambda: False)
     sequence_1.run()
 
     assert var_spy.count() == 2

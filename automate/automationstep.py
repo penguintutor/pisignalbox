@@ -6,6 +6,7 @@ from core import event_bus
 from events import LocoEvent, LogEvent
 from .automationrule import AutomationRule
 from core import WorkerSignals
+from core import substitute_variables
 from core import global_app_vars
 
 # Each step contains a rule commands or sequences
@@ -52,34 +53,19 @@ class AutomationStep:
             
     def parse_var (self):
         # Copy data dict to run_data - which allows for any variable substitutions
-        run_data = {}
+        run_data = {'var_data' : False}
         var_data = False # If parse a variable then set to True to indicate updated
-        for key, value in self.data['data'].items():           
-            if isinstance(value, str) and value.startswith("{") and value.endswith("}"):
-                var_data = True
-                var_name = value[1:-1]
-                if vars == None:
-                    # Future: remove if no longer required
-                    # Should always have a global variable 
-                    print ("Automation Step - Deprecated Vars are now mandatory")
-                    event_bus.broadcast(LogEvent(
-                        {'source':"Automation",
-                        'level':3, # None critical error
-                        'sequence': self.sequence_name, 
-                        'step': f" {self.step_name}",
-                        'description': f"Variable detected {var_name} but no AppVar created"
-                        }
-                    ))
-                    continue
-                # If the value doesn't exist then it will be None
-                run_data[key] = global_app_vars.get_variable(var_name)
-            else:
+        for key, value in self.data['data'].items():       
+            if isinstance(value, str):
+                # replace any variables
+                new_string, var_data = substitute_variables (value, global_app_vars)
+                run_data[key] = new_string
+                if var_data:
+                    run_data["var_data"] = True
+            else: 
                 run_data[key] = value
-        # If a substitution has been made then temporarily add it to the dict
-        # so that the calling method knows a substitution has been made
-        if var_data:
-            run_data["var_data"] = True
         return run_data
+
 
     # If any variable tokens are found they are handled in the run        
     def run (self, notify_signal, notify_wait_signal, status_signal, locos):
@@ -138,7 +124,6 @@ class AutomationStep:
                 'description': f"Set Variable {var_name} = {var_value}"
                 }
             ))
-            
         elif app_command == "Increment Variable":
             var_name = run_data.get("variable", "")
             inc_value = run_data.get("value", 1)
@@ -654,3 +639,5 @@ class AutomationStep:
         """Deserialize from JSON string to object."""
         d = json.loads(json_str)
         return cls.from_dict(d, parent)
+
+
