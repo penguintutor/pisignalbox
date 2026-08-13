@@ -319,7 +319,7 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
 
     # Future: handle sequence status updates
     def update_sequence_status (self, seq_num, status, step=-1):
-        print (f"Main Window Sequence status update: {seq_num}, {status}, {step}") 
+        #print (f"Main Window Sequence status update: {seq_num}, {status}, {step}") 
         # If it's a start then create a new tab
         if status == "start":
             self.create_automation_tab (seq_num, self.automation.get_sequence(seq_num))

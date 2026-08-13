@@ -27,7 +27,7 @@ class UIAutomateViewMixin:
         # Registry to map sequence_id -> {'widget': QWidget, 'model': QAbstractTableModel}
         self._active_sequences = {}
 
-    def start_sequence_tab(self, sequence_id: str, tab_title: str, description: str, model: QAbstractTableModel):
+    def start_sequence_tab(self, sequence_id: str, tab_title: str, description: str, id_string: str, model: QAbstractTableModel):
         """
         Creates a tab for a new automation sequence and registers it.
         """
@@ -44,6 +44,14 @@ class UIAutomateViewMixin:
         if description:
             label = QLabel(description)
             layout.addWidget(label)
+
+        if id_string:
+            id_label = QLabel(id_string)
+            layout.addWidget(id_label)
+
+        status_string = "Status: Starting"
+        status_label = QLabel(status_string)
+        layout.addWidget(status_label)
 
         table_view = QTableView()
         table_view.setModel(model)
@@ -118,54 +126,19 @@ class UIAutomateViewMixin:
         data = sequence.get_step_data()                
         model = AutomateTableModel(data)
         
-        title = f"Run {sequence.get_short_title()}"
-        description = f"Tracking Automation Sequence:\nID: {sequence_id}"
+        title = f"Auto: {sequence.get_short_title()}"
+        description = f"Automation Sequence: {sequence.get_title()}"
+        id_string = f"\nID: {sequence_id}"
         
         # Register and create the tab
         self.start_sequence_tab(
             sequence_id=sequence_id,
             tab_title=title,
             description=description,
+            id_string=id_string,
             model=model
         )
 
-
-    # def create_test_tab(self):
-    #     """Slot to test our UIAutomateViewMixin functionality."""
-        
-    #     # 1. Generate a unique sequence ID (this would come from your AutomationSequence)
-    #     sequence_id = f"seq_run_{self.tab_counter}_{int(time.time())}"
-        
-    #     # 2. Create some demo data that looks like an automation tracking table
-    #     data = [
-    #         ["Step", "Action", "Status", "Timestamp"],
-    #         ["1", "Initialize CAN bus", "Success", "0.00s"],
-    #         ["2", "Check sensors", "Success", "0.45s"],
-    #         ["3", "Move to start position", "Running...", "1.20s"],
-    #         ["4", "Execute sequence", "Pending", "-"],
-    #         ["5", "Log telemetry", "Pending", "-"]
-    #     ]
-    #     model = AutomateTableModel(data)
-        
-    #     # 3. Define the UI text
-    #     title = f"Run #{self.tab_counter}"
-    #     description = f"Tracking Automation Sequence:\nID: {sequence_id}"
-        
-    #     # 4. Register and create the tab using the Mixin
-    #     self.start_sequence_tab(
-    #         sequence_id=sequence_id,
-    #         tab_title=title,
-    #         description=description,
-    #         model=model
-    #     )
-        
-    #     # 5. Simulate the thread completing in the future.
-    #     # In your real code, you would connect your thread's `finished` signal
-    #     # directly to a slot that calls self.close_sequence_tab(sequence_id).
-    #     # Here, we use a QTimer to automatically close this specific tab in 5 seconds.
-    #     QTimer.singleShot(5000, lambda sid=sequence_id: self._simulate_thread_finished(sid))
-
-    #     self.tab_counter += 1
 
     def update_automation_position(self, sequence_id, index):
         #print (f"Active sequences {self._active_sequences}")

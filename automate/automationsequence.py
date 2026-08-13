@@ -63,6 +63,9 @@ class AutomationSequence (QRunnable):
             gui_data.append([i, str(self.steps[i]), ""])
         return gui_data
 
+    def get_title(self):
+        return self.title
+
     def get_short_title (self):
         if self.short_title != None:
             return self.short_title
