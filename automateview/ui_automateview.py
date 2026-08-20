@@ -49,7 +49,8 @@ class UIAutomateViewMixin:
             id_label = QLabel(id_string)
             layout.addWidget(id_label)
 
-        status_string = "Status: Starting"
+        # Initially set to blank - will be updated to Status: Starting
+        status_string = "Status:"
         status_label = QLabel(status_string)
         layout.addWidget(status_label)
 
@@ -59,8 +60,12 @@ class UIAutomateViewMixin:
         layout.addWidget(table_view)
 
         # Register the widgets BEFORE adding to the UI
+        # Save the things we may need to change in future
+        # Alternative ways of doing this through setting object names
+        # but this is a fast and simple way to implement
         self._active_sequences[sequence_id] = {
             'widget': new_tab,
+            'status_label': status_label,
             'model': model,
             'table_view': table_view
         }
@@ -68,6 +73,24 @@ class UIAutomateViewMixin:
         # Add to the tab widget
         index = self.ui.PanelTabs.addTab(new_tab, tab_title)
         self.ui.PanelTabs.setCurrentIndex(index)
+        # Set initial status to Starting
+        self.update_automation_status (sequence_id, "starting")
+
+
+    def update_automation_status (self, sequence_id: str, status: str):
+        """ Updates the status entry"""
+        # Check that sequence_id is valid (could have been destroyed)
+        if sequence_id not in self._active_sequences: 
+            return
+        # Is there a colour in the settings we want to display this as (if not then use normal text colour)
+        status_color = self.settings.get_setting("statuscolors", status)
+        if status_color != None:
+            # use html span to set colour
+            formatted_status = f"Status: <span style='color: {status_color}; font-weight: bold;'>{status}</span>"
+        else:
+            formatted_status = f"Status: <span style='font-weight: bold;'>{status}</span>"
+        self._active_sequences[sequence_id]['status_label'].setText(formatted_status)
+
 
     def get_sequence_model(self, sequence_id: str) -> QAbstractTableModel:
         """
@@ -128,7 +151,7 @@ class UIAutomateViewMixin:
         
         title = f"Auto: {sequence.get_short_title()}"
         description = f"Automation Sequence: {sequence.get_title()}"
-        id_string = f"\nID: {sequence_id}"
+        id_string = f"ID: {sequence_id}"
         
         # Register and create the tab
         self.start_sequence_tab(

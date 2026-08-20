@@ -5,7 +5,9 @@ If any of the files are missing then displays empty data or similar
 ## data/
 
 settings.json 
-* General settings
+* General settings / Application settings
+layoutfile - layout file to open on start
+statuscolors - dict of status to color (HTML notation - eg. word / #FFFFFF)
 
 yards.json
 * List of yards (if none display all locos)

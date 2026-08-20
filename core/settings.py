@@ -60,3 +60,14 @@ class Settings:
     def set_layout_filename (self, filename):
         self.settings_dict['layoutfile'] = filename
         self.save_settings()
+
+    def get_setting(self, setting_str, sub_setting_str=None):
+        """Gets a setting from the dict
+        if the setting is a dict (eg. statuscolors) and
+        sub_setting_str is provided then return the 
+        value of the sub_setting_str instead.
+        If the setting doesn't exist then return None"""
+        setting_value = self.settings_dict.get(setting_str, None)
+        if isinstance (setting_value, dict) and sub_setting_str != None:
+            return setting_value.get(sub_setting_str, None)
+        return setting_value

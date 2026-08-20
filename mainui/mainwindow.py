@@ -326,6 +326,8 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
         # If it's running then notify ui_automateview to update
         if status == "running":
             self.update_automation_position (seq_num, step)
+        # Whatever the status then update the status 
+        self.update_automation_status (seq_num, status)
 
 
     def gui_event (self, gui_event):
