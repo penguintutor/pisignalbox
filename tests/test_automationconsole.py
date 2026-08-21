@@ -67,6 +67,6 @@ def test_automation_console_sequence_1():
 
     first_log_event = mock_log_subscriber.call_args_list[0].args[0]
     # Expected string if output the log event as __str__
-    first_log_expected = "Log {'source': 'Automation', 'level': 5, 'sequence': 'Test sequence 1', 'step': '00 - Start', 'description': 'Starting sequence: Test sequence 1', 'event_type': 'Log'}"
+    first_log_expected = "Log {'source': 'Automation', 'level': 5, 'sequence': 'Test sequence 1', 'step': '00 - Start', 'step_index': 0, 'description': 'Starting sequence: Test sequence 1', 'event_type': 'Log'}"
 
     assert str(first_log_event) == first_log_expected
