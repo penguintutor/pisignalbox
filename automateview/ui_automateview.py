@@ -27,13 +27,15 @@ class UIAutomateViewMixin:
         # Registry to map sequence_id -> {'widget': QWidget, 'model': QAbstractTableModel}
         self._active_sequences = {}
 
-    def start_sequence_tab(self, sequence_id: str, tab_title: str, description: str, id_string: str, model: QAbstractTableModel):
+    def start_sequence_tab(self, sequence_id: str, tab_title: str, description: str, id_str: str, model: QAbstractTableModel):
         """
         Creates a tab for a new automation sequence and registers it.
         """
         if sequence_id in self._active_sequences:
             print(f"Warning: Sequence {sequence_id} is already running.")
             return
+
+        tab_title_string = f"Auto: {tab_title}"
 
         new_tab = QWidget()
         # Optional: store the sequence ID on the widget itself as a property
@@ -42,10 +44,12 @@ class UIAutomateViewMixin:
         layout = QVBoxLayout(new_tab)
 
         if description:
-            label = QLabel(description)
+            description_string = f"Automation Sequence: <span style='font-weight: bold;'>{description}</span>"
+            label = QLabel(description_string)
             layout.addWidget(label)
 
-        if id_string:
+        if id_str:
+            id_string = f"ID: <span style='font-weight: bold;'>{id_str}</span"
             id_label = QLabel(id_string)
             layout.addWidget(id_label)
 
@@ -71,7 +75,7 @@ class UIAutomateViewMixin:
         }
 
         # Add to the tab widget
-        index = self.ui.PanelTabs.addTab(new_tab, tab_title)
+        index = self.ui.PanelTabs.addTab(new_tab, tab_title_string)
         self.ui.PanelTabs.setCurrentIndex(index)
         # Set initial status to Starting
         self.update_automation_status (sequence_id, "starting")
@@ -149,16 +153,16 @@ class UIAutomateViewMixin:
         data = sequence.get_step_data()                
         model = AutomateTableModel(data)
         
-        title = f"Auto: {sequence.get_short_title()}"
-        description = f"Automation Sequence: {sequence.get_title()}"
-        id_string = f"ID: {sequence_id}"
+        title = sequence.get_short_title()
+        description = sequence.get_title()
+        id_string = f"{sequence_id}"
         
         # Register and create the tab
         self.start_sequence_tab(
             sequence_id=sequence_id,
             tab_title=title,
             description=description,
-            id_string=id_string,
+            id_str=id_string,
             model=model
         )
 
