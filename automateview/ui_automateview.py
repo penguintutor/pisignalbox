@@ -3,26 +3,66 @@ from PySide6.QtCore import QAbstractTableModel
 from PySide6.QtWidgets import QAbstractItemView
 from automateview import AutomateTableModel
 
+
 class UIAutomateViewMixin:
     """
     Mixin to manage dynamically created Automation Sequence tabs.
     Requires self.ui.PanelTabs.
+
+    tabs are created, destroyed and added to PanelTabs as required. 
+    The sequence_id is the index entry in automation manager
+
+    Various parts are stored in the _active_sequences including the QWidget 
+    within the tab, but the tab itself is not - that can be obtained using
+    _sequence_to_tab_index which uses indexOf based on the QWidget
+    see _enable_tab_close for an example
+
+    
     """
     
-    def setup_automate_tabs(self):
-        """Initializes tab behavior and the sequence registry."""
-        # Todo - don't allow tab closure if still running
-        self.ui.PanelTabs.setTabsClosable(True)
-        ## We still allow manual closing by the user clicking 'X'
-        self.ui.PanelTabs.tabCloseRequested.connect(self._manual_tab_close)
 
+    def _sequence_to_tab_index (self, sequence_id):
+        # Lookup the Qwidget
+        widget = self._active_sequences[sequence_id]['widget']
+        # Find the index of widget in the tab_bar
+        tab_index = self.ui.PanelTabs.indexOf(widget)
+        # returns -1 if not found - instead return None
+
+        if tab_index < 0:
+            return None
+        return tab_index
+        
+
+    def _enable_tab_close(self, tab_index, enable=False):
+        """ Enable / Disable close tab from a tab
+        By default they start enabled.
+        Disable for tab 0 (never close the signal box tab)
+        Disable can be used to disable tab close whilst a sequence running
+        """
         # Access the underlying QTabBar
         tab_bar = self.ui.PanelTabs.tabBar()
+
         # Remove the close button from the permanent tab at index 0.
         # Depending on the OS and theme, the close button might be on the right or left. 
         # Setting both to None guarantees it disappears everywhere.
-        tab_bar.setTabButton(0, QTabBar.RightSide, None)
-        tab_bar.setTabButton(0, QTabBar.LeftSide, None)
+        #tab_bar.setTabButton(0, QTabBar.RightSide, None)
+        #tab_bar.setTabButton(0, QTabBar.LeftSide, None)
+        close_button = tab_bar.tabButton(tab_index, QTabBar.RightSide)
+        if close_button:
+            if enable == True:
+                close_button.show()
+            else:
+                close_button.hide()
+
+    def setup_automate_tabs(self):
+        """Initializes tab behavior and the sequence registry."""
+        # Allow tabs closure (used by automation)
+        # But then disable
+        self.ui.PanelTabs.setTabsClosable(True)
+        ## We allow manual closing by the user clicking 'X'
+        self.ui.PanelTabs.tabCloseRequested.connect(self._manual_tab_close)
+
+        self._enable_tab_close (0, False)
         
         # Registry to map sequence_id -> {'widget': QWidget, 'model': QAbstractTableModel}
         self._active_sequences = {}
@@ -86,6 +126,19 @@ class UIAutomateViewMixin:
         # Check that sequence_id is valid (could have been destroyed)
         if sequence_id not in self._active_sequences: 
             return
+        # If it's running then hide the close button on the tab
+        if status == "running":
+            # get index of the tab with the sequence
+            index = self._sequence_to_tab_index(sequence_id)
+            if index != None:
+                self._enable_tab_close (index, False)
+        # If stopped or finished then enable close button
+        elif status == "stopped" or status == "finished":
+            # get index of the tab with the sequence
+            index = self._sequence_to_tab_index(sequence_id)
+            if index != None:
+                self._enable_tab_close (index, True)
+        ## Set the status message
         # Is there a colour in the settings we want to display this as (if not then use normal text colour)
         status_color = self.settings.get_setting("statuscolors", status)
         if status_color != None:

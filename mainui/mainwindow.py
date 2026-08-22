@@ -317,7 +317,6 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
 
         self.ui.automationRunButton.clicked.connect(self.run_selected_sequence)
 
-    # Future: handle sequence status updates
     def update_sequence_status (self, seq_num, status, step=-1):
         #print (f"Main Window Sequence status update: {seq_num}, {status}, {step}") 
         # If it's a start then create a new tab
