@@ -42,11 +42,10 @@ class UIAutomateViewMixin:
         # Access the underlying QTabBar
         tab_bar = self.ui.PanelTabs.tabBar()
 
-        # Remove the close button from the permanent tab at index 0.
-        # Depending on the OS and theme, the close button might be on the right or left. 
-        # Setting both to None guarantees it disappears everywhere.
-        #tab_bar.setTabButton(0, QTabBar.RightSide, None)
-        #tab_bar.setTabButton(0, QTabBar.LeftSide, None)
+        # Remove the close button.
+        # On the Raspberry Pi the close button is at the RightSide
+        # This can be applied to the LeftSide as well for other OS
+        # but this is specifically written for the Pi.
         close_button = tab_bar.tabButton(tab_index, QTabBar.RightSide)
         if close_button:
             if enable == True:
@@ -221,8 +220,6 @@ class UIAutomateViewMixin:
 
 
     def update_automation_position(self, sequence_id, index):
-        #print (f"Active sequences {self._active_sequences}")
-        #print (f"Running Sequence {sequence_id}, {index}")
         self.select_and_scroll(sequence_id, index)
 
 

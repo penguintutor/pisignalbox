@@ -26,9 +26,8 @@ class AutomateTableModel(QAbstractTableModel):
         if role == Qt.DisplayRole:
             return str(self._data[index.row()][index.column()])
         # Handle background colour
-        if role == Qt.BackgroundRole:
-            if index.row() == self._selected:
-                return self._selected_color
+        if role == Qt.BackgroundRole and index.row() == self._selected:
+            return self._selected_color
         return None
 
     def set_selected(self, row):

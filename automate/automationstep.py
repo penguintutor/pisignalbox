@@ -68,7 +68,7 @@ class AutomationStep:
 
 
     # If any variable tokens are found they are handled in the run        
-    def run (self, notify_signal, notify_wait_signal, status_signal, locos):
+    def run (self, notify_signal, notify_wait_signal, locos):
         if self.step_type == "App":
             self._run_app_step  (notify_signal, notify_wait_signal)
         elif self.step_type == "Rule":

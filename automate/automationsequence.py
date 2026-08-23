@@ -79,7 +79,6 @@ class AutomationSequence (QRunnable):
         locos = []
         for step in self.steps:
             # Gets a loco_id from the step
-            # Todo - does this need to be changed to a loco object?
             new_loco = step.get_loco_id()
             if new_loco != "" and new_loco not in locos:
                 locos.append (new_loco)
@@ -239,7 +238,7 @@ class AutomationSequence (QRunnable):
                     }
                 ))
                 # Run by calling the step run method
-                self.steps[self.position].run(self.signals.notify, self.signals.notify_wait,self.signals.status, locos)
+                self.steps[self.position].run(self.signals.notify, self.signals.notify_wait, locos)
             self.position += 1
         # While loop ended
         # Emit a signal to indicate the thread has finished

@@ -42,10 +42,10 @@ class AutomationManager (QObject):
     # Get sequence variables 
     def get_variables(self):
         #print ("Getting variables from all sequences")
-        vars = []
+        var_list = []
         for seq in self.sequences:
-            vars.extend(seq.get_variables())
-        return vars
+            var_list.extend(seq.get_variables())
+        return var_list
 
     def add_sequence(self, sequence_data):
         #print ("Adding sequence to Automation Manager")
@@ -76,11 +76,10 @@ class AutomationManager (QObject):
         # QMessageBox.information(None, "Status", status_message)
         self.automation_status.emit (seq_num, state, step)
 
-    # Finised - now replaced with status
+    # Finished - now replaced with status - issue deprecated warning
     def sequence_finished(self, seq_num):
         print ("Automation Manager - sequence_finished deprecated")
-        #print (f"Automation Manager: Sequence {seq_num} finished")
-        #self.automation_status.emit(f"Sequence {seq_num} finished")
+
 
     def update_sequence(self, seq_num, sequence_data):
         if seq_num >= len(self.sequences):

@@ -241,7 +241,6 @@ class AutomationSeqDialog(QDialog):
     def save_sequence(self):
         """Finalizes the sequence creation and accepts the dialog."""
         title = self.title_input.text().strip()
-        #num_locos = self.num_locos_spinbox.value()
 
         if not title:
             QMessageBox.warning(self, "Error", "Please enter a sequence title.")

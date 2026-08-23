@@ -26,7 +26,9 @@ class AutoLocoDialog(QDialog):
         self.resize(600, 300)
 
         # Do we "share" or "steal" in event of loco already allocated
-        #Todo currently only share coded
+        # Future: At the moment share is the only supported method
+        # could consider steal in future as an alternative, if needed
+        # but perhaps just leave as share
         self.acquire_share = "share"
 
         # Data storage
