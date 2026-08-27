@@ -70,8 +70,12 @@ class UIAutomateViewMixin:
         """
         Creates a tab for a new automation sequence and registers it.
         """
+        # If the sequence_id already exists then don't create a new tab
         if sequence_id in self._active_sequences:
-            print(f"Warning: Sequence {sequence_id} is already running.")
+            if self._active_sequences[sequence_id]['status'] == "running":
+                # If it's already running - currently this echos to the console
+                # Future: May want to change this to a UI message in future
+                print(f"Warning: Sequence {sequence_id} is already running.")
             return
 
         tab_title_string = f"Auto: {tab_title}"
@@ -110,7 +114,8 @@ class UIAutomateViewMixin:
             'widget': new_tab,
             'status_label': status_label,
             'model': model,
-            'table_view': table_view
+            'table_view': table_view, 
+            'status': "starting"
         }
 
         # Add to the tab widget
@@ -125,6 +130,8 @@ class UIAutomateViewMixin:
         # Check that sequence_id is valid (could have been destroyed)
         if sequence_id not in self._active_sequences: 
             return
+        # Update the internal status so can track the state of the thread
+        self._active_sequences[sequence_id]['status'] = status
         # If it's running then hide the close button on the tab
         if status == "running":
             # get index of the tab with the sequence
@@ -243,7 +250,7 @@ class UIAutomateViewMixin:
         self._active_sequences[sequence_id]['table_view'].scrollTo(index, QAbstractItemView.EnsureVisible)
 
 
-    def _simulate_thread_finished(self, sequence_id: str):
-        """Simulates the slot that catches your thread's completion signal."""
-        print(f"Sequence {sequence_id} complete. Cleaning up tab.")
-        self.close_sequence_tab(sequence_id)
+    # def _simulate_thread_finished(self, sequence_id: str):
+    #     """Simulates the slot that catches your thread's completion signal."""
+    #     print(f"Sequence {sequence_id} complete. Cleaning up tab.")
+    #     self.close_sequence_tab(sequence_id)
