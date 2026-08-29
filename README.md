@@ -29,7 +29,9 @@ To setup using virtual environment:
     pip install pyvlcb
     pip install strip_tags
     pip install flask
+    pip install flask_login
     pip install flask.wtf
+    pip install json5
     pip install pyserial
 
 Then clone this repository onto your computer. You can use the GitHub download or to be able to get the latest update then use:

@@ -8,7 +8,6 @@ import urllib.request, urllib.parse
 import logging
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 ### Set logging to console during testing
 ### Uncomment the following text to allow debugging to the terminal

@@ -1,8 +1,7 @@
 import time
-from flask import request
-from flask import render_template
-from flask import session
-from flask import redirect
+from flask import current_app, request, session, redirect, render_template
+from flask_login import LoginManager, UserMixin, login_user, login_required, current_user, logout_user
+from werkzeug.security import generate_password_hash, check_password_hash
 from strip_tags import strip_tags
 import threading
 import logging, os
@@ -19,7 +18,9 @@ def test():
     # print(f"Args:      {dict(request.args)}")
     # print(f"Headers:   {dict(request.headers)}")
     # print("-------------------------------")
-    return "Test data"
+    usb_port = current_app.config.get('usb_port')
+    return_string = f"USB port {usb_port}"
+    return return_string
 
 @requests_blueprint.route("/vlcb", methods=['GET', 'POST'])
 def vlcb_request():

@@ -93,7 +93,7 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
         # Load the settings file early so we can use them throughout the class
         self.settings = Settings(self, self.files['settings'])
         url = self.settings.get_setting("url")
-        api_key = self.settings.get_setting("apikey")
+        api_key = self.settings.get_setting("api_key")
 
         # Loader used to load the ui files
         loader = QUiLoader()

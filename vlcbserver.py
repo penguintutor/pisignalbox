@@ -10,13 +10,28 @@ import logging
 import vlcbserver
 from vlcbserver import create_app
 import vlcbserver.requests
+# Uses json5 to allow comments in the config file
+import json5
+from pathlib import Path
+
+# --- Configuration Paths ---
+# Find the directory where this script lives, then append the subdirectory
+SCRIPT_DIR = Path(__file__).resolve().parent
+CONFIG_DIR = SCRIPT_DIR / "vlcbserver"
+
+# These are the config files - fixed filenames
+# Future: could have an option to call a different filename but not
+# supported at the moment
+DEFAULT_SETTINGS = CONFIG_DIR / "defaults.json"
+CUSTOM_SETTINGS = CONFIG_DIR / "server.json"
 
 # Configure logging for the entire application
 logging.basicConfig(level=logging.ERROR) 
 
-port = '/dev/ttyACM0'
+## Port now stored in the config file
+#port = '/dev/ttyACM0'
 
-# NOTE: Currently any errors and he server stops, 
+# NOTE: Currently any errors and the server stops, 
 # Consider adding additional error handling
 
 # maximum number of entries to cache in server
@@ -25,25 +40,54 @@ port = '/dev/ttyACM0'
 # on each event loop
 max_entries = 100
 
+def load_settings(default_path, custom_path):
+    # Load defaults first
+    try:
+        with open(default_path, 'r') as f:
+            settings = json5.load(f)
+    except FileNotFoundError:
+        print(f"Critical: '{default_path}' not found. Cannot start without defaults.")
+        return {}
+    except ValueError as e:
+        print(f"Critical: '{default_path}' is not valid JSON5. Error: {e}")
+        return {}
 
+    # Check for custom settings and override (using pathlib's .exists())
+    if custom_path.exists():
+        try:
+            with open(custom_path, 'r') as f:
+                custom_settings = json5.load(f)
+                
+            # Merge the dicts, overwriting defaults with custom values
+            settings.update(custom_settings)
+            
+        except ValueError as e:
+            print(f"Warning: '{custom_path}' contains invalid JSON5. Ignoring custom overrides. Error: {e}")
+            
+    return settings
 
-def flaskThread(debug=False):
+def flaskThread(debug, config):
+    tcp_port = config.get("tcp_port")
+    host = config.get("hostname")
+    print (f"Network address {host}:{tcp_port}")
     if not debug:
         log = logging.getLogger('werkzeug')
         log.setLevel(logging.ERROR)
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host=host, port=tcp_port, use_reloader=False)
     
 # Setup pixel strip and then start the updatePixels loop
-def mainThread(debug=False):
+def mainThread(debug, config):
+    usb_port = config.get("usb_port")
+    print (f"USB port: {usb_port}")
     while True:
         # Entire thread is in a loop which allows us to keep trying connection etc.
-        
+
         # Connect to USB
-        usb = CanUSB4(port)
+        usb = CanUSB4(usb_port)
         try:
             usb.connect()
         except DeviceConnectionError as e:
-            logging.error (f"Error connecting to {port} - {e}")
+            logging.error (f"Error connecting to {usb_port} - {e}")
             # At the moment stop - perhaps update in future
             break
 
@@ -120,11 +164,17 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='VLCB Server')
     parser.add_argument('-d', '--debug', action='store_true', help='Enable debug mode')
     args = parser.parse_args()
-    
+
+    # Load the settings - using default filenames
+    # could update to use commandline filenames in future if required
+    config = load_settings(DEFAULT_SETTINGS, CUSTOM_SETTINGS)
+
     app = create_app()
+    # Add the config to app.config so it's available to routes.py
+    app.config.update(config)
 
     # run as two threads - main thread and flask thread
-    mt = threading.Thread(target=mainThread, args=(args.debug,))
-    ft = threading.Thread(target=flaskThread, args=(args.debug,))
+    mt = threading.Thread(target=mainThread, args=(args.debug, config))
+    ft = threading.Thread(target=flaskThread, args=(args.debug, config))
     mt.start()
     ft.start()
