@@ -6,6 +6,7 @@ from strip_tags import strip_tags
 import threading
 import logging, os
 import vlcbserver
+from vlcbserver.vlcb_bridge import send_data, get_data
 
 from . import requests_blueprint
 
@@ -28,13 +29,15 @@ def vlcb_request():
     this_arg = request.args.get('send', default = 'none', type = str)
     if this_arg != "none":
         #Todo check valid format
-        vlcbserver.send_data(this_arg)
+        #vlcbserver.send_data(this_arg)
+        send_data(this_arg)
         return_data = ["0,0,0"]
         
     else:
         this_arg = request.args.get('read', default = 0, type = int)
 
-        entries = vlcbserver.get_data(this_arg)
+        #entries = vlcbserver.get_data(this_arg)
+        entries = get_data(this_arg)
         # Add first entry
         return_data = entries[0]
         for i in range(1, len(entries)):

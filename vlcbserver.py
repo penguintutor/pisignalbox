@@ -10,9 +10,11 @@ import logging
 import vlcbserver
 from vlcbserver import create_app
 import vlcbserver.requests
+from vlcbserver.vlcb_bridge import command_queue, add_sensor_update, cleanup_sensor_data
 # Uses json5 to allow comments in the config file
 import json5
 from pathlib import Path
+import queue
 
 # --- Configuration Paths ---
 # Find the directory where this script lives, then append the subdirectory
@@ -99,34 +101,30 @@ def mainThread(debug, config):
 def _run_connected_loop(usb, debug):
     while True:
         # First part of loop - clear out any excessive entries
-        # do now rather than each time we add something
-        if (len(vlcbserver.data) > max_entries):
-            num_pop = len(vlcbserver.data) - max_entries
-            del vlcbserver.data[0:num_pop]
-            vlcbserver.data_index += num_pop
-        #print (f"Len data post {len(data)} index {data_index}")
-            
-        
+        cleanup_sensor_data(max_entries)
+
         ### Check to see if we have any outgoing messages
-        # prioritise sending
-        while (len(vlcbserver.messages) > 0):
-            this_message = vlcbserver.messages.pop(0)
-            usb.send_data(this_message)
-            # Add it to the data
-            vlcbserver.data.append(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ",o," + this_message)
+        # prioritise sending - so gather all commands
+        while True:
+            try:
+                # Read from message queue for any requests from flask
+                # get_nowait() pulls a command if one exists, otherwise throws queue.Empty
+                command = command_queue.get_nowait()
+                #print(f"[Hardware] Sending command to layout: {command}")
+                # Send it to the serial port
+                usb.send_data(command)
+                # Also add it to the data - so other clients can also see it
+                add_sensor_update(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ",o," + command)
+                
+            except queue.Empty:
+                # No commands from Flask - break out of loop
+                break
+            
             
         # in_data is a list of data
         # first entry [0] is the number entries - if negative then error
         in_data = usb.read_data()
         _process_inbound_data(in_data, debug)
-
-
-def _maintain_buffer_limits():
-    """Prunes the server data logs if they exceed max_entries."""
-    if len(vlcbserver.data) > max_entries:
-        num_pop = len(vlcbserver.data) - max_entries
-        del vlcbserver.data[0:num_pop]
-        vlcbserver.data_index += num_pop
 
 
 def _send_outgoing_messages(usb):
@@ -156,7 +154,7 @@ def _process_inbound_data(in_data, debug):
     # Process packet collection
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     for this_input in in_data[1:]:
-        vlcbserver.data.append(f"{timestamp},i,{this_input}")
+        add_sensor_update(f"{timestamp},i,{this_input}")
         logging.debug(f"Received {this_input}")
             
 
