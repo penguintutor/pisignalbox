@@ -176,7 +176,7 @@ class LocoManager(QObject):
         logger.debug(f"Session cancelled {session_id} successfully.")
             
         loco.reset()
-        event_bus.publish(AppEvent({"action": "resetloco", 'loco_id': self.loco.loco_id}))
+        event_bus.publish(AppEvent({"action": "resetloco", 'loco_id': loco.loco_id}))
 
         
     # Enable / disable locos

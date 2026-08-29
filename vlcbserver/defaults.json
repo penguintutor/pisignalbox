@@ -29,6 +29,21 @@
     // Are users able to login through a browser 
     // If not, and public access is not enabled then all connections
     // must be through the api
-    "user_auth_enable": true
+    "user_auth_enable": true,
+
+    // Strong Random Secret key
+    // If you want to maintain user login sessions beyond a restart then 
+    // create a secret_key
+    // it's used by Flask-Login to cryptographically sign session cookies
+    // Again do not store in here - place in server.json instead
+    // If included then it needs to be at least 32 random characters and numbers
+    // If not included or insecure then a random key is created instead
+    // "secret_key": "",
+
+    // max_entries is the number of entries stored 
+    // should be no need to change this, but if the vlcb data 
+    // is generated much faster from the USB than the api calls
+    // for updates then this could be increased
+    "max_entries": 100
 
 }

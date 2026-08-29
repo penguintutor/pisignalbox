@@ -1,4 +1,5 @@
 import time
+import re
 from flask import current_app, request, session, redirect, render_template
 from flask_login import LoginManager, UserMixin, login_user, login_required, current_user, logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -8,48 +9,39 @@ import logging, os
 import vlcbserver
 from vlcbserver.vlcb_bridge import send_data, get_data
 
-from . import requests_blueprint
+from . import api_blueprint, web_blueprint
 
-@requests_blueprint.route("/", methods=['GET', 'POST'])
+# ==========================================
+# API Routes (No CSRF, requires API Key)
+# ==========================================
+
+@api_blueprint.route("/vlcb", methods=['GET', 'POST'])
+@login_required
+def vlcb_request():
+    return process_vlcb_logic()
+
+# ==========================================
+# Web Routes (CSRF Protected, requires Session)
+# ==========================================
+
+@web_blueprint.route("/", methods=['GET', 'POST'])
 def test():
-    # print("--- INCOMING REQUEST TO '/' ---")
-    # print(f"Method:    {request.method}")
-    # print(f"Path:      {request.path}")
-    # print(f"Full URL:  {request.url}")
-    # print(f"Args:      {dict(request.args)}")
-    # print(f"Headers:   {dict(request.headers)}")
-    # print("-------------------------------")
     usb_port = current_app.config.get('usb_port')
     return_string = f"USB port {usb_port}"
     return return_string
 
-@requests_blueprint.route("/vlcb", methods=['GET', 'POST'])
-def vlcb_request():
-    # If there is a value then it's a send
-    this_arg = request.args.get('send', default = 'none', type = str)
-    if this_arg != "none":
-        #Todo check valid format
-        #vlcbserver.send_data(this_arg)
-        send_data(this_arg)
-        return_data = ["0,0,0"]
-        
-    else:
-        this_arg = request.args.get('read', default = 0, type = int)
-
-        #entries = vlcbserver.get_data(this_arg)
-        entries = get_data(this_arg)
-        # Add first entry
-        return_data = entries[0]
-        for i in range(1, len(entries)):
-            return_data += "\n"
-            return_data += entries[i]
-    return return_data
-    
 #/vlcb?read=<id of first data packet>&format=txt&[&end=<id last packet to retrieve]
 #/vlcb?send=<string of send request>&format=txt
 
-#@requests_blueprint.route("/")
-@requests_blueprint.route("/home", methods=['GET', 'POST'])
+@web_blueprint.route("/vlcb", methods=['GET', 'POST'])
+@login_required
+def vlcb_request():
+    return process_vlcb_logic()
+    
+
+
+#@web_blueprint.route("/")
+@web_blueprint.route("/home", methods=['GET', 'POST'])
 def main():
     login_status = 'logged_in'
     #ip_address = get_ip_address()
@@ -70,8 +62,9 @@ def main():
     else:   # login required
         return redirect('/login')
 
-@requests_blueprint.route("/login", methods=['GET', 'POST'])
+@web_blueprint.route("/login", methods=['GET', 'POST'])
 def login():
+    return ("Login required")
     # Start by setting ip address to the real address
     ip_address = get_ip_address()
     login_status = pixelserver.auth.auth_check(ip_address, session)
@@ -96,7 +89,7 @@ def login():
     else:
         return render_template('login.html')
     
-@requests_blueprint.route("/logout", methods=['GET', 'POST'])
+@web_blueprint.route("/logout", methods=['GET', 'POST'])
 def logout():
     if 'username' in session:
         username = session['username']
@@ -107,7 +100,7 @@ def logout():
     
 # admin and settings only available to logged in users regardless of 
 # network status
-@requests_blueprint.route("/settings", methods=['GET', 'POST'])
+@web_blueprint.route("/settings", methods=['GET', 'POST'])
 def settings():
     authorized = pixelserver.auth.check_permission_admin (get_ip_address(), session)
     if authorized != 'admin':
@@ -177,7 +170,7 @@ def settings():
 
 
 # profile - can view own profile and change password etc
-@requests_blueprint.route("/profile", methods=['GET', 'POST'])
+@web_blueprint.route("/profile", methods=['GET', 'POST'])
 def profile():
     ip_address = get_ip_address()
     # Status msg for feedback to user
@@ -207,7 +200,7 @@ def profile():
     profile_form = user_admin.html_view_profile(username)
     return render_template('profile.html', user=username, admin=is_admin, form=profile_form, message=status_msg)
 
-@requests_blueprint.route("/password", methods=['GET', 'POST'])
+@web_blueprint.route("/password", methods=['GET', 'POST'])
 def password():
     ip_address = get_ip_address()
     # Status msg for feedback to user
@@ -252,7 +245,7 @@ def password():
     else:
         return render_template('password.html', user=username, admin=is_admin, form=password_form)
     
-@requests_blueprint.route("/newuser", methods=['GET', 'POST'])
+@web_blueprint.route("/newuser", methods=['GET', 'POST'])
 def newuser():
     authorized = pixelserver.auth.check_permission_admin (get_ip_address(), session)
     if authorized != 'admin':
@@ -265,3 +258,49 @@ def newuser():
         # Last option is "notadmin"
         # If trying to do admin, but not an admin then we log them off
         # before allowing import time
+
+# ==========================================
+# Helper methods - not routes
+# ==========================================
+
+def process_vlcb_logic():
+    # If there is a send argument then it's a send
+    this_arg = request.args.get('send', default='none', type=str)
+    if this_arg != "none":
+        valid = validate_vlcb_request(this_arg)
+        if valid:
+            send_data(this_arg)
+        else:
+            # Print this as we want to know when developing if we are getting 
+            # invalid requests - or if our regex is too strict
+            print(f"routes vlcb_request - this is invalid request {this_arg}")
+        # Return null data regardless of whether success or not
+        # we've only added to the queue so don't know
+        # Client can watch to see if it's been went from the api read
+        return "0,0,0"
+        
+    else:
+        this_arg = request.args.get('read', default=0, type=int)        
+        entries = get_data(this_arg)
+        if not entries:
+            return ""
+        return "\n".join(str(e) for e in entries)
+
+def validate_vlcb_request (request_string):
+    """ Simple check if the request is in a recognised format
+    It doesn't actual check if the command is valid, or if it's
+    appropriate to send this command. """
+    if not isinstance(request_string, str):
+        return False
+        
+    # Regex pattern breakdown:
+    # ^:                  - Begins with a colon
+    # [a-zA-Z0-9]{2}      - Exactly 2 alphanumeric characters
+    # [a-fA-F0-9]{3}      - Exactly 3 hex characters
+    # [a-zA-Z0-9]         - Exactly 1 alphanumeric character
+    # [a-zA-Z0-9]{2,12}   - Between 2 and 12 alphanumeric characters
+    # ;$                  - Ends with a semicolon
+    pattern = r'^:[a-zA-Z0-9]{2}[a-fA-F0-9]{3}[a-zA-Z0-9][a-zA-Z0-9]{2,12};$'
+    
+    return bool(re.match(pattern, request_string))
+

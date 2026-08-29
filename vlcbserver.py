@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import sys
 from flask import Flask
 import threading
 import logging
@@ -15,6 +16,7 @@ from vlcbserver.vlcb_bridge import command_queue, add_sensor_update, cleanup_sen
 import json5
 from pathlib import Path
 import queue
+
 
 # --- Configuration Paths ---
 # Find the directory where this script lives, then append the subdirectory
@@ -40,7 +42,10 @@ logging.basicConfig(level=logging.ERROR)
 # Will exceed this, but this is the trim level
 # ie if we exceed max_entries we will trim to this level
 # on each event loop
-max_entries = 100
+# max_entries = 100
+# This entry is now in the defaults.json
+
+
 
 def load_settings(default_path, custom_path):
     # Load defaults first
@@ -89,19 +94,19 @@ def mainThread(debug, config):
         try:
             usb.connect()
         except DeviceConnectionError as e:
-            logging.error (f"Error connecting to {usb_port} - {e}")
+            logging.exception (f"Error connecting to {usb_port} - {e}")
             # At the moment stop - perhaps update in future
             break
 
         # Once connected, hand control over to the processing loop
-        _run_connected_loop(usb, debug)
+        _run_connected_loop(usb, config)
 
 
         
-def _run_connected_loop(usb, debug):
+def _run_connected_loop(usb, config):
     while True:
         # First part of loop - clear out any excessive entries
-        cleanup_sensor_data(max_entries)
+        cleanup_sensor_data(config.get("max_entries"))
 
         ### Check to see if we have any outgoing messages
         # prioritise sending - so gather all commands
@@ -124,7 +129,7 @@ def _run_connected_loop(usb, debug):
         # in_data is a list of data
         # first entry [0] is the number entries - if negative then error
         in_data = usb.read_data()
-        _process_inbound_data(in_data, debug)
+        _process_inbound_data(in_data)
 
 
 def _send_outgoing_messages(usb):
@@ -137,7 +142,7 @@ def _send_outgoing_messages(usb):
         vlcbserver.data.append(f"{timestamp},o,{this_message}")
 
 
-def _process_inbound_data(in_data, debug):
+def _process_inbound_data(in_data):
     """Evaluates and processes the result of a USB buffer read."""
     # Handle empty or error states
     if in_data[0] == 0:
@@ -158,6 +163,7 @@ def _process_inbound_data(in_data, debug):
         logging.debug(f"Received {this_input}")
             
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='VLCB Server')
     parser.add_argument('-d', '--debug', action='store_true', help='Enable debug mode')
@@ -167,12 +173,33 @@ if __name__ == "__main__":
     # could update to use commandline filenames in future if required
     config = load_settings(DEFAULT_SETTINGS, CUSTOM_SETTINGS)
 
-    app = create_app()
-    # Add the config to app.config so it's available to routes.py
-    app.config.update(config)
+    app = create_app(config)
 
     # run as two threads - main thread and flask thread
-    mt = threading.Thread(target=mainThread, args=(args.debug, config))
-    ft = threading.Thread(target=flaskThread, args=(args.debug, config))
+    # Set daemon=True. This tells Python: "If the main script exits, 
+    # instantly kill these threads. Do not wait for them.
+    # If one stops then there is no point in the other continuing
+    mt = threading.Thread(target=mainThread, args=(args.debug, config), daemon=True)
+    ft = threading.Thread(target=flaskThread, args=(args.debug, config), daemon=True)
     mt.start()
     ft.start()
+
+    # Add a monitor loop, so that if either thread stops it errors and quits
+    try:
+        while True:
+            # Check if the hardware thread died
+            if not mt.is_alive():
+                sys.exit("\nCRITICAL ERROR: The VLCB hardware mainThread stopped unexpectedly. Shutting down the entire server.")
+            
+            # Check if the Flask thread died
+            if not ft.is_alive():
+                sys.exit("\nCRITICAL ERROR: The Flask web thread stopped unexpectedly. Shutting down the entire server.")
+            
+            # Sleep for 1 second so this while loop doesn't consume 100% of your CPU
+            time.sleep(1)
+            
+    except KeyboardInterrupt:
+        # Graceful manual exit
+        # If you press Ctrl+C in the terminal, it breaks the loop cleanly
+        print("\nCtrl+C detected. Shutting down VLCB Server...")
+        sys.exit(0)

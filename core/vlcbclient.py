@@ -32,7 +32,8 @@ class VLCBClient():
     
     def send (self, message):
         message = urllib.parse.quote(message)
-        request_string = f"{self.url}vlcb?send={message}&format=txt"
+        # Note that this adds the api prefix to act as an api
+        request_string = f"{self.url}api/vlcb?send={message}&format=txt"
         logger.debug(f"Send request {request_string}")
         req = urllib.request.Request(request_string, headers=self.headers)
         try:
@@ -41,6 +42,10 @@ class VLCBClient():
         except urllib.error.HTTPError as e:
             # Catches server errors eg. 404 not found, 401 unathorized, 500 internal server error
             logger.warning(f"Error sending via http {request_string}: {e.code}, {e.reason}")
+            # Todo - create user friendly messages
+            # probably want to stop the app requests for something that needs an update
+            # eg. 401 - not authorised
+            print (f"HTTP Error {e.code} {e.read().decode('utf-8')}")
             # None indicates not connected
             return None
         except urllib.error.URLError as e:
@@ -68,7 +73,7 @@ class VLCBClient():
             last_packet = -5
         else:
             last_packet += 1	# Read next packet
-        request_string = f"{self.url}vlcb?read={last_packet}&format=txt"
+        request_string = f"{self.url}api/vlcb?read={last_packet}&format=txt"
         logger.debug(f"Reading {request_string}")
         # Create a Request object
         req = urllib.request.Request(request_string, headers=self.headers)
@@ -76,6 +81,7 @@ class VLCBClient():
             request_url = urllib.request.urlopen(req)
             response = request_url.read().decode('utf-8')
         except urllib.error.HTTPError as e:
+            # Todo: handle errors here as well
             # Catches server errors eg. 404 not found, 401 unathorized, 500 internal server error
             logger.warning(f"Error reading via http {request_string}: {e.code}, {e.reason}")
             # None indicates not connected
