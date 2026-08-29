@@ -43,7 +43,9 @@ basedir = os.path.dirname(__file__)
 
 app_title = "Pi SignalBox"
 
-url = "http://127.0.0.1:5000/"
+# URL now moved to settings 
+#url = "http://127.0.0.1:5000/"
+
 #os.path.join(basedir, "data/")
 read_rate = 200
 
@@ -80,17 +82,22 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
     def __init__(self, dirs, files, settings=None):
         super().__init__()
 
-        # Trigger initial message to stay app starting
+        # Trigger initial message to say app starting
         event_bus.publish(AppEvent({"action":"status", "state":"PiSignalBox Gui application starting"}))
 
-        # Loader used to load the ui files
-        loader = QUiLoader()
-        loader.registerCustomWidget(TrackViewDisplay)
-        
         # Command line arguments and directory settings
         self.cmd_settings = settings or {}
         self.dirs = {} # dirs need to be updated with data_dir
         self.files = files
+
+        # Load the settings file early so we can use them throughout the class
+        self.settings = Settings(self, self.files['settings'])
+        url = self.settings.get_setting("url")
+        api_key = self.settings.get_setting("apikey")
+
+        # Loader used to load the ui files
+        loader = QUiLoader()
+        loader.registerCustomWidget(TrackViewDisplay)
         
         # This will hold the QPixmap for the loco image
         self.loco_image = None
@@ -114,9 +121,9 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
             #print("Using Mock VLCB Client")
             from tests.mock_vlcbclient import MockVLCBClient
             mock_client = MockVLCBClient()
-            self.api = ApiHandler(self.threadpool, url, mock_client)
+            self.api = ApiHandler(self.threadpool, url, api_key, mock_client)
         else:
-            self.api = ApiHandler(self.threadpool, url)
+            self.api = ApiHandler(self.threadpool, url, api_key)
 
         # Get the QFont object for the default font
         app = QApplication.instance()
@@ -146,11 +153,6 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
         # and can also trigger events.
         # get_variable(variable_name), set_variable(variable_name, new_value), inc_variable(variable_name, inc_amount)
         #self.appvariables = AppVar(self.var_signal)
-
-        
-
-        # Load the settings file here
-        self.settings = Settings(self, self.files['settings'])
 
         current_dir = Path(__file__).resolve().parent
         self.ui = loader.load(current_dir / "mainwindow.ui", None)

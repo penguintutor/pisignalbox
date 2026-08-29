@@ -12,10 +12,11 @@ from device import device_manager, VLCBNode
 logger = logging.getLogger(__name__)
 
 class ApiHandler(QObject):
-    def __init__(self, thread_pool: QThreadPool, url, server_client=None):
+    def __init__(self, thread_pool: QThreadPool, url, api_key, server_client=None):
         super().__init__()
         self.threadpool = thread_pool
         self.url = url
+        self.api_key = api_key
        
         # Keep alive timer must run on mainwindow and must be started / stopped using signals
         
@@ -27,7 +28,7 @@ class ApiHandler(QObject):
         # The class is called client, but as it's used to communicate
         # with the server it's referred to in this as self.server
         # Allow injection of a mock or alternate client for testing.
-        self.server = server_client or VLCBClient(self.url)
+        self.server = server_client or VLCBClient(self.url, self.api_key)
 
         # Add request to be sent next time timer expires
         #self.send_queue = []

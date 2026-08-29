@@ -10,11 +10,18 @@ import vlcbserver
 
 from . import requests_blueprint
 
-@requests_blueprint.route("/")
+@requests_blueprint.route("/", methods=['GET', 'POST'])
 def test():
+    # print("--- INCOMING REQUEST TO '/' ---")
+    # print(f"Method:    {request.method}")
+    # print(f"Path:      {request.path}")
+    # print(f"Full URL:  {request.url}")
+    # print(f"Args:      {dict(request.args)}")
+    # print(f"Headers:   {dict(request.headers)}")
+    # print("-------------------------------")
     return "Test data"
 
-@requests_blueprint.route("/vlcb")
+@requests_blueprint.route("/vlcb", methods=['GET', 'POST'])
 def vlcb_request():
     # If there is a value then it's a send
     this_arg = request.args.get('send', default = 'none', type = str)
@@ -38,7 +45,7 @@ def vlcb_request():
 #/vlcb?send=<string of send request>&format=txt
 
 #@requests_blueprint.route("/")
-@requests_blueprint.route("/home")
+@requests_blueprint.route("/home", methods=['GET', 'POST'])
 def main():
     login_status = 'logged_in'
     #ip_address = get_ip_address()
@@ -85,7 +92,7 @@ def login():
     else:
         return render_template('login.html')
     
-@requests_blueprint.route("/logout")
+@requests_blueprint.route("/logout", methods=['GET', 'POST'])
 def logout():
     if 'username' in session:
         username = session['username']
