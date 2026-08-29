@@ -3,6 +3,7 @@
 !tests/data/*.json
 # Secret
 secret.cfg
+data/settings.json
 data/locos/*
 data/layout
 data/layouts/*
