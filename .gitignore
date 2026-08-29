@@ -1,9 +1,10 @@
 *.json
-# Re-include .json files ONLY in tests/data/
+# Re-include .json files in tests/data/
 !tests/data/*.json
+# Allow default settings 
+!defaults.json
 # Secret
 secret.cfg
-data/settings.json
 data/locos/*
 data/layout
 data/layouts/*
