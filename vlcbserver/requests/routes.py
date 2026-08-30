@@ -24,11 +24,11 @@ def vlcb_request():
 # Web Routes (CSRF Protected, requires Session)
 # ==========================================
 
-@web_blueprint.route("/", methods=['GET', 'POST'])
-def test():
-    usb_port = current_app.config.get('usb_port')
-    return_string = f"USB port {usb_port}"
-    return return_string
+# @web_blueprint.route("/", methods=['GET', 'POST'])
+# def test():
+#     usb_port = current_app.config.get('usb_port')
+#     return_string = f"USB port {usb_port}"
+#     return return_string
 
 #/vlcb?read=<id of first data packet>&format=txt&[&end=<id last packet to retrieve]
 #/vlcb?send=<string of send request>&format=txt
@@ -40,27 +40,28 @@ def vlcb_request():
     
 
 
-#@web_blueprint.route("/")
+@web_blueprint.route("/", methods=['GET', 'POST'])
 @web_blueprint.route("/home", methods=['GET', 'POST'])
 def main():
-    login_status = 'logged_in'
-    #ip_address = get_ip_address()
-    #login_status = pixelserver.auth.auth_check(ip_address, session)
-    # not allowed even if logged in
-    if login_status == "invalid":
-        return redirect('/invalid')
-    elif login_status == "network":
-        return render_template('index.html', user="guest", admin=False)
-    elif login_status == "logged_in":
-        # Also check if admin - to show settings button
-        username = session['username']
-        if (pixelserver.auth.check_admin(username)):
-            admin = True
-        else:
-            admin = False
-        return render_template('index.html', user=session['username'], admin=admin)
-    else:   # login required
-        return redirect('/login')
+    return render_template('index.html', hello="Hello World")
+    # login_status = 'logged_in'
+    # #ip_address = get_ip_address()
+    # #login_status = pixelserver.auth.auth_check(ip_address, session)
+    # # not allowed even if logged in
+    # if login_status == "invalid":
+    #     return redirect('/invalid')
+    # elif login_status == "network":
+    #     return render_template('index.html', user="guest", admin=False)
+    # elif login_status == "logged_in":
+    #     # Also check if admin - to show settings button
+    #     username = session['username']
+    #     if (pixelserver.auth.check_admin(username)):
+    #         admin = True
+    #     else:
+    #         admin = False
+    #     return render_template('index.html', user=session['username'], admin=admin)
+    # else:   # login required
+    #     return redirect('/login')
 
 @web_blueprint.route("/login", methods=['GET', 'POST'])
 def login():
