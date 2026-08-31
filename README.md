@@ -40,6 +40,45 @@ Then clone this repository onto your computer. You can use the GitHub download o
 
     git clone https://github.com/penguintutor/pisignalbox.git ~/pisignalbox
 
+### Adding API-Key
+
+For security reasons you must add a secure API key to both the
+server and client. This needs to be identical.
+
+For the client add it to guiclient/data/settings.json
+If the file doesn't exist already the file should have:
+
+```json
+{
+	"server": {
+		"api_key": "INSERT LONG API KEY HERE - random string"
+	}
+}
+```
+
+For the server it should be stored in vlcbserver/server.json
+
+```json
+{
+    // Set the API key
+    "api_key": "INSERT LONG API KEY HERE - random string"
+}
+```
+
+Note the server includes comments, but they are not allowed in the guiclient file. Also note the lack of "server" top level in the 
+server.json file. 
+
+
+# Upgrade September 2026
+
+Another major refactoring has moved the file structure. If you
+are upgrading from an older version move the files in your data folder to guiclient/data/
+
+For security reasons the server now needs an api_key which must 
+match the client. At the moment this must be manually edited, but
+in future this will be added to the GUI config.
+
+
 # Upgrade July 2026
 
 Due to a major refactoring and node name change any layout files before July 2026 will need to be updated. To update, first checkout one of the refactor git commits (eg. main 7420e97). Then run the application choose Tools -> Layout Edit, and then click on the cross to close out of Layout Edit mode. You can then move to a a newer version.
