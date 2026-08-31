@@ -23,9 +23,9 @@ Install PySide6 using:
 
 To setup using virtual environment:
 
-    mkdir ~/venv
-    python3 -m venv ~/venv/pyvlcb --system-site-packages
-    source ~/venv/pyvlcb/bin/activate
+    mkdir -p ~/venv
+    python3 -m venv ~/venv/pisignalbox --system-site-packages
+    source ~/venv/pisignalbox/bin/activate
     pip install pyvlcb
     pip install strip_tags
     pip install flask

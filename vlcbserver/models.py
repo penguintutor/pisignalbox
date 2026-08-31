@@ -7,5 +7,9 @@ USER_DB = {
 }
 
 class User(UserMixin):
-    def __init__(self, user_id):
+    def __init__(self, user_id, username=None, email=None, profile_data = None):
         self.id = user_id
+        self.username = username or "System"
+        self.email = email or "API"
+        # Profile is a dict
+        self.profile_data = profile_data or {}

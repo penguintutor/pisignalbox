@@ -14,6 +14,9 @@ from .models import User
 # This allows the decorator to be used anywhere in this file.
 login_manager = LoginManager()
 
+# Manage users
+#user_manager = UserManager
+
 # Callback function from LoginManager
 @login_manager.request_loader
 def load_user_from_request(request):

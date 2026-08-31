@@ -1,27 +1,24 @@
-#!/usr/bin/bash
-cd ~/pisignalbox
-source ~/venv/pyvlcb/bin/activate
+#!/bin/bash
 
-# Check if the server is already running
-pid=$(pgrep -f "python3 ./vlcbserver.py")
+# ---------------------------------------------------------
+# User Configuration
+# If you installed the virtual environment in a different 
+# location, update the path below:
+# ---------------------------------------------------------
+VENV_PATH="$HOME/venv/pisignalbox"
 
-if [ -n "$pid" ]; then
-    echo "Server already running PID $pid. Skipping startup."
+# Activate the virtual environment if it exists
+if [ -f "$VENV_PATH/bin/activate" ]; then
+    source "$VENV_PATH/bin/activate"
 else
-    echo "Starting vlcbserver..."
-    ./vlcbserver.py &
-    # Give it a brief moment to initialize before checking PID or moving on
-    sleep 1
-    pid=$(pgrep -f "python3 ./vlcbserver.py")
-    echo "Server started with PID $pid"
+    echo "Warning: Virtual environment not found at $VENV_PATH"
+    echo "Attempting to run with system Python..."
 fi
 
-./app.py
+# Get the exact directory this bash script lives in
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 
-# Show pid of server
-pid=$(pgrep -f "python3 ./vlcbserver.py")
-if [ -n "$pid" ]; then
-    echo "Server still running PID $pid"
-else
-    echo "Server is not running."
-fi
+# Launch the Python orchestrator
+# The "$@" ensures that any arguments passed to this bash script 
+# (like --mock or --data_dir) are passed straight through to Python!
+python3 "$SCRIPT_DIR/run_pisignalbox.py" "$@"
