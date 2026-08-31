@@ -21,7 +21,7 @@ Install PySide6 using:
     sudo apt install python3-pyside6.qtgui python3-pyside6.qtwidgets python3-pyside6.qtuitools  
 
 
-To setup using virtual environment:
+Additional libraries are required to install using virtual environment (recommended):
 
     mkdir -p ~/venv
     python3 -m venv ~/venv/pisignalbox --system-site-packages
@@ -33,6 +33,8 @@ To setup using virtual environment:
     pip install flask.wtf
     pip install json5
     pip install pyserial
+
+Note if you would like to use a different virtual environment directory then you may need to create your own startup scripts replacing pisignalbox.sh and/or start_server.sh with your virtual environment. This is not required if using the ~/venv/pisignalbox directory. 
 
 Then clone this repository onto your computer. You can use the GitHub download or to be able to get the latest update then use:
 
@@ -67,19 +69,36 @@ and then checkout the main branch
 
 # Running
 
-Start the server using
+Start the application using
 
-    source ~/.venv/pyvlcb/bin/activate
-    python3 vlcbserver.py
+    ./pisignalbox.sh
 
+This will start the server (if local and not already running) and the GUI application.
 
-After starting the server then from another terminal session run 
+To start just the server use
 
-    python3 app.py 
+    ./start_server.sh
 
-Alternatively to run it all together run 
+# Running Automatically
 
-    ./pisignalbox
+To run the program automatically run the script
+
+    setup/install_services.sh
+    sudo systemctl enable pisignalbox.service
+
+### Disabling autostart
+
+To disable the GUI application from starting automatically 
+
+    rm ~/.config/autostart/pisignalbox-gui.desktop
+
+To disable the server from starting automatically
+
+    sudo systemctl stop pisignalbox.service
+    sudo systemctl disable pisignalbox.service
+    sudo rm /etc/systemd/system/pisignalbox.service
+    sudo systemctl daemon-reload
+
 
 
 # Tests

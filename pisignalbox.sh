@@ -3,7 +3,7 @@
 # ---------------------------------------------------------
 # User Configuration
 # If you installed the virtual environment in a different 
-# location, update the path below:
+# location, update the path below, or use your own startup scripts
 # ---------------------------------------------------------
 VENV_PATH="$HOME/venv/pisignalbox"
 
