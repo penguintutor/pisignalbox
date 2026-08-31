@@ -36,6 +36,7 @@ dirs = {
 
 
 files = {
+    'defaults': 'default-settings.json',
     'settings': 'settings.json',
     'locos': 'locos.json',
     'rules': 'rules.json',
@@ -92,7 +93,9 @@ def main():
     logging.basicConfig(level=logging.ERROR) 
     # Change to logging.INFO to turn off all debug prints globally
     # To enable detailed logging for apihandler then use below
-    # logging.getLogger('core.apihandler').setLevel(logging.DEBUG)
+    #logging.getLogger('core.apihandler').setLevel(logging.DEBUG)
+    # Or even more detailed logging from the vlcbclient
+    #logging.getLogger('core.vlcbclient').setLevel(logging.DEBUG)
 
     faulthandler.enable()
 

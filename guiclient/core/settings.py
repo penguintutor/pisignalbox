@@ -6,27 +6,39 @@ from core import DATA_DIR
 from pathlib import Path 
 
 class Settings:
-    def __init__ (self, parent, setting_file):
+    def __init__ (self, parent, defaults_file, setting_file):
         self.parent = parent
         self.data_dir = DATA_DIR
+        self.defaults_filename = defaults_file
         self.setting_filename = setting_file
         self.settings_dict = {}
-        
-        self.load_settings()
+
+        # Load defaults, then override with more specific values
+        self.load_settings(self.defaults_filename)
+        self.load_settings(self.setting_filename)
     
     # Load settings (normally called by constructor)
-    # filename can be specified to load alternative file
-    def load_settings (self, filename=None):
+    # filename required
+    def load_settings (self, filename):
         if filename == None:
-            filename = self.setting_filename
+            return
         full_path = self.data_dir / filename
         try:
             with open(full_path, 'r') as data_file:
-                self.settings_dict = json.load(data_file)
-        except OSError:
-            print (f"No settings file '{filename}' using default values")
+                # Store as new dict before merging with existing
+                new_settings = json.load(data_file)
+                self._merge_settings(new_settings)
+        except FileNotFoundError:
+            print(f"Warning: The file '{filename}' was not found.")
+            
+        except json.JSONDecodeError as e:
+            print(f"Warning: The file '{filename}' is corrupt (Details: {e})")
+            
+        except PermissionError:
+            print(f"Warning: Permission denied when trying to read '{filename}'.")
         
-    # Returns True is successful save
+    # Returns True if successful save
+    # Defaults to the standard settings file
     def save_settings (self, filename=None):
         self.update_settings ()		# Read in any settings that may have changed
         if filename == None:
@@ -69,3 +81,35 @@ class Settings:
         if isinstance (setting_value, dict) and sub_setting_str != None:
             return setting_value.get(sub_setting_str, None)
         return setting_value
+
+    def get_url(self):
+        """Get's the entire URL this combines the settings
+        server.protocol, server.hostname, server.port into a 
+        single url formatted string"""
+        protocol = self.get_setting("server", "protocol")
+        hostname = self.get_setting("server", "hostname")
+        port = self.get_setting("server", "port")
+        return (f"{protocol}://{hostname}:{port}/")
+
+    def _merge_settings(self, new_settings):
+            """ Used by load settings to merge the new entries
+            into the existing settings dict. Allows dict to be 
+            2 levels deep and merge sub items"""
+
+            for key, value in new_settings.items():
+                # Check if the key exists AND the existing value is a dictionary
+                if key in self.settings_dict and isinstance(self.settings_dict[key], dict):
+                    
+                    # If the incoming value is NOT a dictionary, raise an error
+                    if not isinstance(value, dict):
+                        raise ValueError(
+                            f"Type mismatch for setting '{key}': expected a dictionary, "
+                            f"but got {type(value).__name__}."
+                        )
+                    
+                    # Both are dictionaries, so merge them
+                    self.settings_dict[key].update(value)
+                else:
+                    # Otherwise, it's a new key or replacing a standard value
+                    self.settings_dict[key] = value
+                

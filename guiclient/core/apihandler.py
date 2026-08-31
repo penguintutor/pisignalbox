@@ -18,6 +18,8 @@ class ApiHandler(QObject):
         self.url = url
         self.api_key = api_key
        
+        logger.debug (f"APiHandler URL {self.url}")
+
         # Keep alive timer must run on mainwindow and must be started / stopped using signals
         
         # Queue to hold commands as they are sent from the queue
