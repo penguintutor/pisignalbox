@@ -6,7 +6,7 @@ import logging, os
 import random
 import string
 import secrets
-from .models import User
+from .models import db, User
 
 # Create App and enable login manager for user authentication
 
@@ -14,25 +14,37 @@ from .models import User
 # This allows the decorator to be used anywhere in this file.
 login_manager = LoginManager()
 
-# Manage users
-#user_manager = UserManager
+
 
 # Callback function from LoginManager
 @login_manager.request_loader
 def load_user_from_request(request):
     api_key = request.headers.get('X-API-Key')
-    server_api_key = current_app.config.get("api_key")
+    #API key moved to DB
+    #server_api_key = current_app.config.get("api_key")
 
     # If no api_key received then ignore request
     if not api_key:
         # Don't print due to possible false requests
         return None
-    if api_key == server_api_key:
-        return User("system_application")
-    else: 
+    # get database user based on API key
+    user = db.session.execute(
+            db.select(User).filter_by(api_key=api_key)
+        ).scalar_one_or_none()
+
+    if user != None:
+        return user
+    else:
         # if API key included but invalid print a warning
         print ("Client connected with invalid API key")
     return None
+
+@login_manager.user_loader
+def load_user(user_id):
+    # Flask-Login passes the user_id as a string from the session cookie.
+    # We cast it to an int because our database primary key is an Integer.
+    # db.session.get() is the modern SQLAlchemy way to fetch by primary key.
+    return db.session.get(User, int(user_id))
 
 @login_manager.unauthorized_handler
 def unauthorized():
@@ -63,6 +75,15 @@ def create_app(config):
         )
 
     app.config.update(config)
+
+    # Bind the SQLAlchemy object to this app instance
+    db.init_app(app)
+
+#    # If first run then create the db
+#    # if they don't exist yet before processing the first request.
+#    with app.app_context():
+#        db.create_all()
+# DB creation handled by setup_auth.py
 
 
 ## This can be used for debugging if required
@@ -103,6 +124,9 @@ def create_app(config):
     # without needing a web session token
     # Only allowed where api key is used where csrf protection not required
     csrf.exempt(api_blueprint) # NOSONAR
+
+    with app.app_context():
+        db.create_all()
 
     return app
     

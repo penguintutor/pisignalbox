@@ -31,6 +31,7 @@ Additional libraries are required to install using virtual environment (recommen
     pip install flask
     pip install flask_login
     pip install flask.wtf
+    pip install Flask-SQLAlchemy
     pip install json5
     pip install pyserial
 
@@ -40,43 +41,29 @@ Then clone this repository onto your computer. You can use the GitHub download o
 
     git clone https://github.com/penguintutor/pisignalbox.git ~/pisignalbox
 
-### Adding API-Key
+### Adding Users and API-Key
 
-For security reasons you must add a secure API key to both the
-server and client. This needs to be identical.
+To use the web interface then a username needs to be setup first.
 
-For the client add it to guiclient/data/settings.json
-If the file doesn't exist already the file should have:
+To use the GUI client then an API key is needed.
 
-```json
-{
-	"server": {
-		"api_key": "INSERT LONG API KEY HERE - random string"
-	}
-}
-```
+These are setup using 
 
-For the server it should be stored in vlcbserver/server.json
+    setup/setup_auth.py
 
-```json
-{
-    // Set the API key
-    "api_key": "INSERT LONG API KEY HERE - random string"
-}
-```
+It is an interactive CLI which prompts for the details. 
 
-Note the server includes comments, but they are not allowed in the guiclient file. Also note the lack of "server" top level in the 
-server.json file. 
+For security reasons a strong password should be used and when creating an API key it should be 32 alpha-numeric characters. 
 
+Any users created using the setup script will have administrator privileges. The same applies to the API. 
 
 # Upgrade September 2026
 
 Another major refactoring has moved the file structure. If you
 are upgrading from an older version move the files in your data folder to guiclient/data/
 
-For security reasons the server now needs an api_key which must 
-match the client. At the moment this must be manually edited, but
-in future this will be added to the GUI config.
+For security reasons the server now needs an api_key which must match the client. This can be setup using 
+    setup/setup_auth.py
 
 
 # Upgrade July 2026

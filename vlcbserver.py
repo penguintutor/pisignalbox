@@ -11,7 +11,7 @@ import logging
 import vlcbserver
 from vlcbserver import create_app
 import vlcbserver.requests
-from vlcbserver.vlcb_bridge import command_queue, add_sensor_update, cleanup_sensor_data
+from vlcbserver.vlcb_bridge import command_queue, add_sensor_update, cleanup_sensor_data, sensor_data
 # Uses json5 to allow comments in the config file
 import json5
 from pathlib import Path
@@ -20,14 +20,20 @@ import queue
 
 # --- Configuration Paths ---
 # Find the directory where this script lives, then append the subdirectory
-SCRIPT_DIR = Path(__file__).resolve().parent
-CONFIG_DIR = SCRIPT_DIR / "vlcbserver"
+BASE_DIR = Path(__file__).resolve().parent
+CONFIG_DIR = BASE_DIR / "vlcbserver"
 
 # These are the config files - fixed filenames
 # Future: could have an option to call a different filename but not
 # supported at the moment
 DEFAULT_SETTINGS = CONFIG_DIR / "defaults.json"
 CUSTOM_SETTINGS = CONFIG_DIR / "server.json"
+
+# Database is in the instances directory - holds user details etc.
+INSTANCE_DIR = BASE_DIR / 'instances'
+DATABASE_PATH = INSTANCE_DIR / 'users.db'
+
+INSTANCE_DIR.mkdir(parents=True, exist_ok=True)
 
 # Configure logging for the entire application
 logging.basicConfig(level=logging.ERROR) 
@@ -133,13 +139,25 @@ def _run_connected_loop(usb, config):
 
 
 def _send_outgoing_messages(usb):
-    """Flushes the outgoing message queue to the USB device."""
-    while len(vlcbserver.messages) > 0:
-        this_message = vlcbserver.messages.pop(0)
-        usb.send_data(this_message)
-        
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        vlcbserver.data.append(f"{timestamp},o,{this_message}")
+    """Sends the outgoing message queue to the USB device.
+    Keeps sending whilst there are messages to send
+    - sending is higher priority than receiving """
+    
+    while True:
+        try:
+            # Attempt to grab a message without waiting
+            cmd = command_queue.get_nowait()  
+            
+            # Process the message here
+            usb.send_data(cmd)
+                    
+            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            add_sensor_update(f"{timestamp},o,{cmd}")
+            
+        except queue.Empty:
+            # If no messages waiting then return
+            return
+
 
 
 def _process_inbound_data(in_data):
@@ -172,6 +190,13 @@ if __name__ == "__main__":
     # Load the settings - using default filenames
     # could update to use commandline filenames in future if required
     config = load_settings(DEFAULT_SETTINGS, CUSTOM_SETTINGS)
+    # Add paths to config if required elsewhere
+    config.update({
+        # Flask-SQLAlchemy expects a URI string. Uses an f-string to inject the Path.
+        'SQLALCHEMY_DATABASE_URI': f"sqlite:///{DATABASE_PATH}",
+        # Disabling this saves memory and suppresses a warning
+        'SQLALCHEMY_TRACK_MODIFICATIONS': False,
+    })
 
     app = create_app(config)
 

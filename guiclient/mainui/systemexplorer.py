@@ -79,7 +79,7 @@ class SystemExplorer:
         node_item.setEditable(False)
         
         # Stash the ID in the item so clself._registry.get(("node", event.node_id))icks can find it later
-        node_item.setData(("node", node.node_id), Qt.UserRole)
+        node_item.setData(("node", node.node_id), Qt.ItemDataRole.UserRole)
         
         # Save to registry for instant updates later
         self._ui_registry[("node", node.node_id)] = node_item
@@ -100,7 +100,7 @@ class SystemExplorer:
         node_item.setEditable(False)
         
         # Stash the ID in the item so clself._registry.get(("node", event.node_id))icks can find it later
-        node_item.setData(("gui", node.node_id), Qt.UserRole)
+        node_item.setData(("gui", node.node_id), Qt.ItemDataRole.UserRole)
         
         # Save to registry for instant updates later
         self._ui_registry[("gui", node.node_id)] = node_item
@@ -122,7 +122,7 @@ class SystemExplorer:
 
         obj_item = QStandardItem(str(child_obj))
         obj_item.setEditable(False)
-        obj_item.setData(("gui_child", node_id, idx), Qt.UserRole)
+        obj_item.setData(("gui_child", node_id, idx), Qt.ItemDataRole.UserRole)
         
         # Register the specific EV for fast updates using the string ev_id
         self._ui_registry[("gui_child", node_id, idx)] = obj_item
@@ -136,7 +136,7 @@ class SystemExplorer:
         # Assuming VLCBev has a __str__ method, otherwise use f"EV {ev.ev_id}: {ev.state}"
         ev_item = QStandardItem(str(ev))
         ev_item.setEditable(False)
-        ev_item.setData(("ev", node_id, ev.ev_id), Qt.UserRole)
+        ev_item.setData(("ev", node_id, ev.ev_id), Qt.ItemDataRole.UserRole)
         
         # Register the specific EV for fast updates using the string ev_id
         self._obj_registry[("ev", node_id, ev.ev_id)] = ev_item
@@ -158,7 +158,7 @@ class SystemExplorer:
         """Handle clicks of the QTreeView"""
 
         # Enable custom context menus for right-clicks
-        self.tree_view.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.tree_view.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         
         # Connect Signals
         self.tree_view.clicked.connect(self._on_left_click)
@@ -281,7 +281,7 @@ class SystemExplorer:
         item = self.model.itemFromIndex(index)
         if not item:
             return None
-        lookup_key = item.data(Qt.UserRole)
+        lookup_key = item.data(Qt.ItemDataRole.UserRole)
                 
         # Get the actual object (not the ui QStandardItem)
         self.selected_node = self._obj_registry.get(lookup_key)
