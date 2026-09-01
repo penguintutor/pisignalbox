@@ -8,6 +8,7 @@ secret.cfg
 data/locos/*
 data/layout
 data/layouts/*
+instances/*
 
 # Lib is excluded as submodule
 lib/
