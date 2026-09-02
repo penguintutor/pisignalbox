@@ -1,20 +1,23 @@
+import sys
 from flask import Flask, current_app, request, jsonify, redirect, url_for
 from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.exc import OperationalError
+from sqlalchemy import inspect
 import time
 import logging, os
 import random
 import string
 import secrets
 from .models import db, User
+from .logging_config import setup_logging
 
 # Create App and enable login manager for user authentication
 
 # The login_manager is used as a decorator for requests for login
 # This allows the decorator to be used anywhere in this file.
 login_manager = LoginManager()
-
-
 
 # Callback function from LoginManager
 @login_manager.request_loader
@@ -32,11 +35,13 @@ def load_user_from_request(request):
             db.select(User).filter_by(api_key=api_key)
         ).scalar_one_or_none()
 
-    if user != None:
+    if user:
+        logging.info(f"AUTH SUCCESS (API): Token authenticated for user '{user.username}' from from {request.remote_addr}.")
         return user
     else:
-        # if API key included but invalid print a warning
-        print ("Client connected with invalid API key")
+        # if API key included but invalid then a warning
+        # as likely client / server misconfiguration 
+        logging.warning(f"AUTH FAIL (API): Invalid API token provided from from {request.remote_addr}.")
     return None
 
 @login_manager.user_loader
@@ -50,6 +55,9 @@ def load_user(user_id):
 def unauthorized():
     """Routes unauthenticated traffic based on what they asked for."""
     
+    # Log the IP and the endpoint they tried to access
+    logging.warning(f"AUTH FAIL (Unauthorized): Attempted access to '{request.path}' from {request.remote_addr}.")
+
     # Path A: The automated script forgot its API key
     if request.path.startswith('/api/'):
         # Return a strict machine-readable HTTP 401 error
@@ -76,15 +84,10 @@ def create_app(config):
 
     app.config.update(config)
 
+    setup_logging(app)
+
     # Bind the SQLAlchemy object to this app instance
     db.init_app(app)
-
-#    # If first run then create the db
-#    # if they don't exist yet before processing the first request.
-#    with app.app_context():
-#        db.create_all()
-# DB creation handled by setup_auth.py
-
 
 ## This can be used for debugging if required
     # @app.before_request
@@ -124,9 +127,6 @@ def create_app(config):
     # without needing a web session token
     # Only allowed where api key is used where csrf protection not required
     csrf.exempt(api_blueprint) # NOSONAR
-
-    with app.app_context():
-        db.create_all()
 
     return app
     

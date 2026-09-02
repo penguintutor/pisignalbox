@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import sys
+import os, sys
 from flask import Flask
 import threading
 import logging
@@ -19,6 +19,8 @@ import queue
 
 
 # --- Configuration Paths ---
+# These are in caps as constants, but some can be overwritten
+# by command line options or environment settings
 # Find the directory where this script lives, then append the subdirectory
 BASE_DIR = Path(__file__).resolve().parent
 CONFIG_DIR = BASE_DIR / "vlcbserver"
@@ -33,10 +35,22 @@ CUSTOM_SETTINGS = CONFIG_DIR / "server.json"
 INSTANCE_DIR = BASE_DIR / 'instances'
 DATABASE_PATH = INSTANCE_DIR / 'users.db'
 
-INSTANCE_DIR.mkdir(parents=True, exist_ok=True)
+# String for setup command - used to inform user how to add user
+SETUP_CMD = "setup/setup_auth.py"
+
+# Future: Consider overriding using config file or environment variables
+LOGLEVEL_CONSOLE = logging.WARNING
+LOGLEVEL_FILE = logging.INFO
+
+LOG_DIR = BASE_DIR / 'logs'
+LOG_PATH = LOG_DIR / 'vlcbserver.log'
 
 # Configure logging for the entire application
-logging.basicConfig(level=logging.ERROR) 
+#logging.basicConfig(level=logging.ERROR) 
+# Compromise warning 
+#logging.basicConfig(level=logging.WARNING) 
+# Add debugging at INFO and above
+# logging.basicConfig(level=logging.INFO) 
 
 ## Port now stored in the config file
 #port = '/dev/ttyACM0'
@@ -187,16 +201,39 @@ if __name__ == "__main__":
     parser.add_argument('-d', '--debug', action='store_true', help='Enable debug mode')
     args = parser.parse_args()
 
+    # LOG_PATH can be overwridden by environment setting 
+    env_log_dir = os.environ.get('APP_LOG_DIR', None)
+    if env_log_dir:
+        LOG_PATH = Path(env_log_dir) / 'vlcbserver.log'
+
     # Load the settings - using default filenames
     # could update to use commandline filenames in future if required
     config = load_settings(DEFAULT_SETTINGS, CUSTOM_SETTINGS)
+
     # Add paths to config if required elsewhere
     config.update({
         # Flask-SQLAlchemy expects a URI string. Uses an f-string to inject the Path.
         'SQLALCHEMY_DATABASE_URI': f"sqlite:///{DATABASE_PATH}",
         # Disabling this saves memory and suppresses a warning
         'SQLALCHEMY_TRACK_MODIFICATIONS': False,
+        # Log details
+        'LOG_PATH' : LOG_PATH,
+        'LOGLEVEL_CONSOLE': LOGLEVEL_CONSOLE,
+        'LOGLEVEL_FILE': LOGLEVEL_FILE
+
     })
+
+    # Check the database exists
+    # Doesn't check a user - that comes later in the create_app
+    if not DATABASE_PATH.exists():
+        print("ERROR: The database file does not exist.")
+        print(f"Please run the setup step {SETUP_CMD} before starting the app.")
+        sys.exit(1) # Halt application startup
+
+    # Create the log dir if not already exist - and it's local (not overridden with /var/log etc.)
+    if LOG_DIR == BASE_DIR / 'logs':
+        LOG_DIR.mkdir(exist_ok=True)
+
 
     app = create_app(config)
 

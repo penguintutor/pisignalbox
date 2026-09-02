@@ -12,6 +12,31 @@ from vlcbserver.vlcb_bridge import send_data, get_data
 from . import api_blueprint, web_blueprint
 
 # ==========================================
+# Shared Routes both web_blueprint and api_blueprint
+# ==========================================
+
+@web_blueprint.after_request
+@api_blueprint.after_request
+def log_http_request(response):
+    # Determine the user identity if they are logged in
+    if current_user.is_authenticated:
+        user_identity = current_user.username
+    else:
+        user_identity = "Anonymous"
+
+    # Format: IP_Address - User - METHOD /path - STATUS
+    log_message = f"{request.remote_addr} - {user_identity} - {request.method} {request.path} - {response.status_code}"
+
+    # Log 4xx and 5xx errors as warnings/errors, and 2xx/3xx as info
+    if response.status_code >= 400:
+        logging.warning(log_message)
+    else:
+        logging.info(log_message)
+
+    # You MUST return the response object in an after_request callback
+    return response
+
+# ==========================================
 # API Routes (No CSRF, requires API Key)
 # ==========================================
 
@@ -65,7 +90,15 @@ def main():
 
 @web_blueprint.route("/login", methods=['GET', 'POST'])
 def login():
+    
     return ("Login required")
+
+    # Add logging
+#    logging.info(f"AUTH SUCCESS (Web): User '{username}' logged in successfully from from {request.remote_addr}.")
+
+#    logging.warning(f"AUTH FAIL (Web): Failed login attempt for username '{username}' from from {request.remote_addr}.")
+#    return "Invalid credentials", 401
+
     # Start by setting ip address to the real address
     ip_address = get_ip_address()
     login_status = pixelserver.auth.auth_check(ip_address, session)
