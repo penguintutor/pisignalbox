@@ -1,6 +1,6 @@
 import time
 import re
-from flask import current_app, request, session, redirect, render_template
+from flask import current_app, flash, request, session, redirect, render_template, url_for
 from flask_login import LoginManager, UserMixin, login_user, login_required, current_user, logout_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from strip_tags import strip_tags
@@ -8,6 +8,7 @@ import threading
 import logging, os
 import vlcbserver
 from vlcbserver.vlcb_bridge import send_data, get_data
+from vlcbserver.models import User
 
 from . import api_blueprint, web_blueprint
 
@@ -40,6 +41,7 @@ def log_http_request(response):
 # API Routes (No CSRF, requires API Key)
 # ==========================================
 
+@web_blueprint.route("/vlcb", methods=['GET', 'POST'])
 @api_blueprint.route("/vlcb", methods=['GET', 'POST'])
 @login_required
 def vlcb_request():
@@ -49,21 +51,15 @@ def vlcb_request():
 # Web Routes (CSRF Protected, requires Session)
 # ==========================================
 
-# @web_blueprint.route("/", methods=['GET', 'POST'])
-# def test():
-#     usb_port = current_app.config.get('usb_port')
-#     return_string = f"USB port {usb_port}"
-#     return return_string
 
 #/vlcb?read=<id of first data packet>&format=txt&[&end=<id last packet to retrieve]
 #/vlcb?send=<string of send request>&format=txt
 
-@web_blueprint.route("/vlcb", methods=['GET', 'POST'])
-@login_required
-def vlcb_request():
-    return process_vlcb_logic()
+# @web_blueprint.route("/vlcb", methods=['GET', 'POST'])
+# @login_required
+# def vlcb_request():
+#     return process_vlcb_logic()
     
-
 
 @web_blueprint.route("/", methods=['GET', 'POST'])
 @web_blueprint.route("/home", methods=['GET', 'POST'])
@@ -88,210 +84,207 @@ def main():
     # else:   # login required
     #     return redirect('/login')
 
+@web_blueprint.route("/profile", methods=['GET', 'POST'])
+@login_required
+def profile():
+    return render_template('profile.html', hello="Profile")
+
 @web_blueprint.route("/login", methods=['GET', 'POST'])
 def login():
-    
-    return ("Login required")
+    """User login page using Flask-SQLAlchemy."""
+    # If the user is already logged in, skip the login page
+    if current_user.is_authenticated:
+        return redirect(url_for('web.home'))
 
-    # Add logging
-#    logging.info(f"AUTH SUCCESS (Web): User '{username}' logged in successfully from from {request.remote_addr}.")
-
-#    logging.warning(f"AUTH FAIL (Web): Failed login attempt for username '{username}' from from {request.remote_addr}.")
-#    return "Invalid credentials", 401
-
-    # Start by setting ip address to the real address
-    ip_address = get_ip_address()
-    login_status = pixelserver.auth.auth_check(ip_address, session)
-    # check not an unauthorised network
-    if login_status == "invalid":
-        return redirect('/invalid')
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        if (pixelserver.auth.login_user(username, password, ip_address) == True):
-            # create session
-            session['username'] = username
-            return redirect('/')
-        return render_template('login.html', message='Invalid login attempt')
-    # New visit to login page
-    # Check if user file exists, otherwise give warning message
-    # If another error is received then that will override this, but should not be
-    # an issue as this warning should only ever be seen on first attempt before
-    # users.cfg is created.
-    if (not pixelserver.auth.user_file_exists):
-        return render_template('login.html', message='No users defined or missing users file. Run createadmin.py through the shell to setup an admin user.')
-    else:
-        return render_template('login.html')
+        username = request.form.get('username', '')
+        password = request.form.get('password', '')
+
+        ## If either username or password are blank then fail
+        if (username != '' and password != ''):
+            
+            # Query the SQLAlchemy database for the user
+            user = User.query.filter_by(username=username).first()
+        
+            if user and check_password_hash(user.password_hash, password):
+                login_user(user)
+                next_page = request.args.get('next')
+                return redirect(next_page or url_for('web.home'))
+                
+            flash("Invalid username or password.")
+            return redirect(url_for('web.login'))
+
+    # Serve the HTML file from the template folder
+    return render_template('login.html')
+
+
     
 @web_blueprint.route("/logout", methods=['GET', 'POST'])
+@login_required
 def logout():
-    if 'username' in session:
-        username = session['username']
-        logging.info("User logged out "+username)
-    # pop off the session even if not logged in
-    session.pop('username', None)
-    return render_template('login.html', message="Logged out")
+    logout_user()
+    return redirect(url_for('web.login'))
     
 # admin and settings only available to logged in users regardless of 
 # network status
-@web_blueprint.route("/settings", methods=['GET', 'POST'])
-def settings():
-    authorized = pixelserver.auth.check_permission_admin (get_ip_address(), session)
-    if authorized != 'admin':
-        if (authorized == "invalid"):
-            # not allowed even if logged in
-            return redirect('/invalid')
-        # needs to login
-        if (authorized == "login"):
-            return redirect('/login')
-        # Last option is "notadmin"
-        # If trying to do admin, but not an admin then we log them off
-        # before allowing them to login again
-        session.pop('username', None)
-        return render_template('login.html', message='Admin permissions required')
+# @web_blueprint.route("/settings", methods=['GET', 'POST'])
+# def settings():
+#     authorized = pixelserver.auth.check_permission_admin (get_ip_address(), session)
+#     if authorized != 'admin':
+#         if (authorized == "invalid"):
+#             # not allowed even if logged in
+#             return redirect('/invalid')
+#         # needs to login
+#         if (authorized == "login"):
+#             return redirect('/login')
+#         # Last option is "notadmin"
+#         # If trying to do admin, but not an admin then we log them off
+#         # before allowing them to login again
+#         session.pop('username', None)
+#         return render_template('login.html', message='Admin permissions required')
     
-    # Reach here logged in as an admin user - update settings and/or display setting options
-    username = session['username']
-    status_msg = ""
+#     # Reach here logged in as an admin user - update settings and/or display setting options
+#     username = session['username']
+#     status_msg = ""
     
-    if request.method == 'POST':
+#     if request.method == 'POST':
         
-        update_dict = {}
+#         update_dict = {}
         
-        # process the form - validate all parameters
-        # Read into separate values to validate all before updating
-        for key, value in request.form.items():
-            # skip csrf token
-            if key == "csrf_token":
-                continue
-            (status, temp_value) = pixelserver.pixel_conf.validate_parameter(key, value)
-            # If we get an error at any point - don't save and go back to 
-            # showing current status
-            if (status == False):
-                status_msg = temp_value
-                break
-            # Save this for updating values - use returned value
-            # in case it's been sanitised (only certain types are)
-            update_dict[key] = temp_value
+#         # process the form - validate all parameters
+#         # Read into separate values to validate all before updating
+#         for key, value in request.form.items():
+#             # skip csrf token
+#             if key == "csrf_token":
+#                 continue
+#             (status, temp_value) = pixelserver.pixel_conf.validate_parameter(key, value)
+#             # If we get an error at any point - don't save and go back to 
+#             # showing current status
+#             if (status == False):
+#                 status_msg = temp_value
+#                 break
+#             # Save this for updating values - use returned value
+#             # in case it's been sanitised (only certain types are)
+#             update_dict[key] = temp_value
             
-        # special case any checkboxes are only included if checked
-        if not ("ledinvert" in request.form.keys()):
-            update_dict["ledinvert"] = False
+#         # special case any checkboxes are only included if checked
+#         if not ("ledinvert" in request.form.keys()):
+#             update_dict["ledinvert"] = False
             
                 
-        # As long as no error save
-        if (status_msg == ""):
-            for key,value in update_dict.items():
-                if (pixelserver.pixel_conf.update_parameter(key, value) == False): 
-                    status_msg = "Error updating settings"
-                    logging.info("Error updating settings by "+username)
+#         # As long as no error save
+#         if (status_msg == ""):
+#             for key,value in update_dict.items():
+#                 if (pixelserver.pixel_conf.update_parameter(key, value) == False): 
+#                     status_msg = "Error updating settings"
+#                     logging.info("Error updating settings by "+username)
                     
-        # Check no error and if so then save
-        if not pixelserver.pixel_conf.save_settings():
-            status_msg = "Error saving custom config file"
-            logging.info("Error saving custom config file")
+#         # Check no error and if so then save
+#         if not pixelserver.pixel_conf.save_settings():
+#             status_msg = "Error saving custom config file"
+#             logging.info("Error saving custom config file")
             
                     
-        # As long as still no error then report success
-        if (status_msg == ""):
-            status_msg = "Updates saved"
-            logging.info("Settings updated by "+username)
+#         # As long as still no error then report success
+#         if (status_msg == ""):
+#             status_msg = "Updates saved"
+#             logging.info("Settings updated by "+username)
             
     
-    settingsform = pixelserver.pixel_conf.to_html_form()
-    # This passes html to the template so turn off autoescaping in the template eg. |safe
-    return render_template('settings.html', user=username, admin=True, form=settingsform, message=status_msg)
+#     settingsform = pixelserver.pixel_conf.to_html_form()
+#     # This passes html to the template so turn off autoescaping in the template eg. |safe
+#     return render_template('settings.html', user=username, admin=True, form=settingsform, message=status_msg)
 
 
-# profile - can view own profile and change password etc
-@web_blueprint.route("/profile", methods=['GET', 'POST'])
-def profile():
-    ip_address = get_ip_address()
-    # Status msg for feedback to user
-    status_msg = ""
-    # Authentication first
-    login_status = pixelserver.auth.auth_check(ip_address, session)
-    # not allowed even if logged in
-    if login_status == "invalid":
-        return redirect('/invalid')
-    # Network approval not sufficient for profile - must be logged in
-    # If not approved then issue login page
-    if not (login_status == "logged_in") :
-        return redirect('/login')
-    # Reach here then this is logged in
-    username = session['username']
-    #get any messages
-    status_msg = ""
-    if 'msg' in request.args.keys():
-        status_msg = request.args['msg']
-        # strip tags from status message
-        status_msg = strip_tags(status_msg)
-        #status_msg = Markup(status_msg).striptags()
-    # Create user_admin object as needed shortly
-    #user_admin = ServerUserAdmin(pixelserver.auth_users_filename, pixelserver.pixel_conf.get_value('algorithm'))
-    # get admin to determine if settings menu is displayed
-    is_admin = pixelserver.auth.check_admin(username)
-    profile_form = user_admin.html_view_profile(username)
-    return render_template('profile.html', user=username, admin=is_admin, form=profile_form, message=status_msg)
+# # profile - can view own profile and change password etc
+# @web_blueprint.route("/profile", methods=['GET', 'POST'])
+# def profile():
+#     ip_address = get_ip_address()
+#     # Status msg for feedback to user
+#     status_msg = ""
+#     # Authentication first
+#     login_status = pixelserver.auth.auth_check(ip_address, session)
+#     # not allowed even if logged in
+#     if login_status == "invalid":
+#         return redirect('/invalid')
+#     # Network approval not sufficient for profile - must be logged in
+#     # If not approved then issue login page
+#     if not (login_status == "logged_in") :
+#         return redirect('/login')
+#     # Reach here then this is logged in
+#     username = session['username']
+#     #get any messages
+#     status_msg = ""
+#     if 'msg' in request.args.keys():
+#         status_msg = request.args['msg']
+#         # strip tags from status message
+#         status_msg = strip_tags(status_msg)
+#         #status_msg = Markup(status_msg).striptags()
+#     # Create user_admin object as needed shortly
+#     #user_admin = ServerUserAdmin(pixelserver.auth_users_filename, pixelserver.pixel_conf.get_value('algorithm'))
+#     # get admin to determine if settings menu is displayed
+#     is_admin = pixelserver.auth.check_admin(username)
+#     profile_form = user_admin.html_view_profile(username)
+#     return render_template('profile.html', user=username, admin=is_admin, form=profile_form, message=status_msg)
 
-@web_blueprint.route("/password", methods=['GET', 'POST'])
-def password():
-    ip_address = get_ip_address()
-    # Status msg for feedback to user
-    status_msg = ""
-    # Authentication first
-    login_status = pixelserver.auth.auth_check(ip_address, session)
-    # not allowed even if logged in
-    if login_status == "invalid":
-        return redirect('/invalid')
-    # Network approval not sufficient for profile - must be logged in
-    # If not approved then issue login page
-    if not (login_status == "logged_in") :
-        return redirect('/login')
-    # Reach here then this is logged in
-    username = session['username']
-    # logged in and have username so allow to change password
-    user_admin = ServerUserAdmin(pixelserver.auth_users_filename, pixelserver.pixel_conf.get_value('algorithm'))
-    # Is user admin - check for top menu only doesn't change what can be done here
-    is_admin = pixelserver.auth.check_admin(username)
-    password_form = user_admin.html_change_password()
-    if request.method == 'POST':
-        # first check existing password
-        if (not 'currentpassword' in request.form):
-            return render_template('password.html', user=username, admin=is_admin, form=password_form, message="Invalid request")
-        if (not user_admin.check_username_password(username, request.form['currentpassword'])):
-            return render_template('password.html', user=username, admin=is_admin, form=password_form, message="Incorrect username / password")
-        # Now check that repeat is same
-        if (not 'newpassword' in request.form) or (not 'repeatpassword' in request.form) or request.form['newpassword'] != request.form['repeatpassword']:
-            return render_template('password.html', user=username, admin=is_admin, form=password_form, message="New passwords do not match")
-        new_password = request.form['newpassword']
-        # check password is valid (meets rules)
-        result = user_admin.validate_password(new_password)
-        if result[0] != True:
-            return render_template('password.html', user=username, admin=is_admin, form=password_form, message=result[1])
-        # passed tests so set new password
-        user_admin.change_password(username, new_password)
-        user_admin.save_users()
-        logging.info("Password changed by "+username)
-        # redirects to profile
-        return redirect('profile?msg=Password changed')
+# @web_blueprint.route("/password", methods=['GET', 'POST'])
+# def password():
+#     ip_address = get_ip_address()
+#     # Status msg for feedback to user
+#     status_msg = ""
+#     # Authentication first
+#     login_status = pixelserver.auth.auth_check(ip_address, session)
+#     # not allowed even if logged in
+#     if login_status == "invalid":
+#         return redirect('/invalid')
+#     # Network approval not sufficient for profile - must be logged in
+#     # If not approved then issue login page
+#     if not (login_status == "logged_in") :
+#         return redirect('/login')
+#     # Reach here then this is logged in
+#     username = session['username']
+#     # logged in and have username so allow to change password
+#     user_admin = ServerUserAdmin(pixelserver.auth_users_filename, pixelserver.pixel_conf.get_value('algorithm'))
+#     # Is user admin - check for top menu only doesn't change what can be done here
+#     is_admin = pixelserver.auth.check_admin(username)
+#     password_form = user_admin.html_change_password()
+#     if request.method == 'POST':
+#         # first check existing password
+#         if (not 'currentpassword' in request.form):
+#             return render_template('password.html', user=username, admin=is_admin, form=password_form, message="Invalid request")
+#         if (not user_admin.check_username_password(username, request.form['currentpassword'])):
+#             return render_template('password.html', user=username, admin=is_admin, form=password_form, message="Incorrect username / password")
+#         # Now check that repeat is same
+#         if (not 'newpassword' in request.form) or (not 'repeatpassword' in request.form) or request.form['newpassword'] != request.form['repeatpassword']:
+#             return render_template('password.html', user=username, admin=is_admin, form=password_form, message="New passwords do not match")
+#         new_password = request.form['newpassword']
+#         # check password is valid (meets rules)
+#         result = user_admin.validate_password(new_password)
+#         if result[0] != True:
+#             return render_template('password.html', user=username, admin=is_admin, form=password_form, message=result[1])
+#         # passed tests so set new password
+#         user_admin.change_password(username, new_password)
+#         user_admin.save_users()
+#         logging.info("Password changed by "+username)
+#         # redirects to profile
+#         return redirect('profile?msg=Password changed')
         
-    else:
-        return render_template('password.html', user=username, admin=is_admin, form=password_form)
+#     else:
+#         return render_template('password.html', user=username, admin=is_admin, form=password_form)
     
-@web_blueprint.route("/newuser", methods=['GET', 'POST'])
-def newuser():
-    authorized = pixelserver.auth.check_permission_admin (get_ip_address(), session)
-    if authorized != 'admin':
-        if (authorized == "invalid"):
-            # not allowed even if logged in
-            return redirect('/invalid')
-        # needs to login
-        if (authorized == "login"):
-            return redirect('/login')
-        # Last option is "notadmin"
-        # If trying to do admin, but not an admin then we log them off
-        # before allowing import time
+# @web_blueprint.route("/newuser", methods=['GET', 'POST'])
+# def newuser():
+#     authorized = pixelserver.auth.check_permission_admin (get_ip_address(), session)
+#     if authorized != 'admin':
+#         if (authorized == "invalid"):
+#             # not allowed even if logged in
+#             return redirect('/invalid')
+#         # needs to login
+#         if (authorized == "login"):
+#             return redirect('/login')
+#         # Last option is "notadmin"
+#         # If trying to do admin, but not an admin then we log them off
+#         # before allowing import time
 
 # ==========================================
 # Helper methods - not routes
