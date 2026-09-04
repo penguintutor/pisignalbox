@@ -5,69 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pi SignalBox - Login</title>
     <link rel="stylesheet" href="{{ url_for('web.static', filename='pisignalbox.css') }}" />
-    
-    <!-- Login specific styles (You can move this into pisignalbox.css) -->
-    <style>
-        .login-wrapper {
-            display: flex;
-            justify-content: center;
-            margin-top: 2rem;
-        }
-        .login-panel {
-            background-color: #f9f9f9;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 2rem;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .login-panel h2 {
-            margin-top: 0;
-            text-align: center;
-            color: #333;
-        }
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: bold;
-        }
-        .form-group input[type="text"],
-        .form-group input[type="password"] {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-            font-size: 1rem;
-        }
-        .login-btn {
-            width: 100%;
-            padding: 0.75rem;
-            background-color: #0056b3; /* Adjust to match your theme */
-            color: white;
-            border: none;
-            border-radius: 4px;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .login-btn:hover {
-            background-color: #004494;
-        }
-        .flash-message {
-            background-color: #f8d7da;
-            color: #721c24;
-            padding: 1rem;
-            border-radius: 4px;
-            margin-bottom: 1.5rem;
-            text-align: center;
-            border: 1px solid #f5c6cb;
-        }
-    </style>
 </head>
 <body>
 
@@ -80,7 +17,7 @@
 
     <main>
         <div class="banner-container">
-            <img src="{{ url_for('web.static', filename='pisignalbox-banner01.png') }}" alt="Pi SignalBox - Python GUI / Virtual Signal Box / Loco Control / Automation">
+            <img src="{{ url_for('web.static', filename='pisignalbox-banner-small-01.png') }}" alt="Pi SignalBox - Python GUI / Virtual Signal Box / Loco Control / Automation">
         </div>
 
         <div class="login-wrapper">
@@ -96,7 +33,7 @@
                   {% endif %}
                 {% endwith %}
 
-                <form method="POST" action="{{ url_for('web.login') }}">
+                <form method="POST" action="{{ url_for('web.login', next=request.args.get('next')) }}">
                     <!-- Required for Flask-WTF CSRF protection -->
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     

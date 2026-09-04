@@ -22,6 +22,10 @@ import queue
 # These are in caps as constants, but some can be overwritten
 # by command line options or environment settings
 # Find the directory where this script lives, then append the subdirectory
+
+## NOTE these are duplicated in setup scripts, if updated here
+## similar changes may be needed in that script
+
 BASE_DIR = Path(__file__).resolve().parent
 CONFIG_DIR = BASE_DIR / "vlcbserver"
 
@@ -236,6 +240,8 @@ if __name__ == "__main__":
 
 
     app = create_app(config)
+
+    logging.info ("*** Application Start ***")
 
     # run as two threads - main thread and flask thread
     # Set daemon=True. This tells Python: "If the main script exits, 

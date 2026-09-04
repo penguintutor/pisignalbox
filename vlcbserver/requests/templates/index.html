@@ -1,3 +1,4 @@
+{% from "macros.html" import render_user_menu %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -20,19 +21,13 @@
         </div>
 
         <div class="user-menu">
-            <button class="user-button">
-                👤 stewart_w ▼
-            </button>
-            <div class="dropdown-content">
-                <a href="/profile">User Profile</a>
-                <a href="/logout">Logout</a>
-            </div>
+            {{ render_user_menu(current_user) }}
         </div>
     </header>
 
     <main>
         <div class="banner-container">
-            <img src="{{ url_for('web.static', filename='pisignalbox-banner01.png') }}" alt="Pi SignalBox - Python GUI / Virtual Signal Box / Loco Control / Automation">
+            <img src="{{ url_for('web.static', filename='pisignalbox-banner-01.png') }}" alt="Pi SignalBox - Python GUI / Virtual Signal Box / Loco Control / Automation">
         </div>
 
         <div class="app-nav">

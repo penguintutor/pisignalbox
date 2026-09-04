@@ -2,22 +2,34 @@ import sys
 import json
 import getpass
 import secrets
+import logging
 from pathlib import Path
 from werkzeug.security import generate_password_hash
 
 # Resolve paths relative to this script's location in setup/
 SETUP_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = SETUP_DIR.parent
+BASE_DIR = SETUP_DIR.parent
+
+# Database is in the instances directory - holds user details etc.
+INSTANCE_DIR = BASE_DIR / 'instances'
+DATABASE_PATH = INSTANCE_DIR / 'users.db'
+
+# Future: Consider overriding using config file or environment variables
+LOGLEVEL_CONSOLE = logging.WARNING
+LOGLEVEL_FILE = logging.INFO
+
+LOG_DIR = BASE_DIR / 'logs'
+LOG_PATH = LOG_DIR / 'vlcbserver.log'
 
 # Add the project root to sys.path so Python can find 'vlcbserver'
-sys.path.insert(0, str(PROJECT_ROOT))
+sys.path.insert(0, str(BASE_DIR))
 
 # Now we can safely import the app factory and database models
 from vlcbserver import create_app
 from vlcbserver.models import db, User
 
-# Update our file paths to start from the PROJECT_ROOT instead of BASE_DIR
-SETTINGS_FILE = PROJECT_ROOT / 'guiclient' / 'data' / 'settings.json'
+# Update our file paths to start from the BASE_DIR instead of BASE_DIR
+SETTINGS_FILE = BASE_DIR / 'guiclient' / 'data' / 'settings.json'
 
 def create_user():
     print("\n--- Create New User ---")
@@ -98,16 +110,24 @@ def main():
     print("Initializing setup...")
 
     # Define the instances directory
-    INSTANCE_DIR = PROJECT_ROOT / 'instances'
+    INSTANCE_DIR = BASE_DIR / 'instances'
     # CREATE the directory if it doesn't exist (This fixes the error)
     INSTANCE_DIR.mkdir(parents=True, exist_ok=True)
+
+    config = {}
     
-    # We pass the minimal config needed to initialize the DB connection,
-    # ensuring the database is created in the main project's instances folder
-    config = {
-'SQLALCHEMY_DATABASE_URI': f"sqlite:///{INSTANCE_DIR / 'users.db'}",
-        'SQLALCHEMY_TRACK_MODIFICATIONS': False
-    }
+    # Add paths to config if required elsewhere
+    config.update({
+        # Flask-SQLAlchemy expects a URI string. Uses an f-string to inject the Path.
+        'SQLALCHEMY_DATABASE_URI': f"sqlite:///{DATABASE_PATH}",
+        # Disabling this saves memory and suppresses a warning
+        'SQLALCHEMY_TRACK_MODIFICATIONS': False,
+        # Log details
+        'LOG_PATH' : LOG_PATH,
+        'LOGLEVEL_CONSOLE': LOGLEVEL_CONSOLE,
+        'LOGLEVEL_FILE': LOGLEVEL_FILE
+
+    })
     
     app = create_app(config)
     
