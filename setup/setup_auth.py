@@ -33,26 +33,38 @@ SETTINGS_FILE = BASE_DIR / 'guiclient' / 'data' / 'settings.json'
 
 def create_user():
     print("\n--- Create New User ---")
-    username = input("Username: ").strip()
-    if not username:
-        print("Error: Username cannot be empty.")
-        return
+    # Keep asking for a username until valid
+    while True:
+        username = input("Username: ").strip()
+        if not username:
+            print("Error: Username cannot be empty.")
+            continue
 
-    # Check for duplicate username
-    existing_user = db.session.execute(db.select(User).filter_by(username=username)).scalar_one_or_none()
-    if existing_user:
-        print(f"Error: User '{username}' already exists in the database.")
-        return
+        # Check for duplicate username
+        existing_user = db.session.execute(db.select(User).filter_by(username=username)).scalar_one_or_none()
+        if existing_user:
+            print(f"Error: User '{username}' already exists in the database.")
+        else:
+            break
 
-    password = getpass.getpass("Password: ")
-    confirm_password = getpass.getpass("Confirm Password: ")
+        # If user was not valid then keep looping until it is 
+        
+    # Keep asking for a password until valid
+    while True:
+        password = getpass.getpass("Password: ")
+        confirm_password = getpass.getpass("Confirm Password: ")
 
-    if password != confirm_password:
-        print("Error: Passwords do not match.")
-        return
+        if password == confirm_password:
+            break
+        else:
+            print("Error: Passwords do not match.")
+            continue # NOSONAR - explicit guard for future loop expansions 
+
+        # Future: Check for valid password here - eg. min chars?
 
     password_hash = generate_password_hash(password)
-    new_user = User(username=username, password_hash=password_hash) # type: ignore
+    # User is added as an admin so can manage other users
+    new_user = User(username=username, password_hash=password_hash, role="admin") # type: ignore
     
     db.session.add(new_user)
     db.session.commit()
@@ -70,7 +82,7 @@ def create_api_key():
     
     if not user:
         print(f"User '{username}' not found. Creating as an API-only system user...")
-        user = User(username=username, password_hash="SYSTEM_API_USER_NO_PASSWORD") # type: ignore
+        user = User(username=username, password_hash="SYSTEM_API_USER_NO_PASSWORD", role="api-manager") # type: ignore
         db.session.add(user)
 
     custom_key = input("Enter API key (leave blank to auto-generate securely): ").strip()
@@ -136,19 +148,14 @@ def main():
         db.create_all()
         print("Database connection verified.")
 
-        while True:
-            ans = input("\nWould you like to create a new user? [y/N]: ").strip().lower()
-            if ans == 'y':
-                create_user()
-            else:
-                break
+        # Create up to 1 user and 1 api key
+        ans = input("\nWould you like to create a new user? [y/N]: ").strip().lower()
+        if ans == 'y':
+            create_user()
                 
-        while True:
-            ans = input("\nWould you like to create/update an API key? [y/N]: ").strip().lower()
-            if ans == 'y':
-                create_api_key()
-            else:
-                break
+        ans = input("\nWould you like to create/update an API key? [y/N]: ").strip().lower()
+        if ans == 'y':
+            create_api_key()
                 
         print("\nSetup complete. Exiting.")
 

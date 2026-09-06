@@ -10,12 +10,10 @@ import logging, os
 import vlcbserver
 from vlcbserver.vlcb_bridge import send_data, get_data
 from vlcbserver.models import User
+from vlcbserver.utils import role_required
 
 from . import api_blueprint, web_blueprint
 
-# ==========================================
-# Shared Routes both web_blueprint and api_blueprint
-# ==========================================
 
 @web_blueprint.after_request
 @api_blueprint.after_request
@@ -24,7 +22,7 @@ def log_http_request(response):
     if current_user.is_authenticated:
         user_identity = current_user.username
     else:
-        user_identity = "Anonymous"
+        user_identity = "Guest"
 
     # Format: IP_Address - User - METHOD /path - STATUS
     path_with_args = request.full_path.rstrip('?')
@@ -42,6 +40,13 @@ def log_http_request(response):
 # ==========================================
 # API Routes (No CSRF, requires API Key)
 # ==========================================
+
+
+
+# ==========================================
+# Shared Routes both web_blueprint and api_blueprint
+# ==========================================
+
 
 @web_blueprint.route("/vlcb", methods=['GET', 'POST'])
 @api_blueprint.route("/vlcb", methods=['GET', 'POST'])
@@ -90,6 +95,17 @@ def home():
 @login_required
 def profile():
     return render_template('profile.html', hello="Profile")
+
+@web_blueprint.app_errorhandler(403)
+def forbidden_error(error):
+    return render_template('403.html', message="You do not have permission to view this page."), 403
+
+@web_blueprint.route('/admin-dashboard')
+@login_required
+@role_required('admin')
+def admin_dashboard():
+    # Only users with role='admin' can see this
+    return render_template('admin.html')
 
 @web_blueprint.route("/login", methods=['GET', 'POST'])
 def login():

@@ -4,6 +4,18 @@ from flask_login import UserMixin
 
 db = SQLAlchemy()
 
+""" Roles:
+
+user - basic user view only
+operator - control trains
+manager - full railway config - not user admin
+admin - full control useradmin
+
+api-operator - control trains
+api-manager - full railway config - not user admin (default)
+api-admin - full control including useradmin
+"""
+
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
     
@@ -14,10 +26,17 @@ class User(UserMixin, db.Model):
     # API key - nulls for password based logins
     api_key = db.Column(db.String(128), unique=True, nullable=True)
 
+    # Additional Fields
+    email = db.Column(db.String(120), nullable=True)
+    full_name = db.Column(db.String(150), nullable=True)
+    short_name = db.Column(db.String(50), nullable=True)
     
+    # Using a string for role with a default fallback
+    role = db.Column(db.String(50), nullable=False, default='user')
 
     def __repr__(self):
         return f'<User {self.username}>'
+
 
 # System user used by API (no username)
 class ApiUser(UserMixin):
