@@ -1,25 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pi SignalBox - Login</title>
-    <link rel="stylesheet" href="{{ url_for('web.static', filename='pisignalbox.css') }}" />
-</head>
-<body>
-
-    <header class="top-bar">
-        <!-- Simplified top bar for unauthenticated users -->
-        <div class="app-title">
-            <strong>Pi SignalBox Access</strong>
-        </div>
-    </header>
-
-    <main>
-        <div class="banner-container">
-            <img src="{{ url_for('web.static', filename='pisignalbox-banner-small-01.png') }}" alt="Pi SignalBox - Python GUI / Virtual Signal Box / Loco Control / Automation">
-        </div>
-
+{% extends "base.html" %}
+{% block user_menu %}
+{% endblock %}
+{% block content %}
         <div class="login-wrapper">
             <div class="login-panel">
                 <h2>System Login</h2>
@@ -51,7 +33,4 @@
                 </form>
             </div>
         </div>
-    </main>
-
-</body>
-</html>
+{% endblock %}

@@ -1,0 +1,40 @@
+{% from "macros.html" import render_user_menu %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pi SignalBox</title>
+    <link rel="stylesheet" href="{{ url_for('web.static', filename='pisignalbox.css') }}" />
+</head>
+<body>
+
+    <header class="top-bar">
+        
+        <div class="layout-selector">
+            <label for="layout"><strong>Layout:</strong></label>
+            <select id="layout" name="layout">
+                <option value="garden_g_scale">Garden G-Scale</option>
+                <option value="indoor_oo_scale">Indoor OO-Scale</option>
+                <option value="test_track">Test Track</option>
+            </select>
+        </div>
+
+        <div class="user-menu">
+            {{ render_user_menu(current_user) }}
+        </div>
+    </header>
+
+    <main>
+        {% block banner %}
+        <div class="banner-container">
+            <img src="{{ url_for('web.static', filename='pisignalbox-banner-small-01.png') }}" alt="Pi SignalBox - Python GUI / Virtual Signal Box / Loco Control / Automation">
+        </div>
+        {% endblock %}
+
+        {% block content %}{% endblock %}
+        
+    </main>
+
+</body>
+</html>
