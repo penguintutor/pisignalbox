@@ -11,9 +11,16 @@ import vlcbserver
 from vlcbserver.vlcb_bridge import send_data, get_data
 from vlcbserver.models import User
 from vlcbserver.utils import role_required
-
 from . import api_blueprint, web_blueprint
 
+# Examples of types of request
+#/vlcb?read=<id of first data packet>&format=txt&[&end=<id last packet to retrieve]
+#/vlcb?send=<string of send request>&format=txt
+    
+
+# ==========================================
+# Enable logging and error handling
+# ==========================================
 
 @web_blueprint.after_request
 @api_blueprint.after_request
@@ -37,6 +44,12 @@ def log_http_request(response):
     # You MUST return the response object in an after_request callback
     return response
 
+
+@web_blueprint.app_errorhandler(403)
+def forbidden_error(error):
+    return render_template('403.html', message="You do not have permission to view this page."), 403
+
+
 # ==========================================
 # API Routes (No CSRF, requires API Key)
 # ==========================================
@@ -58,47 +71,15 @@ def vlcb_request():
 # Web Routes (CSRF Protected, requires Session)
 # ==========================================
 
-
-#/vlcb?read=<id of first data packet>&format=txt&[&end=<id last packet to retrieve]
-#/vlcb?send=<string of send request>&format=txt
-
-# @web_blueprint.route("/vlcb", methods=['GET', 'POST'])
-# @login_required
-# def vlcb_request():
-#     return process_vlcb_logic()
-    
-
 @web_blueprint.route("/", methods=['GET', 'POST'])
 @web_blueprint.route("/home", methods=['GET', 'POST'])
 def home():
     return render_template('index.html')
-    # login_status = 'logged_in'
-    # #ip_address = get_ip_address()
-    # #login_status = pixelserver.auth.auth_check(ip_address, session)
-    # # not allowed even if logged in
-    # if login_status == "invalid":
-    #     return redirect('/invalid')
-    # elif login_status == "network":
-    #     return render_template('index.html', user="guest", admin=False)
-    # elif login_status == "logged_in":
-    #     # Also check if admin - to show settings button
-    #     username = session['username']
-    #     if (pixelserver.auth.check_admin(username)):
-    #         admin = True
-    #     else:
-    #         admin = False
-    #     return render_template('index.html', user=session['username'], admin=admin)
-    # else:   # login required
-    #     return redirect('/login')
 
 @web_blueprint.route("/profile", methods=['GET', 'POST'])
 @login_required
 def profile():
     return render_template('profile.html', hello="Profile")
-
-@web_blueprint.app_errorhandler(403)
-def forbidden_error(error):
-    return render_template('403.html', message="You do not have permission to view this page."), 403
 
 @web_blueprint.route('/admin-dashboard')
 @login_required

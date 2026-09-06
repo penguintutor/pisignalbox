@@ -1,4 +1,5 @@
 {% from "macros.html" import render_user_menu %}
+{% from "macros.html" import render_hamburger_menu with context %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,11 +7,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pi SignalBox</title>
     <link rel="stylesheet" href="{{ url_for('web.static', filename='pisignalbox.css') }}" />
+    <script src="{{ url_for('web.static', filename='pisignalbox.js') }}" defer></script>
 </head>
 <body>
 
     <header class="top-bar">
-        
+        {{ render_hamburger_menu(current_user) }}
         <div class="layout-selector">
             <label for="layout"><strong>Layout:</strong></label>
             <select id="layout" name="layout">

@@ -201,3 +201,109 @@ body {
     text-align: center;
     border: 1px solid #f5c6cb;
 }
+
+/* Hamburger menu */
+/* Reset and basic button styling */
+.hamburger-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 12px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.hamburger-btn:hover {
+    background-color: rgba(0, 0, 0, 0.08);
+}
+
+.hamburger-btn svg {
+    fill: #5f6368; /* Google's standard dark gray */
+}
+
+/* Sidebar Drawer */
+.sidebar-menu {
+    position: fixed;
+    top: 0;
+    left: -300px; /* Hidden off-screen by default */
+    width: 280px;
+    height: 100vh;
+    background-color: #ffffff;
+    box-shadow: 2px 0 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-y: auto;
+}
+
+.sidebar-menu.open {
+    left: 0;
+}
+
+/* Sidebar Internal Styling */
+.sidebar-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #dadce0;
+    font-size: 1.25rem;
+    font-family: 'Google Sans', Arial, sans-serif;
+    color: #202124;
+}
+
+.sidebar-links {
+    list-style: none;
+    padding: 8px 0;
+    margin: 0;
+}
+
+.sidebar-links li a {
+    display: block;
+    padding: 12px 24px;
+    color: #3c4043;
+    text-decoration: none;
+    font-family: 'Google Sans', Arial, sans-serif;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 0 24px 24px 0;
+    margin-right: 8px;
+    transition: background-color 0.2s;
+}
+
+.sidebar-links li a:hover {
+    background-color: #f1f3f4;
+}
+
+.sidebar-links .section-title {
+    padding: 12px 24px 4px 24px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #5f6368;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.sidebar-links .divider {
+    height: 1px;
+    background-color: #dadce0;
+    margin: 8px 0;
+}
+
+/* Background Overlay */
+.menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0,0,0,0.5);
+    z-index: 999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.menu-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+}

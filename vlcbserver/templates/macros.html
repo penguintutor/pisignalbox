@@ -1,0 +1,70 @@
+<!-- macros.html -->
+
+
+{% macro render_user_menu(user) %}
+                {% if user.is_authenticated %}
+                <button class="user-button">
+                    👤 {{ user.username }} ▼
+                </button>
+                <div class="dropdown-content">
+                    <a href="/profile">User Profile</a>
+                    <a href="/logout">Logout</a>
+                </div>
+                {% else %}
+                <button class="user-button">
+                    👤 <a href="/login">Login</a>
+                </button>
+                {% endif %}
+
+{% endmacro %}
+
+
+
+{% macro render_hamburger_menu(current_user) %}
+<div class="menu-container">
+    <!-- The Top-Left Hamburger Button -->
+    <button id="hamburger-btn" class="hamburger-btn" aria-label="Open Menu">
+        <svg focusable="false" viewBox="0 0 24 24" width="24" height="24">
+            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path>
+        </svg>
+    </button>
+
+    <!-- Dark Overlay for background when menu is open -->
+    <div id="menu-overlay" class="menu-overlay"></div>
+
+    <!-- The Sliding Drawer Menu -->
+    <nav id="sidebar-menu" class="sidebar-menu">
+        <div class="sidebar-header">
+            <span class="logo-text">My App</span>
+        </div>
+        
+        <ul class="sidebar-links">
+            <li><a href="{{ url_for('web.home') }}">Home</a></li>
+            
+            {% if current_user.is_authenticated %}
+                <li><a href="{{ url_for('web.home') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('web.profile') }}">Profile</a></li>
+                
+                <!-- Role-based rendering -->
+                {% if current_user.has_role('admin') %}
+                    <li class="divider"></li>
+                    <li class="section-title">Admin Console</li>
+                    <li><a href="{{ url_for('admin.users') }}">Manage Users</a></li>
+                    <li><a href="{{ url_for('admin.settings') }}">System Settings</a></li>
+                {% elif current_user.has_role('editor') %}
+                    <li class="divider"></li>
+                    <li class="section-title">Editor Tools</li>
+                    <li><a href="{{ url_for('editor.posts') }}">Review Content</a></li>
+                {% endif %}
+                
+                <li class="divider"></li>
+                <li><a href="{{ url_for('auth.logout') }}">Sign Out</a></li>
+                
+            {% else %}
+                <li class="divider"></li>
+                <li><a href="{{ url_for('auth.login') }}">Sign In</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+{% endmacro %}

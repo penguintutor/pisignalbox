@@ -63,7 +63,7 @@ def unauthorized():
         # Return a strict machine-readable HTTP 401 error
         return jsonify({"error": "Unauthorized. Missing or invalid X-API-Key."}), 401
     
-    # Path B: A human tried to access /dashboard without logging in
+    # Path B: A user tried to access /dashboard without logging in
     # Redirect them to the HTML login page, and remember where they were trying to go
     return redirect(url_for('web.login', next=request.path))
 
@@ -78,8 +78,8 @@ def create_app(config):
     #if csrf_enable:
     csrf = CSRFProtect()
     app = Flask(
-        __name__,
-        template_folder="www"
+        __name__
+        #template_folder="www"
         )
 
     app.config.update(config)
@@ -119,9 +119,11 @@ def create_app(config):
     login_manager.init_app(app)
 
     #Register routes as @requests
-    from vlcbserver.requests import api_blueprint, web_blueprint
+    from vlcbserver.blueprints.web import api_blueprint, web_blueprint
+    from vlcbserver.blueprints.auth import auth_blueprint
     app.register_blueprint(api_blueprint)
     app.register_blueprint(web_blueprint)
+    app.register_blueprint(auth_blueprint)
 
     # Exempt the API blueprint from CSRF API calls can POST to it
     # without needing a web session token
