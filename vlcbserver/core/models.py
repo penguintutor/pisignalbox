@@ -36,8 +36,7 @@ class User(UserMixin, db.Model):
 
     def has_role(self, role_name):
         """Check if the user has a specific role."""
-        return True
-        #return self.role == role_name
+        return self.role == role_name
 
     def __repr__(self):
         return f'<User {self.username}>'
@@ -49,3 +48,10 @@ class ApiUser(UserMixin):
         # Flask-Login needs an ID as a string
         self.id = "api_system_user" 
         self.username = "Client App"
+
+    # API users also have a role
+    def has_role(self, role_name):
+            """Check if the user has a specific role."""
+            return False
+            #return self.role == role_name
+    

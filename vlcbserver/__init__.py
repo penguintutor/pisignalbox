@@ -10,8 +10,9 @@ import logging, os
 import random
 import string
 import secrets
-from .models import db, User
+from .core.models import db, User
 from .logging_config import setup_logging
+from .core.utils import log_http_request, forbidden_error
 
 # Create App and enable login manager for user authentication
 
@@ -79,7 +80,6 @@ def create_app(config):
     csrf = CSRFProtect()
     app = Flask(
         __name__
-        #template_folder="www"
         )
 
     app.config.update(config)
@@ -118,12 +118,18 @@ def create_app(config):
     csrf.init_app(app)
     login_manager.init_app(app)
 
+    # Register App level routes
+    app.after_request(log_http_request)
+
     #Register routes as @requests
-    from vlcbserver.blueprints.web import api_blueprint, web_blueprint
+    from vlcbserver.blueprints.api import api_blueprint
+    from vlcbserver.blueprints.web import web_blueprint
     from vlcbserver.blueprints.auth import auth_blueprint
+    from vlcbserver.blueprints.admin import admin_blueprint
     app.register_blueprint(api_blueprint)
     app.register_blueprint(web_blueprint)
     app.register_blueprint(auth_blueprint)
+    app.register_blueprint(admin_blueprint)
 
     # Exempt the API blueprint from CSRF API calls can POST to it
     # without needing a web session token

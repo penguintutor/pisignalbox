@@ -10,7 +10,7 @@ import argparse
 import logging
 import vlcbserver
 from vlcbserver import create_app
-import vlcbserver.requests
+import vlcbserver.blueprints.web
 from vlcbserver.vlcb_bridge import command_queue, add_sensor_update, cleanup_sensor_data, sensor_data
 # Uses json5 to allow comments in the config file
 import json5
@@ -25,9 +25,10 @@ import queue
 
 ## NOTE these are duplicated in setup scripts, if updated here
 ## similar changes may be needed in that script
+## Also included in tests
 
 BASE_DIR = Path(__file__).resolve().parent
-CONFIG_DIR = BASE_DIR / "vlcbserver"
+CONFIG_DIR = BASE_DIR / "vlcbserver" / "settings"
 
 # These are the config files - fixed filenames
 # Future: could have an option to call a different filename but not
@@ -224,8 +225,7 @@ if __name__ == "__main__":
         'LOG_PATH' : LOG_PATH,
         'LOGLEVEL_CONSOLE': LOGLEVEL_CONSOLE,
         'LOGLEVEL_FILE': LOGLEVEL_FILE
-
-    })
+        })
 
     # Check the database exists
     # Doesn't check a user - that comes later in the create_app

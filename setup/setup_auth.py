@@ -26,7 +26,7 @@ sys.path.insert(0, str(BASE_DIR))
 
 # Now we can safely import the app factory and database models
 from vlcbserver import create_app
-from vlcbserver.models import db, User
+from vlcbserver.core.models import db, User
 
 # Update our file paths to start from the BASE_DIR instead of BASE_DIR
 SETTINGS_FILE = BASE_DIR / 'guiclient' / 'data' / 'settings.json'

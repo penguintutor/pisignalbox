@@ -1,4 +1,4 @@
-from .models import db, User
+from .core.models import db, User
 
 def create_user(username, password_hash):
     """Add a new user to the database."""

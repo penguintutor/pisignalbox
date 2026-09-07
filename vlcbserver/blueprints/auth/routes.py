@@ -9,9 +9,9 @@ import threading
 import logging, os
 import vlcbserver
 from vlcbserver.vlcb_bridge import send_data, get_data
-from vlcbserver.models import User
-from vlcbserver.utils import role_required
-from vlcbserver.blueprints.web import api_blueprint, web_blueprint
+from vlcbserver.core.models import User
+from vlcbserver.core.utils import role_required
+from vlcbserver.blueprints.web import web_blueprint
 from . import auth_blueprint
 
 # Examples of types of request
