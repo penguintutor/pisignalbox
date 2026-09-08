@@ -1,4 +1,11 @@
-pip3 install Flask-WTF
-pip3 install strip-tags
+## Developer info
 
+# Pop-up menu
+Enter using short code eg.
 
+?status=added
+
+or custom menus
+
+?msg=Password+reset+email+sent&type=info"
+?msg=Failed+to+save+changes&type=error

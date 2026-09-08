@@ -9,7 +9,7 @@ import threading
 import logging, os
 import vlcbserver
 from vlcbserver.vlcb_bridge import send_data, get_data
-from vlcbserver.core.models import User
+from vlcbserver.core.models import User, db
 from vlcbserver.core.utils import role_required
 from . import admin_blueprint
 
@@ -30,7 +30,43 @@ def check_admin_access():
         abort(403)
 
 @admin_blueprint.route('/dashboard')
-def admin_dashboard():
+def dashboard():
     # Only users with role='admin' can see this
     return render_template('admin.html')
 
+# Todo implement
+@admin_blueprint.route('/users')
+def users():
+    # SQLAlchemy 2.0 select query ordered alphabetically by username
+    query = db.select(User).order_by(User.username.asc())
+    users = db.session.execute(query).scalars().all()
+# Replace this with your database or datastore query:
+    # users = User.query.all()
+    # users = [
+    #     {
+    #         "username": "admin",
+    #         "fullname": "System Administrator",
+    #         "email": "admin@pisignalbox.local",
+    #         "role": "Admin",
+    #     },
+    #     {
+    #         "username": "operator1",
+    #         "fullname": "Signal Operator",
+    #         "email": "operator@pisignalbox.local",
+    #         "role": "Operator",
+    #     },
+    #     {
+    #         "username": "guest_viewer",
+    #         "fullname": "Track Monitor",
+    #         "email": "guest@pisignalbox.local",
+    #         "role": "Viewer",
+    #     },
+    # ]
+
+    return render_template('admin-users.html', users=users)
+
+# Todo implement
+@admin_blueprint.route('/settings')
+def settings():
+    # Only users with role='admin' can see this
+    return render_template('admin.html')

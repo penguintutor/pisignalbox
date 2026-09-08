@@ -15,7 +15,7 @@
                   {% endif %}
                 {% endwith %}
 
-                <form method="POST" action="{{ url_for('web.login', next=request.args.get('next')) }}">
+                <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next')) }}">
                     <!-- Required for Flask-WTF CSRF protection -->
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                     

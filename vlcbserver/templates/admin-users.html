@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% from "macros.html" import render_user_row %}
+
+{% block content %}
+<div class="admin-container">
+    <div class="admin-panel">
+        <div class="admin-header">
+            <div>
+                <h2>User Management</h2>
+                <p class="admin-subtitle">Manage system accounts, authentication credentials, and access roles.</p>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="openAddUserModal()">
+                + Add New User
+            </button>
+        </div>
+
+        <div class="table-responsive">
+            <table class="user-table">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Full Name</th>
+                        <th>Email Address</th>
+                        <th>Role</th>
+                        <th class="text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                        {{ render_user_row(user) }}
+                    {% else %}
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: #888; padding: 20px;">
+                                No users registered.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Add / Edit User Modal Dialog -->
+<dialog id="user-modal" class="admin-modal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 id="modal-title">Add New User</h3>
+            <button type="button" class="close-btn" onclick="document.getElementById('user-modal').close()">&times;</button>
+        </div>
+        <form method="POST" action="/admin/users/save" id="user-form">
+            <input type="hidden" name="csrf_token" value="IjJmYTA1NzQ0NjViMzM4Y2MxYmMyYWVjZGNmMDdhYWRhNzExOWY5MjQi.aqCCPA.IseUclhD7RzYOlZ7POXeLOS9KQs">
+            <input type="hidden" id="original-username" name="original_username" value="">
+
+            <div class="form-group">
+                <label for="modal-username">Username</label>
+                <input type="text" id="modal-username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="modal-fullname">Full Name</label>
+                <input type="text" id="modal-fullname" name="fullname" required>
+            </div>
+            <div class="form-group">
+                <label for="modal-email">Email Address</label>
+                <input type="email" id="modal-email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="modal-role">Role</label>
+                <select id="modal-role" name="role" class="form-select">
+                    <option value="Viewer">Viewer</option>
+                    <option value="Operator">Operator</option>
+                    <option value="Admin">Admin</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="modal-password" id="modal-password-label">Password</label>
+                <input type="password" id="modal-password" name="password" placeholder="Enter password" required>
+                <small id="password-help" class="form-hint"></small>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('user-modal').close()">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="modal-submit-btn">Save User</button>
+            </div>
+        </form>
+    </div>
+</dialog>
+
+<script>
+    function openAddUserModal() {
+        document.getElementById('modal-title').textContent = 'Add New User';
+        document.getElementById('user-form').reset();
+        document.getElementById('original-username').value = '';
+        document.getElementById('modal-username').readOnly = false;
+        // Password is required when creating a new user
+        const passwordInput = document.getElementById('modal-password');
+        passwordInput.required = true;
+        passwordInput.placeholder = 'Enter password';
+        document.getElementById('password-help').textContent = '';
+
+        document.getElementById('user-modal').showModal();
+    }
+
+    function openEditUserModal(username, fullname, email, role) {
+        document.getElementById('modal-title').textContent = 'Edit User: ' + username;
+        document.getElementById('original-username').value = username;
+        document.getElementById('modal-username').value = username;
+        document.getElementById('modal-username').readOnly = true;
+        document.getElementById('modal-fullname').value = fullname;
+        document.getElementById('modal-email').value = email;
+        document.getElementById('modal-role').value = role;
+        document.getElementById('modal-password').value = '';
+        
+        // Password is optional when editing an existing user
+        const passwordInput = document.getElementById('modal-password');
+        passwordInput.value = '';
+        passwordInput.required = false;
+        passwordInput.placeholder = '••••••••';
+        document.getElementById('password-help').textContent = 'Leave empty to retain existing password.';
+
+        document.getElementById('user-modal').showModal();
+    }
+
+    function confirmDeleteUser(username) {
+        if (confirm(`Are you sure you want to permanently delete user "${username}"?`)) {
+            // Submit deletion via a hidden form or fetch request
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/admin/users/delete';
+
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrf_token';
+            csrfInput.value = 'IjJmYTA1NzQ0NjViMzM4Y2MxYmMyYWVjZGNmMDdhYWRhNzExOWY5MjQi.aqCCPA.IseUclhD7RzYOlZ7POXeLOS9KQs';
+
+            const userInput = document.createElement('input');
+            userInput.type = 'hidden';
+            userInput.name = 'username';
+            userInput.value = username;
+
+            form.appendChild(csrfInput);
+            form.appendChild(userInput);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+</script>
+{% endblock %}

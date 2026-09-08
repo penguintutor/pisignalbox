@@ -66,7 +66,7 @@ def unauthorized():
     
     # Path B: A user tried to access /dashboard without logging in
     # Redirect them to the HTML login page, and remember where they were trying to go
-    return redirect(url_for('web.login', next=request.path))
+    return redirect(url_for('auth.login', next=request.path))
 
 
 

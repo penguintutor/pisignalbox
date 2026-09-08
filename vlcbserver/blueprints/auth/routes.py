@@ -49,7 +49,7 @@ def login():
                 return redirect(next_page)
                 
             flash("Invalid username or password.")
-            return redirect(url_for('web.login', next=next_page))
+            return redirect(url_for('auth.login', next=next_page))
 
     # Serve the HTML file from the template folder
     return render_template('login.html')
@@ -60,5 +60,5 @@ def login():
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for('web.login'))
+    return redirect(url_for('auth.login'))
     

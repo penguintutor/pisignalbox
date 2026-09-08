@@ -1,4 +1,4 @@
-{% from "macros.html" import render_user_menu %}
+{% from "macros.html" import render_user_menu, render_layout_menu %}
 {% from "macros.html" import render_hamburger_menu with context %}
 <!DOCTYPE html>
 <html lang="en">
@@ -13,14 +13,8 @@
 
     <header class="top-bar">
         {{ render_hamburger_menu(current_user) }}
-        <div class="layout-selector">
-            <label for="layout"><strong>Layout:</strong></label>
-            <select id="layout" name="layout">
-                <option value="garden_g_scale">Garden G-Scale</option>
-                <option value="indoor_oo_scale">Indoor OO-Scale</option>
-                <option value="test_track">Test Track</option>
-            </select>
-        </div>
+        {{ render_layout_menu() }}
+
 
         <div class="user-menu">
             {{ render_user_menu(current_user) }}
@@ -36,6 +30,8 @@
 
         {% block content %}{% endblock %}
         
+        <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
     </main>
 
 </body>
