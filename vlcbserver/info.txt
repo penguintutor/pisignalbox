@@ -9,3 +9,18 @@ or custom menus
 
 ?msg=Password+reset+email+sent&type=info"
 ?msg=Failed+to+save+changes&type=error
+
+
+# Roles
+
+system_ref and user friendly name
+
+reader "Observer" (Read Only)
+operator "Signaller" (control existing layout)
+update "Layout Engineer" (Can update layout etc.)
+admin "Operations Manager" (All above + user admin)
+
+Note these are case sensitive
+
+API uses same role categories. Indeed a user could
+have both a password and an API string. 

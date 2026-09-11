@@ -25,14 +25,14 @@ def check_admin_access():
         return redirect(url_for('auth.login', next=request.url))
     
     # Check if the user has the admin role
-    if not current_user.has_role('admin'):
+    if not current_user.has_role('Operations Manager'):
         # Return a 403 Forbidden error if they are logged in but lack permissions
         abort(403)
 
-@admin_blueprint.route('/dashboard')
+@admin_blueprint.route('/')
 def dashboard():
     # Only users with role='admin' can see this
-    return render_template('admin.html')
+    return render_template('admin-index.html')
 
 # Todo implement
 @admin_blueprint.route('/users')
@@ -40,30 +40,8 @@ def users():
     # SQLAlchemy 2.0 select query ordered alphabetically by username
     query = db.select(User).order_by(User.username.asc())
     users = db.session.execute(query).scalars().all()
-# Replace this with your database or datastore query:
-    # users = User.query.all()
-    # users = [
-    #     {
-    #         "username": "admin",
-    #         "fullname": "System Administrator",
-    #         "email": "admin@pisignalbox.local",
-    #         "role": "Admin",
-    #     },
-    #     {
-    #         "username": "operator1",
-    #         "fullname": "Signal Operator",
-    #         "email": "operator@pisignalbox.local",
-    #         "role": "Operator",
-    #     },
-    #     {
-    #         "username": "guest_viewer",
-    #         "fullname": "Track Monitor",
-    #         "email": "guest@pisignalbox.local",
-    #         "role": "Viewer",
-    #     },
-    # ]
 
-    return render_template('admin-users.html', users=users)
+    return render_template('admin-index.html', users=users)
 
 # Todo implement
 @admin_blueprint.route('/settings')

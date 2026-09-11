@@ -16,6 +16,7 @@ from vlcbserver.vlcb_bridge import command_queue, add_sensor_update, cleanup_sen
 import json5
 from pathlib import Path
 import queue
+from vlcbserver.config import Config
 
 
 # --- Configuration Paths ---
@@ -23,32 +24,11 @@ import queue
 # by command line options or environment settings
 # Find the directory where this script lives, then append the subdirectory
 
+# Constants moved to constants.py / config.py
+
 ## NOTE these are duplicated in setup scripts, if updated here
 ## similar changes may be needed in that script
 ## Also included in tests
-
-BASE_DIR = Path(__file__).resolve().parent
-CONFIG_DIR = BASE_DIR / "vlcbserver" / "settings"
-
-# These are the config files - fixed filenames
-# Future: could have an option to call a different filename but not
-# supported at the moment
-DEFAULT_SETTINGS = CONFIG_DIR / "defaults.json"
-CUSTOM_SETTINGS = CONFIG_DIR / "server.json"
-
-# Database is in the instances directory - holds user details etc.
-INSTANCE_DIR = BASE_DIR / 'instances'
-DATABASE_PATH = INSTANCE_DIR / 'users.db'
-
-# String for setup command - used to inform user how to add user
-SETUP_CMD = "setup/setup_auth.py"
-
-# Future: Consider overriding using config file or environment variables
-LOGLEVEL_CONSOLE = logging.WARNING
-LOGLEVEL_FILE = logging.INFO
-
-LOG_DIR = BASE_DIR / 'logs'
-LOG_PATH = LOG_DIR / 'vlcbserver.log'
 
 # Configure logging for the entire application
 #logging.basicConfig(level=logging.ERROR) 
@@ -204,7 +184,10 @@ def _process_inbound_data(in_data):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='VLCB Server')
     parser.add_argument('-d', '--debug', action='store_true', help='Enable debug mode')
+    parser.add_argument("--base-dir", type=Path, default=None, help="Override project base directory")
     args = parser.parse_args()
+
+    cfg = Config(base_dir=args.base_dir)
 
     # LOG_PATH can be overwridden by environment setting 
     env_log_dir = os.environ.get('APP_LOG_DIR', None)
@@ -213,35 +196,35 @@ if __name__ == "__main__":
 
     # Load the settings - using default filenames
     # could update to use commandline filenames in future if required
-    config = load_settings(DEFAULT_SETTINGS, CUSTOM_SETTINGS)
+    config = load_settings(cfg.DEFAULT_SETTINGS, cfg.CUSTOM_SETTINGS)
 
     # Add paths to config if required elsewhere
     config.update({
         # Flask-SQLAlchemy expects a URI string. Uses an f-string to inject the Path.
-        'SQLALCHEMY_DATABASE_URI': f"sqlite:///{DATABASE_PATH}",
+        'SQLALCHEMY_DATABASE_URI': f"sqlite:///{cfg.DATABASE_PATH}",
         # Disabling this saves memory and suppresses a warning
         'SQLALCHEMY_TRACK_MODIFICATIONS': False,
         # Log details
-        'LOG_PATH' : LOG_PATH,
-        'LOGLEVEL_CONSOLE': LOGLEVEL_CONSOLE,
-        'LOGLEVEL_FILE': LOGLEVEL_FILE
+        'LOG_PATH' : cfg.LOG_PATH,
+        'LOGLEVEL_CONSOLE': cfg.LOGLEVEL_CONSOLE,
+        'LOGLEVEL_FILE': cfg.LOGLEVEL_FILE
         })
 
     # Check the database exists
     # Doesn't check a user - that comes later in the create_app
-    if not DATABASE_PATH.exists():
+    if not cfg.DATABASE_PATH.exists():
         print("ERROR: The database file does not exist.")
-        print(f"Please run the setup step {SETUP_CMD} before starting the app.")
+        print(f"Please run the setup step {cfg.SETUP_CMD} before starting the app.")
         sys.exit(1) # Halt application startup
 
     # Create the log dir if not already exist - and it's local (not overridden with /var/log etc.)
-    if LOG_DIR == BASE_DIR / 'logs':
-        LOG_DIR.mkdir(exist_ok=True)
+    if cfg.LOG_DIR == cfg.BASE_DIR / 'logs':
+        cfg.LOG_DIR.mkdir(exist_ok=True)
 
 
     app = create_app(config)
 
-    logging.info ("*** Application Start ***")
+    logging.info ("*** cfg.Application Start ***")
 
     # run as two threads - main thread and flask thread
     # Set daemon=True. This tells Python: "If the main script exits, 

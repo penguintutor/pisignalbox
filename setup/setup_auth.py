@@ -64,7 +64,7 @@ def create_user():
 
     password_hash = generate_password_hash(password)
     # User is added as an admin so can manage other users
-    new_user = User(username=username, password_hash=password_hash, role="admin") # type: ignore
+    new_user = User(username=username, password_hash=password_hash, role="Operations Manager") # type: ignore
     
     db.session.add(new_user)
     db.session.commit()
@@ -72,26 +72,29 @@ def create_user():
 
 def create_api_key():
     print("\n--- Create API Key ---")
-    
-    username = input("Enter username to attach this API key to (e.g., 'GUI Api'): ").strip()
-    if not username:
-        print("Error: Username cannot be empty.")
-        return
 
-    user = db.session.execute(db.select(User).filter_by(username=username)).scalar_one_or_none()
-    
-    if not user:
-        print(f"User '{username}' not found. Creating as an API-only system user...")
-        user = User(username=username, password_hash="SYSTEM_API_USER_NO_PASSWORD", role="api-manager") # type: ignore
-        db.session.add(user)
+    while True:
+        username = input("Enter username to attach this API key to (e.g., 'GUI Api'): ").strip()
+        if not username:
+            print("Error: Username cannot be empty.")
+            continue
+ 
 
-    custom_key = input("Enter API key (leave blank to auto-generate securely): ").strip()
-    api_key = custom_key if custom_key else secrets.token_urlsafe(32)
+        user = db.session.execute(db.select(User).filter_by(username=username)).scalar_one_or_none()
+        
+        if not user:
+            print(f"User '{username}' not found. Creating as an API-only system user...")
+            user = User(username=username, password_hash="SYSTEM_API_USER_NO_PASSWORD", role="api-manager") # type: ignore
+            db.session.add(user)
 
-    existing_key = db.session.execute(db.select(User).filter_by(api_key=api_key)).scalar_one_or_none()
-    if existing_key and existing_key.username != username:
-        print("Error: This exact API key is already assigned to a different user.")
-        return
+        custom_key = input("Enter API key (leave blank to auto-generate securely): ").strip()
+        api_key = custom_key if custom_key else secrets.token_urlsafe(32)
+
+        existing_key = db.session.execute(db.select(User).filter_by(api_key=api_key)).scalar_one_or_none()
+        if existing_key and existing_key.username != username:
+            print("Error: This exact API key is already assigned to a different user.")
+        else:
+            break
 
     user.api_key = api_key
     db.session.commit()

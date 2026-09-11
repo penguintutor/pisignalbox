@@ -52,7 +52,7 @@ def login():
             return redirect(url_for('auth.login', next=next_page))
 
     # Serve the HTML file from the template folder
-    return render_template('login.html')
+    return render_template('auth-login.html')
 
 
     
