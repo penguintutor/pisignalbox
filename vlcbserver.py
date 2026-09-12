@@ -17,6 +17,8 @@ import json5
 from pathlib import Path
 import queue
 from vlcbserver.config import Config
+from vlcbserver.settings import load_settings
+from vlcbserver.mainthread import run_connected_loop
 
 
 # --- Configuration Paths ---
@@ -50,34 +52,6 @@ from vlcbserver.config import Config
 # max_entries = 100
 # This entry is now in the defaults.json
 
-
-
-def load_settings(default_path, custom_path):
-    # Load defaults first
-    try:
-        with open(default_path, 'r') as f:
-            settings = json5.load(f)
-    except FileNotFoundError:
-        print(f"Critical: '{default_path}' not found. Cannot start without defaults.")
-        return {}
-    except ValueError as e:
-        print(f"Critical: '{default_path}' is not valid JSON5. Error: {e}")
-        return {}
-
-    # Check for custom settings and override (using pathlib's .exists())
-    if custom_path.exists():
-        try:
-            with open(custom_path, 'r') as f:
-                custom_settings = json5.load(f)
-                
-            # Merge the dicts, overwriting defaults with custom values
-            settings.update(custom_settings)
-            
-        except ValueError as e:
-            print(f"Warning: '{custom_path}' contains invalid JSON5. Ignoring custom overrides. Error: {e}")
-            
-    return settings
-
 def flaskThread(debug, config):
     tcp_port = config.get("tcp_port")
     host = config.get("hostname")
@@ -87,7 +61,7 @@ def flaskThread(debug, config):
         log.setLevel(logging.ERROR)
     app.run(host=host, port=tcp_port, use_reloader=False)
     
-# Setup pixel strip and then start the updatePixels loop
+# Run the main thread for reading and writing to usb.
 def mainThread(debug, config):
     usb_port = config.get("usb_port")
     print (f"USB port: {usb_port}")
@@ -104,81 +78,8 @@ def mainThread(debug, config):
             break
 
         # Once connected, hand control over to the processing loop
-        _run_connected_loop(usb, config)
+        run_connected_loop(usb, config)
 
-
-        
-def _run_connected_loop(usb, config):
-    while True:
-        # First part of loop - clear out any excessive entries
-        cleanup_sensor_data(config.get("max_entries"))
-
-        ### Check to see if we have any outgoing messages
-        # prioritise sending - so gather all commands
-        while True:
-            try:
-                # Read from message queue for any requests from flask
-                # get_nowait() pulls a command if one exists, otherwise throws queue.Empty
-                command = command_queue.get_nowait()
-                #print(f"[Hardware] Sending command to layout: {command}")
-                # Send it to the serial port
-                usb.send_data(command)
-                # Also add it to the data - so other clients can also see it
-                add_sensor_update(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ",o," + command)
-                
-            except queue.Empty:
-                # No commands from Flask - break out of loop
-                break
-            
-            
-        # in_data is a list of data
-        # first entry [0] is the number entries - if negative then error
-        in_data = usb.read_data()
-        _process_inbound_data(in_data)
-
-
-def _send_outgoing_messages(usb):
-    """Sends the outgoing message queue to the USB device.
-    Keeps sending whilst there are messages to send
-    - sending is higher priority than receiving """
-    
-    while True:
-        try:
-            # Attempt to grab a message without waiting
-            cmd = command_queue.get_nowait()  
-            
-            # Process the message here
-            usb.send_data(cmd)
-                    
-            timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            add_sensor_update(f"{timestamp},o,{cmd}")
-            
-        except queue.Empty:
-            # If no messages waiting then return
-            return
-
-
-
-def _process_inbound_data(in_data):
-    """Evaluates and processes the result of a USB buffer read."""
-    # Handle empty or error states
-    if in_data[0] == 0:
-        time.sleep(0.1)
-        return
-    elif in_data[0] < 1:
-        print(f"Error {in_data[1]}, {in_data[2]}")
-        return
-
-    # Data integrity check
-    if len(in_data) - 1 != in_data[0]:
-        print(f"Warning incorrect data returned, expected {in_data[0]}, received {len(in_data) - 1}")
-
-    # Process packet collection
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    for this_input in in_data[1:]:
-        add_sensor_update(f"{timestamp},i,{this_input}")
-        logging.debug(f"Received {this_input}")
-            
 
 
 if __name__ == "__main__":
