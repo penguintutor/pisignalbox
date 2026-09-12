@@ -17,7 +17,7 @@ import json5
 from pathlib import Path
 import queue
 from vlcbserver.config import Config
-from vlcbserver.settings import load_settings
+from vlcbserver.settings import get_config, load_settings, cfg_checks
 from vlcbserver.mainthread import run_connected_loop
 
 
@@ -52,7 +52,7 @@ from vlcbserver.mainthread import run_connected_loop
 # max_entries = 100
 # This entry is now in the defaults.json
 
-def flaskThread(debug, config):
+def flaskThread(app, debug, config):
     tcp_port = config.get("tcp_port")
     host = config.get("hostname")
     print (f"Network address {host}:{tcp_port}")
@@ -81,47 +81,12 @@ def mainThread(debug, config):
         run_connected_loop(usb, config)
 
 
+def run_server(cfg, config):
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='VLCB Server')
-    parser.add_argument('-d', '--debug', action='store_true', help='Enable debug mode')
-    parser.add_argument("--base-dir", type=Path, default=None, help="Override project base directory")
-    args = parser.parse_args()
-
-    cfg = Config(base_dir=args.base_dir)
-
-    # LOG_PATH can be overwridden by environment setting 
-    env_log_dir = os.environ.get('APP_LOG_DIR', None)
-    if env_log_dir:
-        LOG_PATH = Path(env_log_dir) / 'vlcbserver.log'
-
-    # Load the settings - using default filenames
-    # could update to use commandline filenames in future if required
-    config = load_settings(cfg.DEFAULT_SETTINGS, cfg.CUSTOM_SETTINGS)
-
-    # Add paths to config if required elsewhere
-    config.update({
-        # Flask-SQLAlchemy expects a URI string. Uses an f-string to inject the Path.
-        'SQLALCHEMY_DATABASE_URI': f"sqlite:///{cfg.DATABASE_PATH}",
-        # Disabling this saves memory and suppresses a warning
-        'SQLALCHEMY_TRACK_MODIFICATIONS': False,
-        # Log details
-        'LOG_PATH' : cfg.LOG_PATH,
-        'LOGLEVEL_CONSOLE': cfg.LOGLEVEL_CONSOLE,
-        'LOGLEVEL_FILE': cfg.LOGLEVEL_FILE
-        })
-
-    # Check the database exists
-    # Doesn't check a user - that comes later in the create_app
-    if not cfg.DATABASE_PATH.exists():
-        print("ERROR: The database file does not exist.")
-        print(f"Please run the setup step {cfg.SETUP_CMD} before starting the app.")
+    # Perform checks against cfg before server start
+    # eg. if no DB then no point in proceeding
+    if cfg_checks(cfg) == False:
         sys.exit(1) # Halt application startup
-
-    # Create the log dir if not already exist - and it's local (not overridden with /var/log etc.)
-    if cfg.LOG_DIR == cfg.BASE_DIR / 'logs':
-        cfg.LOG_DIR.mkdir(exist_ok=True)
-
 
     app = create_app(config)
 
@@ -132,7 +97,7 @@ if __name__ == "__main__":
     # instantly kill these threads. Do not wait for them.
     # If one stops then there is no point in the other continuing
     mt = threading.Thread(target=mainThread, args=(args.debug, config), daemon=True)
-    ft = threading.Thread(target=flaskThread, args=(args.debug, config), daemon=True)
+    ft = threading.Thread(target=flaskThread, args=(app, args.debug, config), daemon=True)
     mt.start()
     ft.start()
 
@@ -155,3 +120,23 @@ if __name__ == "__main__":
         # If you press Ctrl+C in the terminal, it breaks the loop cleanly
         print("\nCtrl+C detected. Shutting down VLCB Server...")
         sys.exit(0)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='VLCB Server')
+    parser.add_argument('-d', '--debug', action='store_true', help='Enable debug mode')
+    parser.add_argument("--base-dir", type=Path, default=None, help="Override project base directory")
+    # Launch authentication setup
+    parser.add_argument('--setup-auth', action='store_true', help='Launch interactive auth setup instead of starting server')
+    args = parser.parse_args()
+
+    cfg = Config(base_dir=args.base_dir)
+
+    # Load and setup config using both config consts and settings
+    config = get_config(cfg)
+
+    if args.setup_auth:
+        from vlcbserver.setup_auth import new_auth
+        new_auth(config)
+    else:
+        run_server(cfg, config)

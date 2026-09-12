@@ -33,3 +33,9 @@ class Config:
 
         self.LOG_DIR = self.BASE_DIR / 'logs'
         self.LOG_PATH = self.LOG_DIR / 'vlcbserver.log'
+
+        # Allow some environment variables to override 
+        # LOG_PATH can be overridden by environment setting 
+        env_log_dir = os.environ.get('APP_LOG_DIR', None)
+        if env_log_dir:
+            self.LOG_PATH = Path(env_log_dir) / 'vlcbserver.log'

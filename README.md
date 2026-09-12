@@ -47,9 +47,9 @@ To use the web interface then a username needs to be setup first.
 
 To use the GUI client then an API key is needed.
 
-These are setup using 
+These are both setup using 
 
-    setup/setup_auth.py
+    ./start_server.sh --setup-auth
 
 It is an interactive CLI which prompts for the details. 
 
@@ -57,41 +57,6 @@ For security reasons a strong password should be used and when creating an API k
 
 Any users created using the setup script will have administrator privileges. The same applies to the API. 
 
-# Upgrade September 2026
-
-Another major refactoring has moved the file structure. If you
-are upgrading from an older version move the files in your data folder to guiclient/data/
-
-For security reasons the server now needs an api_key which must match the client. This can be setup using 
-    setup/setup_auth.py
-
-
-# Upgrade July 2026
-
-Due to a major refactoring and node name change any layout files before July 2026 will need to be updated. To update, first checkout one of the refactor git commits (eg. main 7420e97). Then run the application choose Tools -> Layout Edit, and then click on the cross to close out of Layout Edit mode. You can then move to a a newer version.
-
-This will be deprecated in future. 
-
-Note: There may be other data upgrades needed in future whilst the code is still under development. 
-
-
-# Development
-
-If you would like to be involved in the development then you will likely want to download the submodule when cloning the repository. Use:
-
-    git clone --recurse-submodules git@github.com:penguintutor/pisignalbox.git
-
-Then activate the venv before running the following from the pisignalbox directory
-
-    pip install -e lib/pyvlcb
-
-If you would like to update the pyvlcb library then change to that directory 
-
-    cd lib/pyvlcb
-
-and then checkout the main branch
-
-    git checkout main
 
 # Running
 
@@ -126,6 +91,24 @@ To disable the server from starting automatically
     sudo systemctl daemon-reload
 
 
+# Development
+
+If you would like to be involved in the development then you will likely want to download the submodule when cloning the repository. Use:
+
+    git clone --recurse-submodules git@github.com:penguintutor/pisignalbox.git
+
+Then activate the venv before running the following from the pisignalbox directory
+
+    pip install -e lib/pyvlcb
+
+If you would like to update the pyvlcb library then change to that directory 
+
+    cd lib/pyvlcb
+
+and then checkout the main branch
+
+    git checkout main
+
 
 # Tests
 
@@ -143,3 +126,22 @@ All requests are sent to a message queue, so there may be a short delay in them 
 unless there are a lot of updates in progress.
 
 For loco control the dial shows the desired speed, the LCD display shows the value provided in the last update
+
+# Updates
+
+## Upgrade September 2026 / upgrades
+
+Another major refactoring has moved the file structure. If you
+are upgrading from an older version move the files in your data folder to guiclient/data/
+
+For security reasons the server now needs an api_key which must match the client. This can be setup using 
+    ./start_server.sh --setup-auth
+
+
+## Upgrade July 2026
+
+Due to a major refactoring and node name change any layout files before July 2026 will need to be updated. To update, first checkout one of the refactor git commits (eg. main 7420e97). Then run the application choose Tools -> Layout Edit, and then click on the cross to close out of Layout Edit mode. You can then move to a a newer version.
+
+This will be deprecated in future. 
+
+Note: There may be other data upgrades needed in future whilst the code is still under development. 

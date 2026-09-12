@@ -1,3 +1,6 @@
+# Used when setting up new users through the CLI
+# Needs to be run once from vlcbserver.py, then not required
+
 import sys
 import json
 import getpass
@@ -6,32 +9,14 @@ import logging
 from pathlib import Path
 from werkzeug.security import generate_password_hash
 
-# Resolve paths relative to this script's location in setup/
-SETUP_DIR = Path(__file__).resolve().parent
-BASE_DIR = SETUP_DIR.parent
-
-# Database is in the instances directory - holds user details etc.
-INSTANCE_DIR = BASE_DIR / 'instances'
-DATABASE_PATH = INSTANCE_DIR / 'users.db'
-
-# Future: Consider overriding using config file or environment variables
-LOGLEVEL_CONSOLE = logging.WARNING
-LOGLEVEL_FILE = logging.INFO
-
-LOG_DIR = BASE_DIR / 'logs'
-LOG_PATH = LOG_DIR / 'vlcbserver.log'
-
-# Add the project root to sys.path so Python can find 'vlcbserver'
-sys.path.insert(0, str(BASE_DIR))
 
 # Now we can safely import the app factory and database models
 from vlcbserver import create_app
 from vlcbserver.core.models import db, User
 
-# Update our file paths to start from the BASE_DIR instead of BASE_DIR
-SETTINGS_FILE = BASE_DIR / 'guiclient' / 'data' / 'settings.json'
 
-def create_user():
+
+def create_user(db):
     print("\n--- Create New User ---")
     # Keep asking for a username until valid
     while True:
@@ -70,8 +55,12 @@ def create_user():
     db.session.commit()
     print(f"Success: User '{username}' added to the database.")
 
-def create_api_key():
+def create_api_key(db, base_dir):
     print("\n--- Create API Key ---")
+
+    # Also need to update the guiclient settings.json file
+    # Update our file paths to start from the BASE_DIR instead of BASE_DIR
+    SETTINGS_FILE = base_dir / 'guiclient' / 'data' / 'settings.json'
 
     while True:
         username = input("Enter username to attach this API key to (e.g., 'GUI Api'): ").strip()
@@ -121,29 +110,9 @@ def create_api_key():
         
     print(f"Success: API key written to {SETTINGS_FILE}")
 
-def main():
+def new_auth(config):
     print("Initializing setup...")
-
-    # Define the instances directory
-    INSTANCE_DIR = BASE_DIR / 'instances'
-    # CREATE the directory if it doesn't exist (This fixes the error)
-    INSTANCE_DIR.mkdir(parents=True, exist_ok=True)
-
-    config = {}
-    
-    # Add paths to config if required elsewhere
-    config.update({
-        # Flask-SQLAlchemy expects a URI string. Uses an f-string to inject the Path.
-        'SQLALCHEMY_DATABASE_URI': f"sqlite:///{DATABASE_PATH}",
-        # Disabling this saves memory and suppresses a warning
-        'SQLALCHEMY_TRACK_MODIFICATIONS': False,
-        # Log details
-        'LOG_PATH' : LOG_PATH,
-        'LOGLEVEL_CONSOLE': LOGLEVEL_CONSOLE,
-        'LOGLEVEL_FILE': LOGLEVEL_FILE
-
-    })
-    
+   
     app = create_app(config)
     
     with app.app_context():
@@ -154,13 +123,11 @@ def main():
         # Create up to 1 user and 1 api key
         ans = input("\nWould you like to create a new user? [y/N]: ").strip().lower()
         if ans == 'y':
-            create_user()
+            create_user(db)
                 
         ans = input("\nWould you like to create/update an API key? [y/N]: ").strip().lower()
         if ans == 'y':
-            create_api_key()
+            create_api_key(db, config['BASE_DIR'])
                 
         print("\nSetup complete. Exiting.")
 
-if __name__ == '__main__':
-    main()
