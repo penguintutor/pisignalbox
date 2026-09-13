@@ -1,6 +1,7 @@
 # models.py
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
+from vlcbserver.constants import ROLES
 
 db = SQLAlchemy()
 
@@ -10,10 +11,6 @@ user - basic user view only
 operator - control trains
 manager - full railway config - not user admin
 admin - full control useradmin
-
-api-operator - control trains
-api-manager - full railway config - not user admin (default)
-api-admin - full control including useradmin
 """
 
 class User(UserMixin, db.Model):
@@ -32,11 +29,16 @@ class User(UserMixin, db.Model):
     short_name = db.Column(db.String(50), nullable=True)
     
     # Using a string for role with a default fallback
-    role = db.Column(db.String(50), nullable=False, default='user')
+    role = db.Column(db.String(50), nullable=False, default='reader')
 
     def has_role(self, role_name):
         """Check if the user has a specific role."""
         return self.role == role_name
+
+    @property
+    def role_display_name(self):
+        # Fallback to the shortname if the key isn't found in ROLES
+        return ROLES.get(self.role, {self.role})
 
     def __repr__(self):
         return f'<User {self.username}>'
@@ -44,14 +46,20 @@ class User(UserMixin, db.Model):
 
 # System user used by API (no username)
 class ApiUser(UserMixin):
+
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    role = db.Column(db.String(50), nullable=False, default='reader')
+
     def __init__(self):
         # Flask-Login needs an ID as a string
-        self.id = "api_system_user" 
-        self.username = "Client App"
+        #self.id = "api_system_user" 
+        #self.username = "Client App"
+        pass
+        
 
     # API users also have a role
     def has_role(self, role_name):
             """Check if the user has a specific role."""
-            return False
-            #return self.role == role_name
+            return self.role == role_name
     

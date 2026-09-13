@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% from "macros/shared.html" import render_user_row %}
+{% from "admin/macros.html" import render_user_row, render_role_select %}
 
 {% block content %}
 <div class="admin-container">
@@ -49,7 +49,7 @@
             <button type="button" class="close-btn" onclick="document.getElementById('user-modal').close()">&times;</button>
         </div>
         <form method="POST" action="/admin/users/save" id="user-form">
-            <input type="hidden" name="csrf_token" value="IjJmYTA1NzQ0NjViMzM4Y2MxYmMyYWVjZGNmMDdhYWRhNzExOWY5MjQi.aqCCPA.IseUclhD7RzYOlZ7POXeLOS9KQs">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" id="original-username" name="original_username" value="">
 
             <div class="form-group">
@@ -67,10 +67,7 @@
             <div class="form-group">
                 <label for="modal-role">Role</label>
                 <select id="modal-role" name="role" class="form-select">
-                    <option value="Viewer">Observer</option>
-                    <option value="Operator">Signaller</option>
-                    <option value="Viewer">Layout Engineer</option>
-                    <option value="Admin">Operations Manager</option>
+                {{ render_role_select(current_role=None, roles_dict=ROLES) }}
                 </select>
             </div>
             <div class="form-group">
@@ -132,7 +129,7 @@
             const csrfInput = document.createElement('input');
             csrfInput.type = 'hidden';
             csrfInput.name = 'csrf_token';
-            csrfInput.value = 'IjJmYTA1NzQ0NjViMzM4Y2MxYmMyYWVjZGNmMDdhYWRhNzExOWY5MjQi.aqCCPA.IseUclhD7RzYOlZ7POXeLOS9KQs';
+            csrfInput.value = '{{ csrf_token() }}';
 
             const userInput = document.createElement('input');
             userInput.type = 'hidden';

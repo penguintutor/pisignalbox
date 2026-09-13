@@ -399,7 +399,7 @@ body {
     font-size: 0.75rem;
     font-weight: bold;
     letter-spacing: 0.5px;
-    text-transform: uppercase;
+    /*text-transform: uppercase;*/
 }
 
 .role-admin {
@@ -414,7 +414,13 @@ body {
     border: 1px solid #b2dfdb;
 }
 
-.role-viewer {
+.role-update {
+    background-color: #e8f5e9; /* Green 50 */
+    color: #388e3c;            /* Green 700 */
+    border: 1px solid #c8e6c9; /* Green 100 */
+}
+
+.role-reader {
     background-color: #f5f5f5;
     color: #616161;
     border: 1px solid #e0e0e0;

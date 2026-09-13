@@ -4,6 +4,7 @@ There is a separate blueprint for api requests (ie. client)
 or web requests
 """
 from flask import Blueprint
+from vlcbserver.constants import ROLES
 
 # The Web Blueprint (For human HTML pages)
 admin_blueprint = Blueprint(
@@ -13,6 +14,10 @@ admin_blueprint = Blueprint(
     static_folder='static',         # Files in the static directory are served as is - eg. CSS / JS
     url_prefix='/admin'
 )
+
+@admin_blueprint.context_processor
+def inject_constants():
+    return {"ROLES": ROLES}
 
 # Import routes at the bottom so they attach to the blueprints above
 from . import routes

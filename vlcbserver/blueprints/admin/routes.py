@@ -34,7 +34,6 @@ def dashboard():
     # Only users with role='admin' can see this
     return render_template('admin/index.html')
 
-# Todo implement
 @admin_blueprint.route('/users')
 def users():
     # SQLAlchemy 2.0 select query ordered alphabetically by username
@@ -42,6 +41,79 @@ def users():
     users = db.session.execute(query).scalars().all()
 
     return render_template('admin/users.html', users=users)
+
+
+@admin_blueprint.route('/users/save', methods=['POST'])
+def save_user():
+    # Retrieve form data
+    original_username = request.form.get('original_username')
+    username = request.form.get('username')
+    fullname = request.form.get('fullname')
+    email = request.form.get('email')
+    password = request.form.get('password')
+    role = request.form.get('role') 
+    
+    # Fallback to match your DB default in case of a malformed request
+    if not role:
+        role = 'reader'
+    
+    # Update Existing User
+    if original_username:
+        user = User.query.filter_by(username=original_username).first()
+        
+        if not user:
+            flash("User not found.", "error")
+            return redirect(url_for('admin.users')) # Replace with your actual redirect route
+            
+        # Update fields
+        user.full_name = fullname
+        user.email = email
+        user.role = role
+        
+        # If the HTML removes 'readonly' to allow username changes, check for collisions
+        if username and username != original_username:
+            existing = User.query.filter_by(username=username).first()
+            if existing:
+                flash("Username is already taken.", "error")
+                return redirect(url_for('admin.users'))
+            user.username = username
+
+        # Only hash and update the password if the user actually typed a new one
+        if password:
+            user.password_hash = generate_password_hash(password)
+
+    # Insert New User
+    else:
+        # Validate required fields for new users
+        if not username or not password:
+            flash("Username and password are required for new users.", "error")
+            return redirect(url_for('admin.users'))
+            
+        # Check if username already exists
+        if User.query.filter_by(username=username).first():
+            flash("Username is already taken.", "error")
+            return redirect(url_for('admin.users'))
+            
+        # Create new user instance
+        user = User(
+            username=username,      # type: ignore
+            full_name=fullname,     # type: ignore
+            email=email,            # type: ignore
+            role=role,              # type: ignore
+            password_hash=generate_password_hash(password)  # type: ignore
+        ) 
+        db.session.add(user)
+
+    # Commit to Database
+    try:
+        db.session.commit()
+        flash("User saved successfully.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash("An error occurred while saving to the database.", "error")
+        print(f"Database error: {e}") # For debugging
+
+    return redirect(url_for('admin.users'))
 
 # Todo implement
 @admin_blueprint.route('/settings')

@@ -1,0 +1,40 @@
+
+
+{% macro render_user_row(user) %}
+<tr>
+    <td><strong>{{ user.username }}</strong></td>
+    <td>{{ user.full_name }}</td>
+    <td>{{ user.email }}</td>
+    <td>
+        {# Normalise role to lowercase for class names: role-admin, role-operator, role-viewer #}
+        <span class="role-badge role-{{ user.role | lower }}">{{ user.role_display_name }}</span>
+    </td>
+    <td class="actions-cell">
+        <button type="button" 
+                class="btn btn-sm btn-edit"
+                data-username="{{ user.username }}"
+                data-fullname="{{ user.full_name }}"
+                data-email="{{ user.email }}"
+                data-role="{{ user.role }}"
+                onclick="handleEditClick(this)">
+            Edit
+        </button>
+        <button type="button" 
+                class="btn btn-sm btn-delete"
+                data-username="{{ user.username }}"
+                onclick="confirmDeleteUser(this.dataset.username)">
+            Delete
+        </button>
+    </td>
+</tr>
+{% endmacro %}
+
+
+
+{% macro render_role_select(current_role=None, roles_dict={}) %}
+                    {% for shortname, longname in roles_dict.items() %}
+                        <option value="{{ shortname }}" {% if current_role == shortname %}selected{% endif %}>
+                            {{ longname }}
+                        </option>
+                    {% endfor %}
+{% endmacro %}
