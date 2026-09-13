@@ -6,8 +6,8 @@ or web requests
 from flask import Blueprint
 
 # The Web Blueprint (For human HTML pages)
-web_blueprint = Blueprint(
-    'web', 
+home_blueprint = Blueprint(
+    'home', 
     __name__, 
     template_folder='templates',    # Template files are processed by Jinja2 - allows {{ var_name }}
     static_folder='static'         # Files in the static directory are served as is - eg. CSS / JS

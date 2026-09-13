@@ -1,13 +1,13 @@
-{% from "macros.html" import render_user_menu, render_layout_menu %}
-{% from "macros.html" import render_hamburger_menu with context %}
+{% from "macros/shared.html" import render_user_menu, render_layout_menu %}
+{% from "macros/shared.html" import render_hamburger_menu with context %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pi SignalBox</title>
-    <link rel="stylesheet" href="{{ url_for('web.static', filename='pisignalbox.css') }}" />
-    <script src="{{ url_for('web.static', filename='pisignalbox.js') }}" defer></script>
+    <link rel="stylesheet" href="{{ url_for('home.static', filename='pisignalbox.css') }}" />
+    <script src="{{ url_for('home.static', filename='pisignalbox.js') }}" defer></script>
 </head>
 <body>
 
@@ -24,7 +24,7 @@
     <main>
         {% block banner %}
         <div class="banner-container">
-            <img src="{{ url_for('web.static', filename='pisignalbox-banner-small-01.png') }}" alt="Pi SignalBox - Python GUI / Virtual Signal Box / Loco Control / Automation">
+            <img src="{{ url_for('home.static', filename='pisignalbox-banner-small-01.png') }}" alt="Pi SignalBox - Python GUI / Virtual Signal Box / Loco Control / Automation">
         </div>
         {% endblock %}
 

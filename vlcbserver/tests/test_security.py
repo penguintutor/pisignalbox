@@ -14,7 +14,7 @@ def test_all_routes_are_secure(app):
         'auth.login', 
         'auth.register', 
         'auth.logout',
-        'web.home', 
+        'home.home', 
         'static'  # Flask's default static file handler
     ]
 

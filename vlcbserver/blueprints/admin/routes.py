@@ -25,14 +25,14 @@ def check_admin_access():
         return redirect(url_for('auth.login', next=request.url))
     
     # Check if the user has the admin role
-    if not current_user.has_role('Operations Manager'):
+    if not current_user.has_role('admin'):
         # Return a 403 Forbidden error if they are logged in but lack permissions
         abort(403)
 
 @admin_blueprint.route('/')
 def dashboard():
     # Only users with role='admin' can see this
-    return render_template('admin-index.html')
+    return render_template('admin/index.html')
 
 # Todo implement
 @admin_blueprint.route('/users')
@@ -41,10 +41,10 @@ def users():
     query = db.select(User).order_by(User.username.asc())
     users = db.session.execute(query).scalars().all()
 
-    return render_template('admin-index.html', users=users)
+    return render_template('admin/users.html', users=users)
 
 # Todo implement
 @admin_blueprint.route('/settings')
 def settings():
     # Only users with role='admin' can see this
-    return render_template('admin.html')
+    return render_template('admin/index.html')

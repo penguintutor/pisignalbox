@@ -1,4 +1,4 @@
-<!-- macros.html -->
+<!-- macros/shared.html -->
 
 
 {% macro render_user_menu(user) %}
@@ -49,11 +49,11 @@
         </div>
         
         <ul class="sidebar-links">
-            <li><a href="{{ url_for('web.home') }}">Home</a></li>
+            <li><a href="{{ url_for('home.home') }}">Home</a></li>
             
             {% if current_user.is_authenticated %}
-                <li><a href="{{ url_for('web.home') }}">Dashboard</a></li>
-                <li><a href="{{ url_for('web.profile') }}">Profile</a></li>
+                <li><a href="{{ url_for('home.home') }}">Dashboard</a></li>
+                <li><a href="{{ url_for('home.profile') }}">Profile</a></li>
                 
                 <!-- Role-based rendering -->
                 {% if current_user.has_role('admin') %}

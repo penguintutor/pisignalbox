@@ -12,7 +12,7 @@ import vlcbserver
 from vlcbserver.vlcb_bridge import send_data, get_data
 from vlcbserver.core.models import User
 from vlcbserver.core.utils import role_required, process_vlcb_logic
-from . import web_blueprint
+from . import home_blueprint
 
 # Examples of types of request
 #/vlcb?read=<id of first data packet>&format=txt&[&end=<id last packet to retrieve]
@@ -24,24 +24,24 @@ from . import web_blueprint
 # ==========================================
 
 
-@web_blueprint.route("/vlcb", methods=['GET', 'POST'])
+@home_blueprint.route("/vlcb", methods=['GET', 'POST'])
 @login_required
 def vlcb_request():
     return process_vlcb_logic()
 
 
-@web_blueprint.route("/", methods=['GET', 'POST'])
-@web_blueprint.route("/home", methods=['GET', 'POST'])
+@home_blueprint.route("/", methods=['GET', 'POST'])
+@home_blueprint.route("/home", methods=['GET', 'POST'])
 def home():
-    return render_template('index.html')
+    return render_template('home/index.html')
 
-@web_blueprint.route("/profile", methods=['GET', 'POST'])
+@home_blueprint.route("/profile", methods=['GET', 'POST'])
 @login_required
 def profile():
-    return render_template('profile.html', hello="Profile")
+    return render_template('home/profile.html', hello="Profile")
 
     
-@web_blueprint.route("/logout", methods=['GET', 'POST'])
+@home_blueprint.route("/logout", methods=['GET', 'POST'])
 @login_required
 def logout():
     logout_user()

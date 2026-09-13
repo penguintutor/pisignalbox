@@ -55,7 +55,7 @@ It is an interactive CLI which prompts for the details.
 
 For security reasons a strong password should be used and when creating an API key it should be 32 alpha-numeric characters. 
 
-Any users created using the setup script will have administrator privileges. The same applies to the API. 
+Any users created using the setup script will have Operation Manager (admin) privileges. If not attached to an existing user then the api will have "Layout Engineer" (update) permissions. 
 
 
 # Running

@@ -49,7 +49,7 @@ def create_user(db):
 
     password_hash = generate_password_hash(password)
     # User is added as an admin so can manage other users
-    new_user = User(username=username, password_hash=password_hash, role="Operations Manager") # type: ignore
+    new_user = User(username=username, password_hash=password_hash, role="admin") # type: ignore
     
     db.session.add(new_user)
     db.session.commit()
@@ -73,7 +73,7 @@ def create_api_key(db, base_dir):
         
         if not user:
             print(f"User '{username}' not found. Creating as an API-only system user...")
-            user = User(username=username, password_hash="SYSTEM_API_USER_NO_PASSWORD", role="api-manager") # type: ignore
+            user = User(username=username, password_hash="SYSTEM_API_USER_NO_PASSWORD", role="manager") # type: ignore
             db.session.add(user)
 
         custom_key = input("Enter API key (leave blank to auto-generate securely): ").strip()
@@ -118,6 +118,7 @@ def new_auth(config):
     with app.app_context():
         # This creates instances/users.db and the tables if they don't exist yet
         db.create_all()
+        
         print("Database connection verified.")
 
         # Create up to 1 user and 1 api key

@@ -123,11 +123,11 @@ def create_app(config):
 
     #Register routes as @requests
     from vlcbserver.blueprints.api import api_blueprint
-    from vlcbserver.blueprints.web import web_blueprint
+    from vlcbserver.blueprints.home import home_blueprint
     from vlcbserver.blueprints.auth import auth_blueprint
     from vlcbserver.blueprints.admin import admin_blueprint
     app.register_blueprint(api_blueprint)
-    app.register_blueprint(web_blueprint)
+    app.register_blueprint(home_blueprint)
     app.register_blueprint(auth_blueprint)
     app.register_blueprint(admin_blueprint)
 

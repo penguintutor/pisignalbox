@@ -10,7 +10,7 @@ import argparse
 import logging
 import vlcbserver
 from vlcbserver import create_app
-import vlcbserver.blueprints.web
+import vlcbserver.blueprints.home
 from vlcbserver.vlcb_bridge import command_queue, add_sensor_update, cleanup_sensor_data, sensor_data
 # Uses json5 to allow comments in the config file
 import json5

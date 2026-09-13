@@ -11,7 +11,7 @@ import vlcbserver
 from vlcbserver.vlcb_bridge import send_data, get_data
 from vlcbserver.core.models import User
 from vlcbserver.core.utils import role_required
-from vlcbserver.blueprints.web import web_blueprint
+from vlcbserver.blueprints.home import home_blueprint
 from . import auth_blueprint
 
 # Examples of types of request
@@ -24,7 +24,7 @@ def login():
     """User login page using Flask-SQLAlchemy."""
     # If the user is already logged in, skip the login page
     if current_user.is_authenticated:
-        return redirect(url_for('web.home'))
+        return redirect(url_for('home.home'))
 
     # Capture next argument to redirect (success) or pass with login attempt
     next_page = request.args.get('next')
@@ -44,7 +44,7 @@ def login():
                 
                 # Security Check: Ignore absolute URLs to prevent Open Redirect attacks
                 if not next_page or urlparse(next_page).netloc != '':
-                    next_page = url_for('web.home')
+                    next_page = url_for('home.home')
 
                 return redirect(next_page)
                 
@@ -52,7 +52,7 @@ def login():
             return redirect(url_for('auth.login', next=next_page))
 
     # Serve the HTML file from the template folder
-    return render_template('auth-login.html')
+    return render_template('auth/login.html')
 
 
     
