@@ -1,19 +1,11 @@
 {% extends "base.html" %}
-{% block user_menu %}
-{% endblock %}
+
+
 {% block content %}
         <div class="login-wrapper">
             <div class="login-panel">
                 <h2>System Login</h2>
                 
-                <!-- Display Flash Messages (e.g., "Invalid username or password.") -->
-                {% with messages = get_flashed_messages() %}
-                  {% if messages %}
-                    {% for message in messages %}
-                      <div class="flash-message">{{ message }}</div>
-                    {% endfor %}
-                  {% endif %}
-                {% endwith %}
 
                 <form method="POST" action="{{ url_for('auth.login', next=request.args.get('next')) }}">
                     <!-- Required for Flask-WTF CSRF protection -->

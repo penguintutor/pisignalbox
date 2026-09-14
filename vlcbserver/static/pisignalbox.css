@@ -643,3 +643,82 @@ body {
         transform: translateY(0);
     }
 }
+
+
+/* Flash Message */
+/* Base Alert Styling */
+.alert {
+    position: relative;
+    padding: 1rem 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid transparent;
+    border-radius: 0.25rem;
+    font-family: inherit;
+}
+
+/* Informational Alert (Light Blue) */
+.alert-info {
+    color: #055160;
+    background-color: #cff4fc;
+    border-color: #b6effb;
+}
+
+/* Error/Danger Alert (Pink/Red) */
+.alert-danger {
+    color: #842029;
+    background-color: #f8d7da;
+    border-color: #f5c2c7;
+}
+
+/* Success Alert (Light Green) */
+.alert-success {
+    color: #0f5132;
+    background-color: #d1e7dd;
+    border-color: #badbcc;
+}
+
+/* Close Button Styling */
+.btn-close {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 2;
+    padding: 1.25rem 1rem;
+    /* Inline SVG for the 'X' cross image */
+    background: transparent url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='M.293.293a1 1 0 011.414 0L8 6.586 14.293.293a1 1 0 111.414 1.414L9.414 8l6.293 6.293a1 1 0 01-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 01-1.414-1.414L6.586 8 .293 1.707a1 1 0 010-1.414z'/%3e%3c/svg%3e") center/1em auto no-repeat;
+    border: 0;
+    opacity: 0.5;
+    cursor: pointer;
+    width: 1em;
+    height: 1em;
+    box-sizing: content-box;
+    transition: opacity 0.15s ease-in-out;
+}
+
+/* Make the cross darker when hovered */
+.btn-close:hover {
+    opacity: 1;
+}
+
+/* Hide the alert when a user clicks the close button (if using Javascript to toggle a 'd-none' class, or handling it natively) */
+.alert.d-none {
+    display: none;
+}
+
+
+/* Generic Page Container (Handles Centering and Padding) */
+.page-container {
+    width: 100%;
+    margin: 20px auto 40px auto; 
+    box-sizing: border-box;
+    padding: 0 10px;
+}
+
+/* Width Modifiers */
+.container-wide {
+    max-width: 1200px; /* For Pi SignalBox admin/layout pages */
+}
+
+.container-narrow {
+    max-width: 450px; /* For the login page */
+}

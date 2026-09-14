@@ -21,12 +21,32 @@
         </div>
     </header>
 
-    <main>
-        {% block banner %}
-        <div class="banner-container">
-            <img src="{{ url_for('home.static', filename='pisignalbox-banner-small-01.png') }}" alt="Pi SignalBox - Python GUI / Virtual Signal Box / Loco Control / Automation">
-        </div>
-        {% endblock %}
+    {% block banner %}
+    <div class="banner-container">
+        <img src="{{ url_for('home.static', filename='pisignalbox-banner-small-01.png') }}" alt="Pi SignalBox - Python GUI / Virtual Signal Box / Loco Control / Automation">
+    </div>
+    {% endblock %}
+    
+    <main class="page-container container-wide">
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    {% if category == 'error' %}
+                        {% set alert_class = 'danger' %}
+                    {% elif category == 'success' %}
+                        {% set alert_class = 'success' %}
+                    {% else %}
+                        {% set alert_class = 'info' %} <!-- The catch-all -->
+                    {% endif %}
+                    
+                    <div class="alert alert-{{ alert_class }} alert-dismissible fade show shadow-sm" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
 
         {% block content %}{% endblock %}
         

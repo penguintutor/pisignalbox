@@ -73,7 +73,7 @@ def create_api_key(db, base_dir):
         
         if not user:
             print(f"User '{username}' not found. Creating as an API-only system user...")
-            user = User(username=username, password_hash="SYSTEM_API_USER_NO_PASSWORD", role="manager") # type: ignore
+            user = User(username=username, password_hash="SYSTEM_API_USER_NO_PASSWORD", role="update") # type: ignore
             db.session.add(user)
 
         custom_key = input("Enter API key (leave blank to auto-generate securely): ").strip()

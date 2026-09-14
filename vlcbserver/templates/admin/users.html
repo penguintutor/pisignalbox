@@ -2,44 +2,45 @@
 {% from "admin/macros.html" import render_user_row, render_role_select %}
 
 {% block content %}
-<div class="admin-container">
-    <div class="admin-panel">
-        <div class="admin-header">
-            <div>
-                <h2>User Management</h2>
-                <p class="admin-subtitle">Manage system accounts, authentication credentials, and access roles.</p>
-            </div>
-            <button type="button" class="btn btn-primary" onclick="openAddUserModal()">
-                + Add New User
-            </button>
-        </div>
 
-        <div class="table-responsive">
-            <table class="user-table">
-                <thead>
-                    <tr>
-                        <th>Username</th>
-                        <th>Full Name</th>
-                        <th>Email Address</th>
-                        <th>Role</th>
-                        <th class="text-right">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for user in users %}
-                        {{ render_user_row(user) }}
-                    {% else %}
-                        <tr>
-                            <td colspan="5" style="text-align: center; color: #888; padding: 20px;">
-                                No users registered.
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+<div class="admin-panel">
+    <div class="admin-header">
+        <div>
+            <h2>User Management</h2>
+            <p class="admin-subtitle">Manage system accounts, authentication credentials, and access roles.</p>
+
         </div>
+        <button type="button" class="btn btn-primary" onclick="openAddUserModal()">
+            + Add New User
+        </button>
+    </div>
+
+    <div class="table-responsive">
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Full Name</th>
+                    <th>Email Address</th>
+                    <th>Role</th>
+                    <th class="text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                    {{ render_user_row(user) }}
+                {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: #888; padding: 20px;">
+                            No users registered.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
+
 
 <!-- Add / Edit User Modal Dialog -->
 <dialog id="user-modal" class="admin-modal">

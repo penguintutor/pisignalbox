@@ -48,7 +48,7 @@ def login():
 
                 return redirect(next_page)
                 
-            flash("Invalid username or password.")
+            flash("Invalid username or password.", "error")
             return redirect(url_for('auth.login', next=next_page))
 
     # Serve the HTML file from the template folder

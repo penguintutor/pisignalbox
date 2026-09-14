@@ -115,8 +115,41 @@ def save_user():
 
     return redirect(url_for('admin.users'))
 
-# Todo implement
-@admin_blueprint.route('/settings')
+@admin_blueprint.route('/users/delete', methods=['POST'])
+def delete_user():
+    # Retrieve the username of the user to delete
+    username = request.form.get('username')
+    
+    if not username:
+        flash("No username provided.", "error")
+        return redirect(url_for('admin.users')) # Replace with your actual redirect route
+        
+    # Find the user in the database
+    user = User.query.filter_by(username=username).first()
+    
+    if not user:
+        flash("User not found.", "error")
+        return redirect(url_for('admin.users'))
+        
+    # Prevent admins from deleting themselves
+    # current_user = ... # (logic to get currently logged in user)
+    if current_user.username == user.username:
+        flash("You cannot delete your own account.", "error")
+        return redirect(url_for('admin.users'))
+
+    # Delete the user and commit
+    try:
+        db.session.delete(user)
+        db.session.commit()
+        flash(f"User '{username}' was successfully deleted.", "success")
+    except Exception as e:
+        db.session.rollback()
+        flash("An error occurred while deleting the user.", "error")
+        print(f"Database error: {e}") # For debugging
+
+    return redirect(url_for('admin.users'))
+
+@admin_blueprint.route('/settings', methods=['POST'])
 def settings():
-    # Only users with role='admin' can see this
-    return render_template('admin/index.html')
+    # Todo implement this
+    return redirect(url_for('admin.users'))
