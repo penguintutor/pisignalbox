@@ -3,6 +3,7 @@ from flask import Flask, current_app, request, jsonify, redirect, url_for
 from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.middleware.proxy_fix import ProxyFix
 from sqlalchemy.exc import OperationalError
 from sqlalchemy import inspect
 import time
@@ -81,6 +82,9 @@ def create_app(config):
     app = Flask(
         __name__
         )
+
+    # Allow ProxyFix - if using Nginx
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
     app.config.update(config)
 

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+        <div class="login-wrapper">
+            <div class="login-panel">
+                <h2>Choose New Password</h2>
+                
+                <p style="margin-bottom: 15px;">Please enter your new password below.</p>
+
+                <!-- Leaving the action empty ("") automatically submits the form 
+                     back to the exact same URL it came from, preserving the token -->
+                <form method="POST" action="">
+                    <!-- Required for Flask-WTF CSRF protection -->
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    
+                    <div class="form-group">
+                        <label for="password">New Password</label>
+                        <input type="password" 
+                               id="password" 
+                               name="password" 
+                               minlength="8" 
+                               maxlength="128" 
+                               pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).+" 
+                               title="Password must contain at least one number, one uppercase letter, and one lowercase letter."
+                               required autofocus>
+                    </div>
+                    
+                    <button type="submit" class="login-btn">Update Password</button>
+                </form>
+            </div>
+        </div>
+{% endblock %}

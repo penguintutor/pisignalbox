@@ -94,6 +94,22 @@ To disable the server from starting automatically
     sudo systemctl daemon-reload
 
 
+# Password resets
+
+To reset or add a new admin user then run the --setup-auth option.
+
+If you would like to enable email password resets then create a file
+settings/mail_config.json with your email server details. The below example shows how you can config for gmail using an app password.
+
+    {
+        "SMTP_SERVER": "smtp.gmail.com",
+        "SMTP_PORT": 465,
+        "SMTP_USER": "your_email@gmail.com",
+        "SMTP_PASS": "your_app_password"
+    }
+
+This assumes there is internet access and that the user has configured their account with an email address. 
+
 # Development
 
 If you would like to be involved in the development then you will likely want to download the submodule when cloning the repository. Use:

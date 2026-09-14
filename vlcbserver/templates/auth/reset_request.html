@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% block content %}
+        <div class="login-wrapper">
+            <div class="login-panel">
+                <h2>Reset Password</h2>
+                
+                {% if reset_enabled %}
+                    <p style="margin-bottom: 15px;">Enter your email address to receive a password reset link.</p>
+                    
+                    <form method="POST" action="{{ url_for('auth.reset_request') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        
+                        <div class="form-group">
+                            <label for="email">Email Address</label>
+                            <input type="email" id="email" name="email" required autofocus>
+                        </div>
+                        
+                        <button type="submit" class="login-btn">Send Reset Link</button>
+                    </form>
+                {% else %}
+                    <div style="margin: 20px 0; padding: 15px; border-left: 4px solid #ff9800; background-color: #fff3e0;">
+                        Self password reset is not enabled. Please contact the layout administrator to reset your password.
+                    </div>
+                {% endif %}
+
+                <div style="margin-top: 20px; text-align: center;">
+                    <a href="{{ url_for('auth.login') }}" style="text-decoration: none;">Return to Login</a>
+                </div>
+            </div>
+        </div>
+{% endblock %}

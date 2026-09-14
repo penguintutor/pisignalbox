@@ -23,6 +23,11 @@
                     
                     <button type="submit" class="login-btn">Log In</button>
                 </form>
+                
+                <div style="margin-top: 15px; text-align: center; font-size: 0.9em;">
+                    <a href="{{ url_for('auth.reset_request') }}">Forgot your password?</a>
+                </div>
+
             </div>
         </div>
 {% endblock %}

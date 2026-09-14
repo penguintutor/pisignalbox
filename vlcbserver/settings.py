@@ -39,6 +39,7 @@ def get_config(cfg):
     # Add paths to config if required elsewhere
     config.update({
         'BASE_DIR': cfg.BASE_DIR,
+        'CONFIG_DIR': cfg.CONFIG_DIR,
         # Flask-SQLAlchemy expects a URI string. Uses an f-string to inject the Path.
         'SQLALCHEMY_DATABASE_URI': f"sqlite:///{cfg.DATABASE_PATH}",
         # Disabling this saves memory and suppresses a warning
