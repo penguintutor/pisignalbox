@@ -5,12 +5,14 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, cur
 from urllib.parse import urlparse
 from werkzeug.security import generate_password_hash, check_password_hash
 from strip_tags import strip_tags
+from email_validator import validate_email, EmailNotValidError
 import threading
 import logging, os
 import vlcbserver
 from vlcbserver.vlcb_bridge import send_data, get_data
 from vlcbserver.core.models import User, db
 from vlcbserver.core.utils import role_required
+from vlcbserver.constants import ROLES
 from . import admin_blueprint
 
 
@@ -47,14 +49,29 @@ def users():
 def save_user():
     # Retrieve form data
     original_username = request.form.get('original_username')
-    username = request.form.get('username')
-    fullname = request.form.get('fullname')
-    email = request.form.get('email')
+    raw_username = request.form.get('username')
+    # Enforce username as lower_case
+    username = raw_username.lower().replace(" ", "_")
+    username = re.sub(r'[^a-z0-9_]', '', username)
+    raw_input_name = request.form.get('fullname')
+    # Just strip brackets from full name
+    fullname = re.sub(r'[<>{}]', '', raw_input_name).strip()
+    raw_email = request.form.get('email')
+    if raw_email:
+        email = clean_email(raw_email)
+    else:
+        email = ""
     password = request.form.get('password')
+    if len(password) < 8:
+        flash("Password is too short. Minimum 8 characters.", "error")
+        return redirect(url_for('admin.users'))
+    elif len(password) > 128:
+            flash("Password is too long. Maximum 128 characters.", "error")
+            return redirect(url_for('admin.users'))
     role = request.form.get('role') 
     
     # Fallback to match your DB default in case of a malformed request
-    if not role:
+    if not role or role not in ROLES:
         role = 'reader'
     
     # Update Existing User
@@ -153,3 +170,15 @@ def delete_user():
 def settings():
     # Todo implement this
     return redirect(url_for('admin.users'))
+
+
+
+def clean_email(raw_email):
+    try:
+        # Validates syntax and normalizes the email
+        valid = validate_email(raw_email, check_deliverability=False)
+        return valid.normalized
+    except EmailNotValidError:
+        # Handle the error (e.g., flash a message to the user)
+        flash("Email included invalid characters, left blank", "warning")
+        return ""

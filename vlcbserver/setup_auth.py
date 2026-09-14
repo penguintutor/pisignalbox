@@ -20,10 +20,12 @@ def create_user(db):
     print("\n--- Create New User ---")
     # Keep asking for a username until valid
     while True:
-        username = input("Username: ").strip()
-        if not username:
+        raw_input = input("Username: ").strip()
+        if not raw_input:
             print("Error: Username cannot be empty.")
             continue
+
+        full_name, username = _handle_username_spaces(raw_input)
 
         # Check for duplicate username
         existing_user = db.session.execute(db.select(User).filter_by(username=username)).scalar_one_or_none()
@@ -49,7 +51,7 @@ def create_user(db):
 
     password_hash = generate_password_hash(password)
     # User is added as an admin so can manage other users
-    new_user = User(username=username, password_hash=password_hash, role="admin") # type: ignore
+    new_user = User(username=username, password_hash=password_hash, role="admin", full_name=full_name) # type: ignore
     
     db.session.add(new_user)
     db.session.commit()
@@ -63,17 +65,19 @@ def create_api_key(db, base_dir):
     SETTINGS_FILE = base_dir / 'guiclient' / 'data' / 'settings.json'
 
     while True:
-        username = input("Enter username to attach this API key to (e.g., 'GUI Api'): ").strip()
-        if not username:
+        raw_input = input("Enter username to attach this API key to (e.g., 'GUI Api'): ").strip()
+        if not raw_input:
             print("Error: Username cannot be empty.")
             continue
+
+        full_name, username = _handle_username_spaces(raw_input)
  
 
         user = db.session.execute(db.select(User).filter_by(username=username)).scalar_one_or_none()
         
         if not user:
             print(f"User '{username}' not found. Creating as an API-only system user...")
-            user = User(username=username, password_hash="SYSTEM_API_USER_NO_PASSWORD", role="update") # type: ignore
+            user = User(username=username, password_hash="SYSTEM_API_USER_NO_PASSWORD", role="update", full_name=full_name) # type: ignore
             db.session.add(user)
 
         custom_key = input("Enter API key (leave blank to auto-generate securely): ").strip()
@@ -109,6 +113,18 @@ def create_api_key(db, base_dir):
         json.dump(data, f, indent=4)
         
     print(f"Success: API key written to {SETTINGS_FILE}")
+
+def _handle_username_spaces(raw_input):
+    # Check if there is at least one space in the input
+    if " " in raw_input:
+        full_name = raw_input
+        username = raw_input.lower().replace(" ", "_")
+    else:
+            # No spaces, use it directly as the username
+        full_name = ""  # Uses the empty string default you set up earlier
+        # still make it lower case
+        username = raw_input.lower()
+    return full_name,username
 
 def new_auth(config):
     print("Initializing setup...")

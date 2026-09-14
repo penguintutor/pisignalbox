@@ -32,6 +32,7 @@ Additional libraries are required to install using virtual environment (recommen
     pip install flask_login
     pip install flask.wtf
     pip install Flask-SQLAlchemy
+    pip install email-validator
     pip install json5
     pip install pyserial
 
@@ -56,6 +57,8 @@ It is an interactive CLI which prompts for the details.
 For security reasons a strong password should be used and when creating an API key it should be 32 alpha-numeric characters. 
 
 Any users created using the setup script will have Operation Manager (admin) privileges. If not attached to an existing user then the api will have "Layout Engineer" (update) permissions. 
+
+Note that the login username will be all lower case and spaces replaced with _
 
 
 # Running

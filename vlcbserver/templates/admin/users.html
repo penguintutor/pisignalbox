@@ -73,7 +73,12 @@
             </div>
             <div class="form-group">
                 <label for="modal-password" id="modal-password-label">Password</label>
-                <input type="password" id="modal-password" name="password" placeholder="Enter password" required>
+                <input type="password" id="modal-password" name="password" 
+                placeholder="Enter password" 
+                minlength="8" maxlength="128" 
+                pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).+" 
+                title="Password must contain at least one number, one uppercase letter, and one lowercase letter."
+                required>
                 <small id="password-help" class="form-hint"></small>
             </div>
 
@@ -143,5 +148,14 @@
             form.submit();
         }
     }
+
+    /* Enforce lowercase and no special chars for username except _ as space */
+    document.getElementById('modal-username').addEventListener('input', function() {
+        this.value = this.value
+            .toLowerCase()
+            .replace(/\s+/g, '_')          // Replace spaces with underscores
+            .replace(/[^a-z0-9_]/g, '');   // Strip all other special characters
+    });
+
 </script>
 {% endblock %}
