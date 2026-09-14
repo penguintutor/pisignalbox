@@ -47,7 +47,13 @@ app_title = "Pi SignalBox"
 #url = "http://127.0.0.1:5000/"
 
 #os.path.join(basedir, "data/")
+
+# Read rate is the normal rate for polling 
+# Wait connect is used if status is not connected (eg. network problems)
+# Long wait is if an error is received (eg. invalid api_key)
 read_rate = 200
+wait_connect = 1000
+long_wait = 5000
 
 logger = logging.getLogger(__name__)
 
@@ -131,8 +137,10 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
         
         # Create a timer to periodically check for updates
         self.timer = QTimer(self)
+        # starts with read_rate (eg. 200ms) timer, but adjusted in
+        # handle_polling based on connection status
         self.timer.setInterval(read_rate)
-        self.timer.timeout.connect(self.api.poll_server)
+        self.timer.timeout.connect(self.handle_polling)
         self.timer.start()
         
         # Keep alive timer - used for DCC keep alive
@@ -612,4 +620,20 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
             if widget.isVisible():
                 print(f"Closing secondary window: {widget}")
                 widget.close()
+
+    def handle_polling(self):
+        """ Polling is setup to allow different speeds"""
+        # Adjust the timer based on the API's status
+        if self.api.status == "Not connected":
+            if self.timer.interval() != wait_connect:
+                self.timer.setInterval(wait_connect)
+        elif self.api.status == "Error":
+            if self.timer.interval() != long_wait:
+                self.timer.setInterval(long_wait)
+        else:
+            if self.timer.interval() != read_rate:
+                self.timer.setInterval(read_rate)
+                
+        # Now trigger the actual poll
+        self.api.poll_server()
 

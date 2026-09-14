@@ -55,17 +55,7 @@ class App(QApplication):
     def __init__(self, args):
         super().__init__()
         
-def handle_focus_change(old_focus, new_focus):
-    if new_focus and isinstance(new_focus.window(), windows_with_dialogs):
-        for widget in QApplication.topLevelWidgets():
-            if isinstance(widget, dialog_types) and widget.isVisible():
-                if widget.windowModality() == Qt.ApplicationModal:
-                    widget.raise_()
-                    widget.activateWindow()
-                    break
-
-        
-    
+   
 # We can connect to the QApplication's focusChanged signal
 # This allows us to handle focus changes across the entire app
 def handle_focus_change(old_focus, new_focus):
@@ -78,7 +68,7 @@ def handle_focus_change(old_focus, new_focus):
             if isinstance(widget, dialog_types) and widget.isVisible():
                 #print (f"Widget is {widget}")
                 # Check for ApplicationModal modality
-                if widget.windowModality() == Qt.ApplicationModal:
+                if widget.windowModality() == Qt.WindowModality.ApplicationModal:
                     # Manually raise the dialog to the front
                     widget.raise_()
                     widget.activateWindow()
@@ -153,6 +143,7 @@ def main():
 
     # Create main window
     window = MainWindowUI(dirs, files, settings)
+    window.show()
 
     # Start event loop and gracefully exit
     sys.exit(app.exec())

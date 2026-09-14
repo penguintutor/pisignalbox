@@ -17,6 +17,11 @@ class ApiHandler(QObject):
         self.threadpool = thread_pool
         self.url = url
         self.api_key = api_key
+
+        # Todo - add Error status vs "Not Connected"
+        # Not Connected used for network problems where expected recover
+        # Error where issue not expected to be resolved quickly (eg. authentication failure)
+        self.status = "Starting"
        
         logger.debug (f"APiHandler URL {self.url}")
 
@@ -183,6 +188,10 @@ class ApiHandler(QObject):
         else:
             self.status = "Connected"
 
+        return self._handle_response(response)
+
+    def _handle_response(self, response):
+        """ Called by thread_getupdate handles the response recieved"""
         # First line is summary
         # Check for an empty data first as we can ignore
         if response[0:10] == "Read,0,0,0":
@@ -234,7 +243,7 @@ class ApiHandler(QObject):
         # Only allow one check_responses thread to run at a time
         if self.update_in_progress == True:
             return
-        
+            
         worker = Worker(self.thread_getupdate)
         self.threadpool.start(worker)
 

@@ -29,7 +29,9 @@ class VLCBClient():
         if api_key:
             self.headers["X-API-Key"] = api_key
 
-    
+    # Todo return and handle different messages
+    # Eg. notify if an error so the API knows (to throttle)
+    # and to notify the user
     def send (self, message):
         message = urllib.parse.quote(message)
         # Note that this adds the api prefix to act as an api
