@@ -35,6 +35,7 @@ Additional libraries are required to install using virtual environment (recommen
     pip install email-validator
     pip install json5
     pip install pyserial
+    pip install gunicorn
 
 Note if you would like to use a different virtual environment directory then you may need to create your own startup scripts replacing pisignalbox.sh and/or start_server.sh with your virtual environment. This is not required if using the ~/venv/pisignalbox directory. 
 
@@ -79,6 +80,8 @@ To run the program automatically run the script
 
     setup/install_services.sh
     sudo systemctl enable pisignalbox.service
+
+Note that this uses the Gunicorn server as a production ready service, rather than the built-in Werkzeug web server
 
 ### Disabling autostart
 

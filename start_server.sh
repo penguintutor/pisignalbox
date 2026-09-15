@@ -20,7 +20,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" &> /dev/null && pwd)"
 # Launch the Python orchestrator
 # The "$@" ensures that any arguments passed to this bash script 
 # (like --mock or --data_dir) are passed straight through to Python!
-python3 "$SCRIPT_DIR/vlcbserver.py" "$@"
+python3 "$SCRIPT_DIR/run.py" "$@"
 
 
 

@@ -80,6 +80,35 @@ def mainThread(debug, config):
         # Once connected, hand control over to the processing loop
         run_connected_loop(usb, config)
 
+def gunicorn_app():
+    """
+    Entry point exclusively for Gunicorn/systemd production environment.
+    Gunicorn handles the web serving and the worker loop, so we only need 
+    to initialize config, start the hardware thread, and return the app.
+    """
+    # Setup config (using defaults since it's running as a service)
+    cfg = Config() 
+    config = get_config(cfg)
+    
+    if cfg_checks(cfg) == False:
+        # If config fails, exit so systemd sees the failure and restarts
+        sys.exit(1)
+
+    # Create the Flask app
+    app = create_app(config)
+    logging.info ("*** Application Start (Gunicorn Production) ***")
+
+    # Start ONLY the hardware thread. 
+    # Notice we hardcode debug=False since it's production.
+    mt = threading.Thread(target=mainThread, args=(False, config), daemon=True)
+    mt.start()
+
+    # We DO NOT start flaskThread.
+    # We DO NOT enter a while True loop.
+    
+    # 4. Hand the app over to Gunicorn
+    return app
+
 
 def run_server(cfg, config):
 

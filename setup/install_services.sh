@@ -22,14 +22,15 @@ echo "GUI autostart installed to ~/.config/autostart/"
 echo "Installing systemd service (requires sudo)..."
 sudo bash -c "cat <<EOF > /etc/systemd/system/pisignalbox.service
 [Unit]
-Description=Pi SignalBox VLCB Server
+Description=Pi SignalBox VLCB Server (Gunicorn)
 After=network.target
 
 [Service]
 Type=simple
 User=$CURRENT_USER
 WorkingDirectory=$INSTALL_DIR
-ExecStart=$HOME/venv/pisignalbox/bin/python3 $INSTALL_DIR/vlcbserver.py
+Environment="PATH=$HOME/venv/pisignalbox/bin"
+ExecStart=$HOME/venv/pisignalbox/bin/gunicorn --workers 1 --threads 4 --bind 0.0.0.0:5000 "wgi:app"
 Restart=on-failure
 RestartSec=5
 
