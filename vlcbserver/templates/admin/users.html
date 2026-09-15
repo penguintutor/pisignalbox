@@ -23,6 +23,7 @@
                     <th>Full Name</th>
                     <th>Email Address</th>
                     <th>Role</th>
+                    <th class="text-right">API Key</th>
                     <th class="text-right">Actions</th>
                 </tr>
             </thead>
@@ -85,6 +86,47 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" onclick="document.getElementById('user-modal').close()">Cancel</button>
                 <button type="submit" class="btn btn-primary" id="modal-submit-btn">Save User</button>
+            </div>
+        </form>
+    </div>
+</dialog>
+
+<!-- Manage API Key Modal Dialog -->
+<dialog id="apikey-modal" class="admin-modal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>Manage API Key</h3>
+            <button type="button" class="close-btn" onclick="document.getElementById('apikey-modal').close()">&times;</button>
+        </div>
+        
+        <!-- Action points to your blueprint endpoint -->
+        <form method="POST" action="{{ url_for('admin.save_key') }}" id="apikey-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" id="apikey-username" name="username" value="">
+
+            <div class="form-group">
+                <label for="modal-apikey">API Key</label>
+                
+                <!-- Flex layout to align input and buttons cleanly -->
+                <div style="display: flex; gap: 5px; margin-bottom: 5px;">
+                    <input type="text" id="modal-apikey" name="api_key" style="flex-grow: 1;">
+                    
+                    <button type="button" class="btn btn-secondary" onclick="copyApiKey()" title="Copy to Clipboard">
+                        <i class="fa-solid fa-copy"></i>
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="generateApiKey()" title="Generate Random Key">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </button>
+                    <button type="button" class="btn btn-danger" onclick="clearApiKey()" title="Clear Key">
+                        <i class="fa-solid fa-eraser"></i>
+                    </button>
+                </div>
+                <small class="form-hint">Leave blank and save to remove the user's API access.</small>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('apikey-modal').close()">Cancel</button>
+                <button type="submit" class="btn btn-primary">Save Key</button>
             </div>
         </form>
     </div>
@@ -156,6 +198,69 @@
             .replace(/\s+/g, '_')          // Replace spaces with underscores
             .replace(/[^a-z0-9_]/g, '');   // Strip all other special characters
     });
+
+
+        // Open the modal and populate data
+        function openApiKeyModal(username, currentKey) {
+            document.getElementById('apikey-username').value = username;
+            
+            // Handle edge case if Jinja accidentally renders "None" as a string
+            if (!currentKey || currentKey === 'None') {
+                document.getElementById('modal-apikey').value = '';
+            } else {
+                document.getElementById('modal-apikey').value = currentKey;
+            }
+            
+            document.getElementById('apikey-modal').showModal();
+        }
+
+        // Empties the text field
+        function clearApiKey() {
+            document.getElementById('modal-apikey').value = '';
+        }
+
+        // Generates a secure, 32-character hexadecimal random string
+        function generateApiKey() {
+            // We use the browser's crypto API for security rather than Math.random()
+            const array = new Uint8Array(16); 
+            window.crypto.getRandomValues(array);
+            
+            // Convert to hex string
+            const key = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+            
+            document.getElementById('modal-apikey').value = key;
+        }
+
+    function copyApiKey() {
+        const apiKeyInput = document.getElementById('modal-apikey');
+        
+        if (!apiKeyInput.value) {
+            alert("No API key to copy!");
+            return; 
+        }
+
+        // Try the modern API first (works on localhost or HTTPS)
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(apiKeyInput.value)
+                .then(() => alert('API Key copied to clipboard!'))
+                .catch(err => console.error('Modern copy failed: ', err));
+        } else {
+            // Fallback for private networks over standard HTTP
+            apiKeyInput.select();
+            apiKeyInput.setSelectionRange(0, 99999); // Required for mobile browsers
+            
+            try {
+                document.execCommand('copy');
+                alert('API Key copied to clipboard!');
+            } catch (err) {
+                console.error('Fallback copy failed: ', err);
+                alert('Failed to copy automatically. Please copy the text manually.');
+            }
+            
+            // Deselect the text afterwards so it doesn't stay highlighted
+            window.getSelection().removeAllRanges();
+        }
+    }
 
 </script>
 {% endblock %}

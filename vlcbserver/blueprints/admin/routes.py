@@ -166,12 +166,49 @@ def delete_user():
 
     return redirect(url_for('admin.users'))
 
+@admin_blueprint.route('/save_key', methods=['POST'])
+def save_key():
+    # Get the data from the form
+    username = request.form.get('username')
+    new_api_key = request.form.get('api_key')
+
+    # Validate the username exists
+    if not username:
+        flash("Error: No username provided.", "danger")
+        return redirect(url_for('admin.users'))
+
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        flash(f"Error: User '{username}' not found.", "danger")
+        return redirect(url_for('admin.users'))
+
+    # Clean and assign the API key
+    if new_api_key and new_api_key.strip():
+        user.api_key = new_api_key.strip()
+        flash(f"API key successfully updated for {username}.", "success")
+    else:
+        user.api_key = None
+        flash(f"API key removed for {username}. Access revoked.", "info")
+
+    # Save to database
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Database error saving API key: {e}") 
+        flash("An error occurred while saving to the database.", "danger")
+
+    return redirect(url_for('admin.users'))
+
+
 @admin_blueprint.route('/settings', methods=['POST'])
 def settings():
     # Todo implement this
     return redirect(url_for('admin.users'))
 
-
+# *******************
+# Helper functions 
+# *******************
 
 def clean_email(raw_email):
     try:
