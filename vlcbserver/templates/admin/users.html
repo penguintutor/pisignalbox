@@ -366,6 +366,12 @@
             alert("No API key to copy!");
             return; 
         }
+        /* If old API key then no longer accessible - as hashed so do not copy */
+        else if (apiKeyInput.value.substring(0, 5) == "*****") {
+            alert("Cannot copy an old API key.\nGenerate a new one.");
+            return;
+        }
+
 
         // Try the modern API first (works on localhost or HTTPS)
         if (navigator.clipboard && window.isSecureContext) {
