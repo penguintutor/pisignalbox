@@ -12,7 +12,7 @@ from werkzeug.security import generate_password_hash
 
 # Now we can safely import the app factory and database models
 from vlcbserver import create_app
-from vlcbserver.core.models import db, User, ApiUser
+from vlcbserver.core.models import db, User
 
 
 
@@ -86,7 +86,7 @@ def create_api_key(db, base_dir):
         api_key = secrets.token_urlsafe(32)
 
         # Create hashed_key to store in the DB
-        hashed_key = ApiUser.api_to_hash(api_key)
+        hashed_key = User.api_to_hash(api_key)
 
         existing_key = db.session.execute(db.select(User).filter_by(api_key=hashed_key)).scalar_one_or_none()
         if existing_key and existing_key.username != username:

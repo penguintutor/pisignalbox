@@ -129,36 +129,3 @@ class User(UserMixin, db.Model):
         # .encode('utf-8') is required because hashlib only hashes bytes, not strings
         return hashlib.sha256(api_key.encode('utf-8')).hexdigest()
     
-
-
-# System user used by API (no username)
-class ApiUser(UserMixin):
-
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    role = db.Column(db.String(50), nullable=False, default='reader')
-
-    def __init__(self):
-        # Flask-Login needs an ID as a string
-        #self.id = "api_system_user" 
-        #self.username = "Client App"
-        pass
-        
-
-    # API users also have a role
-    def has_role(self, role_name):
-            """Check if the user has a specific role."""
-            return self.role == role_name
-
-    # Uses hash function rather than password hashing functions
-    # Does not use a salt - so important that the api_key is random generated
-    # to avoid rainbow table exploit
-    @staticmethod
-    def api_to_hash(api_key):
-        """Converts a plaintext API key into a SHA-256 hash."""
-        if not api_key:
-            return None
-            
-        # .encode('utf-8') is required because hashlib only hashes bytes, not strings
-        return hashlib.sha256(api_key.encode('utf-8')).hexdigest()
-    

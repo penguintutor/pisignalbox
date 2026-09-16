@@ -11,7 +11,7 @@ import logging, os
 import random
 import string
 import secrets
-from .core.models import db, User, ApiUser
+from .core.models import db, User
 from .logging_config import setup_logging
 from .core.utils import log_http_request, forbidden_error
 
@@ -35,7 +35,7 @@ def load_user_from_request(request):
         return None
 
     # Now convert to hashed key which is used to check against dtabase
-    hashed_key = ApiUser.api_to_hash(api_key)
+    hashed_key = User.api_to_hash(api_key)
 
     # get database user based on API key
     user = db.session.execute(

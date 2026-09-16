@@ -11,7 +11,7 @@ import threading
 import logging, os
 import vlcbserver
 from vlcbserver.vlcb_bridge import send_data, get_data
-from vlcbserver.core.models import User, db, ApiUser
+from vlcbserver.core.models import User, db
 from vlcbserver.core.utils import role_required
 from vlcbserver.constants import ROLES
 from . import admin_blueprint
