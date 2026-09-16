@@ -47,6 +47,11 @@ def login():
                 clean_username = login_input.lower().replace(" ", "_")
                 user = User.query.filter_by(username=clean_username).first()
 
+            # If password_hash is None then password logins disabled
+            # Still gives the same password invalid message - don't tell them why
+            if not user.has_password:
+                flash("Invalid username or password.", "error")
+                return redirect(url_for('auth.login', next=next_page))
                     
             if user and check_password_hash(user.password_hash, password):
                 login_user(user)
@@ -59,6 +64,7 @@ def login():
                 
             flash("Invalid username or password.", "error")
             return redirect(url_for('auth.login', next=next_page))
+        
 
     # Serve the HTML file from the template folder
     return render_template('auth/login.html')
@@ -91,7 +97,9 @@ def reset_request():
         email = request.form.get('email').strip()
         user = User.query.filter_by(_email=email).first()
 
-        if user:
+        # Don't allow password reset if password login is disabled
+        # ie. if password is currently None
+        if user and user.has_password:
             token = user.get_reset_token()
             
             # _external=True is CRITICAL. It ensures the URL includes your full domain 
@@ -107,7 +115,7 @@ def reset_request():
             email_thread.start()
             
         # ALWAYS show the same success message to prevent attackers from using 
-        # this form to guess which emails are registered in your database.
+        # this form to guess which emails are registered in the database.
         flash('If an account with that email exists, a password reset link has been sent.', 'info')
         return redirect(url_for('auth.login'))
 

@@ -9,22 +9,38 @@
         {# Normalise role to lowercase for class names: role-admin, role-operator, role-viewer #}
         <span class="role-badge role-{{ user.role | lower }}">{{ user.role_display_name }}</span>
     </td>
-    <td class="actions-cell">
-        <!-- API Key Conditional Button -->
-        {% if user.api_key %}
-            <button class="btn btn-sm btn-secondary" 
-                    title="Manage API Key" 
-                    onclick="openApiKeyModal('{{ user.username }}', '{{ user.api_key }}')">
-                <i class="fa-solid fa-key"></i>
-            </button>
-        {% else %}
-            <button class="btn btn-sm btn-success" 
-                    title="Generate API Key" 
-                    onclick="openApiKeyModal('{{ user.username }}', '')">
-                <i class="fa-solid fa-plus"></i> 
-            </button>
-        {% endif %}
-    </td>
+
+    <!-- Status Badges -->
+<td class="access-cell">
+    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 15px;">
+        
+        <!-- Changed from <div> to a borderless, transparent <button> -->
+        <button type="button" 
+                style="min-width: 45px; text-align: left; cursor: pointer; background: none; border: none; padding: 0; color: inherit;" 
+                onclick="openAuthModal('{{ user.username }}', '{{ user.has_password | lower }}', '{{ user.has_api_key | lower }}')">
+            
+            {% if user.has_password %}
+                <i class="fa-solid fa-desktop text-primary" title="Web Login Enabled (Click to manage)"></i>
+            {% else %}
+                <i class="fa-solid fa-desktop text-muted" style="opacity: 0.2;" title="Web Login Disabled (Click to manage)"></i>
+            {% endif %}
+            
+            {% if user.has_api_key %}
+                <i class="fa-solid fa-key text-success" style="margin-left: 5px;" title="API Access Enabled (Click to manage)"></i>
+            {% else %}
+                <i class="fa-solid fa-key text-muted" style="opacity: 0.2; margin-left: 5px;" title="API Access Disabled (Click to manage)"></i>
+            {% endif %}
+        </button>
+
+        <!-- The original Auth Button remains exactly the same -->
+        <button class="btn btn-sm btn-edit" onclick="openAuthModal('{{ user.username }}', '{{ user.has_password | lower }}', '{{ user.has_api_key | lower }}')" title="Manage Authentication">
+            <i class="fa-solid fa-shield-halved"></i> Auth
+        </button>
+        
+    </div>
+</td>
+
+
     <td class="actions-cell">
         <button type="button" 
                 class="btn btn-sm btn-edit"

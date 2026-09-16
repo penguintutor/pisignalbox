@@ -23,8 +23,8 @@
                     <th>Full Name</th>
                     <th>Email Address</th>
                     <th>Role</th>
-                    <th class="text-right">API Key</th>
-                    <th class="text-right">Actions</th>
+                    <th class="text-center access-cell">Access</th>
+                    <th class="text-right actions-cell">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -72,14 +72,13 @@
                 {{ render_role_select(current_role=None, roles_dict=ROLES) }}
                 </select>
             </div>
-            <div class="form-group">
+            <div class="form-group" id="password-form-group">
                 <label for="modal-password" id="modal-password-label">Password</label>
                 <input type="password" id="modal-password" name="password" 
                 placeholder="Enter password" 
                 minlength="8" maxlength="128" 
                 pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).+" 
-                title="Password must contain at least one number, one uppercase letter, and one lowercase letter."
-                required>
+                title="Password must contain at least one number, one uppercase letter, and one lowercase letter.">
                 <small id="password-help" class="form-hint"></small>
             </div>
 
@@ -91,44 +90,58 @@
     </div>
 </dialog>
 
-<!-- Manage API Key Modal Dialog -->
-<dialog id="apikey-modal" class="admin-modal">
+
+<dialog id="auth-modal" class="admin-modal">
     <div class="modal-box">
         <div class="modal-header">
-            <h3>Manage API Key</h3>
-            <button type="button" class="close-btn" onclick="document.getElementById('apikey-modal').close()">&times;</button>
+            <h3>Manage Authentication: <span id="auth-username-display"></span></h3>
+            <button type="button" class="close-btn" onclick="document.getElementById('auth-modal').close()">&times;</button>
         </div>
         
-        <!-- Action points to your blueprint endpoint -->
-        <form method="POST" action="{{ url_for('admin.save_key') }}" id="apikey-form">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <input type="hidden" id="apikey-username" name="username" value="">
-
+        <!-- SECTION 1: WEB LOGIN (PASSWORD) -->
+        <div class="auth-section" style="border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 15px;">
+            <h4><i class="fa-solid fa-desktop"></i> Web Login</h4>
+            
             <div class="form-group">
-                <label for="modal-apikey">API Key</label>
-                
-                <!-- Flex layout to align input and buttons cleanly -->
-                <div style="display: flex; gap: 5px; margin-bottom: 5px;">
-                    <input type="text" id="modal-apikey" name="api_key" style="flex-grow: 1;">
-                    
-                    <button type="button" class="btn btn-secondary" onclick="copyApiKey()" title="Copy to Clipboard">
-                        <i class="fa-solid fa-copy"></i>
-                    </button>
-                    <button type="button" class="btn btn-primary" onclick="generateApiKey()" title="Generate Random Key">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i>
-                    </button>
-                    <button type="button" class="btn btn-danger" onclick="clearApiKey()" title="Clear Key">
-                        <i class="fa-solid fa-eraser"></i>
+                <div style="display: flex; gap: 5px;">
+                    <input type="password" id="modal-new-password" aria-label="New Password" 
+                        placeholder="Enter new password" style="flex-grow: 1;"
+                        minlength="8" maxlength="128" 
+                        pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).+" 
+                        title="Password must contain at least one number, one uppercase letter, and one lowercase letter."
+                        required>
+                    <button type="button" class="btn btn-primary" id="btn-save-password" onclick="savePassword()">Update</button>
+                    <button type="button" class="btn btn-danger" id="btn-revoke-web" onclick="revokeWebAccess()" title="Revoke Web Access">
+                        <i class="fa-solid fa-ban"></i>
                     </button>
                 </div>
-                <small class="form-hint">Leave blank and save to remove the user's API access.</small>
+                <small class="form-hint" id="password-status-text"></small>
             </div>
+        </div>
 
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="document.getElementById('apikey-modal').close()">Cancel</button>
-                <button type="submit" class="btn btn-primary">Save Key</button>
+        <!-- SECTION 2: API KEY -->
+        <div class="auth-section">
+            <h4><i class="fa-solid fa-key"></i> API Access</h4>
+            
+            <!-- Hidden fields for the AJAX request -->
+            <input type="hidden" id="apikey-username" value="">
+            <input type="hidden" id="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="form-group">
+                <div style="display: flex; gap: 5px;">
+                    <input type="text" id="modal-apikey" aria-label="API Key" style="flex-grow: 1;" readonly placeholder="No API Key present">
+                    <button type="button" class="btn btn-secondary" onclick="copyApiKey()" title="Copy"><i class="fa-solid fa-copy"></i></button>
+                    <button type="button" class="btn btn-info" id="btn-generate-key" onclick="generateAndSaveKey()" title="Generate new key"><i class="fa-solid fa-wand-magic-sparkles"></i></button>
+                    <button type="button" class="btn btn-danger" id="btn-revoke-key" onclick="revokeApiKey()" title="Revoke"><i class="fa-solid fa-eraser"></i></button>
+                </div>
+                <small class="form-hint">Generating a key applies it immediately. Copy it now, as it cannot be viewed again.</small>
             </div>
-        </form>
+        </div>
+
+        <div class="modal-footer" style="display: flex; justify-content: flex-end; margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
+            <button type="button" class="btn btn-secondary" onclick="closeAuthModal()">Close</button>
+        </div>
+
     </div>
 </dialog>
 
@@ -138,11 +151,15 @@
         document.getElementById('user-form').reset();
         document.getElementById('original-username').value = '';
         document.getElementById('modal-username').readOnly = false;
-        // Password is required when creating a new user
+        
+        // 1. Show the password field for new users
+        document.getElementById('password-form-group').style.display = 'block';
+        
+        // 2. Configure it as optional
         const passwordInput = document.getElementById('modal-password');
-        passwordInput.required = true;
-        passwordInput.placeholder = 'Enter password';
-        document.getElementById('password-help').textContent = '';
+        passwordInput.required = false; 
+        passwordInput.placeholder = 'Enter password (optional)';
+        document.getElementById('password-help').textContent = 'Leave blank to disable web login (API-only user).';
 
         document.getElementById('user-modal').showModal();
     }
@@ -155,14 +172,14 @@
         document.getElementById('modal-fullname').value = fullname;
         document.getElementById('modal-email').value = email;
         document.getElementById('modal-role').value = role;
-        document.getElementById('modal-password').value = '';
         
-        // Password is optional when editing an existing user
+        // 1. Completely hide the password field for existing users
+        document.getElementById('password-form-group').style.display = 'none';
+        
+        // 2. Clear out the field to ensure no accidental data is submitted
         const passwordInput = document.getElementById('modal-password');
         passwordInput.value = '';
         passwordInput.required = false;
-        passwordInput.placeholder = '••••••••';
-        document.getElementById('password-help').textContent = 'Leave empty to retain existing password.';
 
         document.getElementById('user-modal').showModal();
     }
@@ -200,36 +217,147 @@
     });
 
 
-        // Open the modal and populate data
-        function openApiKeyModal(username, currentKey) {
-            document.getElementById('apikey-username').value = username;
-            
-            // Handle edge case if Jinja accidentally renders "None" as a string
-            if (!currentKey || currentKey === 'None') {
-                document.getElementById('modal-apikey').value = '';
+    /* API key management is in a separate modal dialog */
+    // hasExistingKey should be a boolean passed from your backend/template
+    function openApiKeyModal(username, hasExistingKey) {
+        document.getElementById('apikey-username').value = username;
+        
+        // Reset UI state
+        document.getElementById('new-apikey-container').style.display = 'none';
+        document.getElementById('btn-generate-key').style.display = 'inline-block';
+        document.getElementById('btn-generate-key').disabled = false;
+        document.getElementById('btn-close-modal').textContent = 'Cancel';
+        document.getElementById('status-container').style.display = 'block';
+        
+        const statusBadge = document.getElementById('apikey-status-badge');
+        const revokeBtn = document.getElementById('btn-revoke-key');
+        
+        if (hasExistingKey) {
+            statusBadge.textContent = 'Active';
+            statusBadge.style.backgroundColor = '#d4edda';
+            statusBadge.style.color = '#155724';
+            revokeBtn.style.display = 'inline-block';
+        } else {
+            statusBadge.textContent = 'None';
+            statusBadge.style.backgroundColor = '#f8d7da';
+            statusBadge.style.color = '#721c24';
+            revokeBtn.style.display = 'none';
+        }
+        
+        document.getElementById('apikey-modal').showModal();
+    }
+
+    async function generateAndSaveKey() {
+        const apiKeyInput = document.getElementById('modal-apikey');
+        
+        // Warn if overriding an existing key
+        if (apiKeyInput.value === '********************************') {
+            if (!confirm("This will immediately revoke and replace the existing key. Continue?")) return;
+        }
+
+        const btn = document.getElementById('btn-generate-key');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+        const username = document.getElementById('apikey-username').value;
+        const csrfToken = document.getElementById('csrf_token').value;
+
+        try {
+            const response = await fetch('/admin/api/generate-key', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ username: username })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                // Show the newly generated plaintext key ONCE
+                apiKeyInput.value = data.api_key;
+                document.getElementById('btn-revoke-key').style.display = 'inline-block';
+                
+                // Re-enable button but keep it ready in case they want another one
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i>';
+                
+                alert("New API Key generated successfully. Please copy it now.");
             } else {
-                document.getElementById('modal-apikey').value = currentKey;
+                alert(data.error || "Failed to generate key.");
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i>';
             }
-            
-            document.getElementById('apikey-modal').showModal();
+        } catch (error) {
+            alert("A network error occurred.");
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i>';
+        }
+    }
+
+    async function revokeApiKey() {
+        if (!confirm("Are you sure you want to permanently revoke this API key?")) return;
+        
+        const username = document.getElementById('apikey-username').value;
+        const csrfToken = document.getElementById('csrf_token').value;
+
+        try {
+            const response = await fetch('/admin/api/revoke-key', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ username: username })
+            });
+
+            if (response.ok) {
+                document.getElementById('modal-apikey').value = '';
+                document.getElementById('btn-revoke-key').style.display = 'none';
+                alert("API Key revoked successfully.");
+            } else {
+                alert("Failed to revoke key.");
+            }
+        } catch (error) {
+            alert("A network error occurred.");
+        }
+    }
+
+    function openAuthModal(username, hasPassword, hasApiKey) {
+        // 1. Set the visual title
+        document.getElementById('auth-username-display').innerText = username;
+        
+        // 2. Set the single hidden username field used by both AJAX functions
+        document.getElementById('apikey-username').value = username;
+        
+        // 3. Setup Password Status
+        const pwStatus = document.getElementById('password-status-text');
+        if (hasPassword === 'true') {
+            pwStatus.innerHTML = '<span style="color: green;">Web login is currently ACTIVE.</span>';
+        } else {
+            pwStatus.innerHTML = '<span style="color: red;">Web login is currently DISABLED.</span> Type a password to enable.';
         }
 
-        // Empties the text field
-        function clearApiKey() {
-            document.getElementById('modal-apikey').value = '';
-        }
+        // 4. Setup API Key Status
+        const apiKeyInput = document.getElementById('modal-apikey');
+        const btnGenerate = document.getElementById('btn-generate-key');
+        const btnRevoke = document.getElementById('btn-revoke-key');
+        
+        btnGenerate.disabled = false;
+        btnGenerate.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i>';
 
-        // Generates a secure, 32-character hexadecimal random string
-        function generateApiKey() {
-            // We use the browser's crypto API for security rather than Math.random()
-            const array = new Uint8Array(16); 
-            window.crypto.getRandomValues(array);
-            
-            // Convert to hex string
-            const key = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
-            
-            document.getElementById('modal-apikey').value = key;
+        if (hasApiKey === 'true') {
+            // Hide the real key, show the mask, enable revoke
+            apiKeyInput.value = '********************************'; 
+            btnRevoke.style.display = 'inline-block';
+        } else {
+            apiKeyInput.value = '';
+            btnRevoke.style.display = 'none';
         }
+        
+        document.getElementById('auth-modal').showModal();
+    }
 
     function copyApiKey() {
         const apiKeyInput = document.getElementById('modal-apikey');
@@ -260,6 +388,87 @@
             // Deselect the text afterwards so it doesn't stay highlighted
             window.getSelection().removeAllRanges();
         }
+    }
+
+
+    async function savePassword() {
+        const passwordInput = document.getElementById('modal-new-password');
+        
+        // 1. Let the browser do the heavy lifting (Checks required, minlength, and pattern)
+        if (!passwordInput.reportValidity()) {
+            return; // Stops the function and shows the native browser tooltip!
+        }
+
+        const newPassword = passwordInput.value;
+        const username = document.getElementById('apikey-username').value; 
+        const csrfToken = document.getElementById('csrf_token').value;
+        const btn = document.getElementById('btn-save-password');
+
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+        try {
+            const response = await fetch('/admin/api/save-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ username: username, new_password: newPassword })
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                passwordInput.value = ''; // Clear the box
+                const pwStatus = document.getElementById('password-status-text');
+                pwStatus.innerHTML = '<span style="color: green;">Web login is currently ACTIVE.</span>';
+                alert("Password updated successfully.");
+            } else {
+                alert(data.error || "Failed to update password.");
+            }
+        } catch (error) {
+            alert("A network error occurred.");
+        }
+        
+        // Reset button state
+        btn.disabled = false;
+        btn.textContent = 'Update';
+    }
+
+    async function revokeWebAccess() {
+        if (!confirm("Are you sure you want to revoke web login access for this user?")) return;
+
+        const username = document.getElementById('apikey-username').value;
+        const csrfToken = document.getElementById('csrf_token').value;
+
+        try {
+            const response = await fetch('/admin/api/revoke-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ username: username })
+            });
+
+            if (response.ok) {
+                const pwStatus = document.getElementById('password-status-text');
+                pwStatus.innerHTML = '<span style="color: red;">Web login is currently DISABLED.</span> Type a password to enable.';
+                alert("Web access revoked.");
+            } else {
+                alert("Failed to revoke web access.");
+            }
+        } catch (error) {
+            alert("A network error occurred.");
+        }
+    }
+
+
+    function closeAuthModal() {
+        document.getElementById('auth-modal').close();
+        // Reload the page when closing so the table icons (desktop/key) update to match any changes made
+        location.reload(); 
     }
 
 </script>

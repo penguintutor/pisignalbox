@@ -1,6 +1,7 @@
 import time
 import re
-from flask import current_app, flash, request, session, redirect, render_template, url_for, abort
+import secrets
+from flask import current_app, flash, request, session, redirect, render_template, url_for, abort, jsonify
 from flask_login import LoginManager, UserMixin, login_user, login_required, current_user, logout_user
 from urllib.parse import urlparse
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -10,7 +11,7 @@ import threading
 import logging, os
 import vlcbserver
 from vlcbserver.vlcb_bridge import send_data, get_data
-from vlcbserver.core.models import User, db
+from vlcbserver.core.models import User, db, ApiUser
 from vlcbserver.core.utils import role_required
 from vlcbserver.constants import ROLES
 from . import admin_blueprint
@@ -61,13 +62,21 @@ def save_user():
         email = clean_email(raw_email)
     else:
         email = ""
-    password = request.form.get('password')
-    if len(password) < 8:
-        flash("Password is too short. Minimum 8 characters.", "error")
-        return redirect(url_for('admin.users'))
-    elif len(password) > 128:
-            flash("Password is too long. Maximum 128 characters.", "error")
-            return redirect(url_for('admin.users'))
+    raw_password = request.form.get('password')
+
+    # Is a pssword supplied
+    if raw_password and raw_password.strip():
+        # also check lengths
+        if len(raw_password) < 8:
+                flash("Password is too short. Minimum 8 characters.", "error")
+                return redirect(url_for('admin.users'))
+        elif len(raw_password) > 128:
+                flash("Password is too long. Maximum 128 characters.", "error")
+                return redirect(url_for('admin.users'))
+        password_hash = generate_password_hash(raw_password.strip())
+    else:
+        password_hash = None # API-only account
+    
     role = request.form.get('role') 
     
     # Fallback to match your DB default in case of a malformed request
@@ -95,15 +104,14 @@ def save_user():
                 return redirect(url_for('admin.users'))
             user.username = username
 
-        # Only hash and update the password if the user actually typed a new one
-        if password:
-            user.password_hash = generate_password_hash(password)
+        # Uses the new password hash - which is password or NOne
+        user.password_hash = password_hash
 
     # Insert New User
     else:
         # Validate required fields for new users
-        if not username or not password:
-            flash("Username and password are required for new users.", "error")
+        if not username:
+            flash("Username is required for new users.", "error")
             return redirect(url_for('admin.users'))
             
         # Check if username already exists
@@ -117,7 +125,7 @@ def save_user():
             full_name=fullname,     # type: ignore
             email=email,            # type: ignore
             role=role,              # type: ignore
-            password_hash=generate_password_hash(password)  # type: ignore
+            password_hash=password_hash  # type: ignore
         ) 
         db.session.add(user)
 
@@ -166,40 +174,170 @@ def delete_user():
 
     return redirect(url_for('admin.users'))
 
-@admin_blueprint.route('/save_key', methods=['POST'])
-def save_key():
-    # Get the data from the form
+@admin_blueprint.route('/save_password', methods=['POST'])
+def save_password():  
     username = request.form.get('username')
-    new_api_key = request.form.get('api_key')
-
-    # Validate the username exists
-    if not username:
-        flash("Error: No username provided.", "danger")
-        return redirect(url_for('admin.users'))
+    new_password = request.form.get('new_password')
+    revoke_web = request.form.get('revoke_web') == 'true'
 
     user = User.query.filter_by(username=username).first()
     if not user:
         flash(f"Error: User '{username}' not found.", "danger")
         return redirect(url_for('admin.users'))
 
-    # Clean and assign the API key
-    if new_api_key and new_api_key.strip():
-        user.api_key = new_api_key.strip()
-        flash(f"API key successfully updated for {username}.", "success")
+    # Handle revocation
+    if revoke_web:
+        user.password_hash = None
+        flash(f"Web login disabled for {username}.", "info")
+    
+    # Handle password creation / update
+    elif new_password and new_password.strip():
+        # Check that the password meets the min / max length
+        # This should be blocked by JavaScript already
+        if len(new_password) < 8:
+            flash("Password is too short", "error")
+            return redirect(url_for('admin.users'))
+        elif len(new_password) > 128:
+            flash("Password is too long", "error")
+            return redirect(url_for('admin.users'))
+        # Reach here then password has passed the basic length checks - create hash
+        user.password_hash = generate_password_hash(new_password.strip())
+        flash(f"Password successfully updated for {username}.", "success")
     else:
-        user.api_key = None
-        flash(f"API key removed for {username}. Access revoked.", "info")
+        flash("No password provided; changes not applied to web login.", "warning")
+        return redirect(url_for('admin.users'))
 
-    # Save to database
     try:
         db.session.commit()
     except Exception as e:
         db.session.rollback()
-        print(f"Database error saving API key: {e}") 
+        print(f"Database error saving password: {e}")
         flash("An error occurred while saving to the database.", "danger")
 
     return redirect(url_for('admin.users'))
 
+@admin_blueprint.route('/save_key', methods=['POST'])
+def save_key():
+    username = request.form.get('username')
+    new_api_key = request.form.get('api_key')
+
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        flash(f"Error: User '{username}' not found.", "danger")
+        return redirect(url_for('admin.users'))
+
+    # If the text box has a key, hash it via the model's static method
+    if new_api_key and new_api_key.strip():
+        user.api_key = User.api_to_hash(new_api_key.strip())
+        flash(f"API key successfully updated for {username}.", "success")
+    else:
+        # Cleared text box - remove API access
+        user.api_key = None
+        flash(f"API key removed for {username}. Access revoked.", "info")
+
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Database error saving API key: {e}")
+        flash("An error occurred while saving to the database.", "danger")
+
+    return redirect(url_for('admin.users'))
+
+""" api functions used for AJAX real time updates """
+@admin_blueprint.route('/api/generate-key', methods=['POST'])
+def api_generate_key():
+    data = request.get_json()
+    username = data.get('username')
+
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    # Generate a cryptographically secure 32-character hex key
+    raw_api_key = secrets.token_hex(16)
+
+    # Hash it using your model's static method and save to the DB
+    user.api_key = User.api_to_hash(raw_api_key)
+
+    try:
+        db.session.commit()
+        # Return the plaintext key ONCE so the JS can display it for copying
+        return jsonify({'api_key': raw_api_key}), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error generating API key: {e}")
+        return jsonify({'error': 'Database error occurred'}), 500
+
+
+@admin_blueprint.route('/api/revoke-key', methods=['POST'])
+def api_revoke_key():
+    data = request.get_json()
+    username = data.get('username')
+
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    # Revoke access by wiping the hash
+    user.api_key = None
+
+    try:
+        db.session.commit()
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error revoking API key: {e}")
+        return jsonify({'error': 'Database error occurred'}), 500
+
+@admin_blueprint.route('/api/save-password', methods=['POST'])
+def api_save_password():
+    data = request.get_json()
+    username = data.get('username')
+    new_password = data.get('new_password')
+
+    if not new_password or not new_password.strip():
+        return jsonify({'error': 'No password provided'}), 400
+
+    # Checks for minimum password length
+    if len(new_password) < 8: 
+        return jsonify({'error': 'Password is too short'}), 400
+    elif len(new_password) > 128: 
+        return jsonify({'error': 'Password is too long'}), 400
+
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    user.password_hash = generate_password_hash(new_password.strip())
+
+    try:
+        db.session.commit()
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error saving password: {e}")
+        return jsonify({'error': 'Database error occurred'}), 500
+
+
+@admin_blueprint.route('/api/revoke-password', methods=['POST'])
+def api_revoke_password():
+    data = request.get_json()
+    username = data.get('username')
+
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        return jsonify({'error': 'User not found'}), 404
+
+    user.password_hash = None
+
+    try:
+        db.session.commit()
+        return jsonify({'success': True}), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error revoking web access: {e}")
+        return jsonify({'error': 'Database error occurred'}), 500
 
 @admin_blueprint.route('/settings', methods=['POST'])
 def settings():

@@ -1,5 +1,6 @@
 # models.py
 from itsdangerous import URLSafeTimedSerializer
+import hashlib
 from flask import current_app
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
@@ -22,7 +23,7 @@ class User(UserMixin, db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128), nullable=False)
+    password_hash = db.Column(db.String(128), nullable=True)
 
     # API key - nulls for password based logins
     api_key = db.Column(db.String(128), unique=True, nullable=True)
@@ -101,6 +102,34 @@ class User(UserMixin, db.Model):
             
         return User.query.get(user_id)
 
+    @property
+    def has_password(self):
+        """
+        Returns True if the user has a password hash set,
+        meaning they are allowed to log in via the web interface.
+        """
+        return self.password_hash is not None and self.password_hash.strip() != ""
+        
+    @property
+    def has_api_key(self):
+        """
+        Returns True if the user has an API key set.
+        """
+        return self.api_key is not None and self.api_key.strip() != ""
+
+    # Uses hash function rather than password hashing functions
+    # Does not use a salt - so important that the api_key is random generated
+    # to avoid rainbow table exploit
+    @staticmethod
+    def api_to_hash(api_key):
+        """Converts a plaintext API key into a SHA-256 hash."""
+        if not api_key:
+            return None
+            
+        # .encode('utf-8') is required because hashlib only hashes bytes, not strings
+        return hashlib.sha256(api_key.encode('utf-8')).hexdigest()
+    
+
 
 # System user used by API (no username)
 class ApiUser(UserMixin):
@@ -120,4 +149,16 @@ class ApiUser(UserMixin):
     def has_role(self, role_name):
             """Check if the user has a specific role."""
             return self.role == role_name
+
+    # Uses hash function rather than password hashing functions
+    # Does not use a salt - so important that the api_key is random generated
+    # to avoid rainbow table exploit
+    @staticmethod
+    def api_to_hash(api_key):
+        """Converts a plaintext API key into a SHA-256 hash."""
+        if not api_key:
+            return None
+            
+        # .encode('utf-8') is required because hashlib only hashes bytes, not strings
+        return hashlib.sha256(api_key.encode('utf-8')).hexdigest()
     

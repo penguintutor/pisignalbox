@@ -382,14 +382,26 @@ body {
     background-color: #f9fbfd;
 }
 
+.text-center {
+    text-align: right;
+}
+
 .text-right {
     text-align: right;
+}
+
+.access-cell {
+    text-align: center;
+    white-space: nowrap;
+    width: 1%;
 }
 
 .actions-cell {
     text-align: right;
     white-space: nowrap;
+    width: 1%;
 }
+
 
 /* Role Badges */
 .role-badge {

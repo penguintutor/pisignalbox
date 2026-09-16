@@ -12,7 +12,7 @@ from werkzeug.security import generate_password_hash
 
 # Now we can safely import the app factory and database models
 from vlcbserver import create_app
-from vlcbserver.core.models import db, User
+from vlcbserver.core.models import db, User, ApiUser
 
 
 
@@ -77,22 +77,29 @@ def create_api_key(db, base_dir):
         
         if not user:
             print(f"User '{username}' not found. Creating as an API-only system user...")
-            user = User(username=username, password_hash="SYSTEM_API_USER_NO_PASSWORD", role="update", full_name=full_name) # type: ignore
+            user = User(username=username, role="update", full_name=full_name) # type: ignore
             db.session.add(user)
 
-        custom_key = input("Enter API key (leave blank to auto-generate securely): ").strip()
-        api_key = custom_key if custom_key else secrets.token_urlsafe(32)
+        # Don't allow user to specify API key as hash is not salted so needs to be random string
+        #custom_key = input("Enter API key (leave blank to auto-generate securely): ").strip()
+        #api_key = custom_key if custom_key else secrets.token_urlsafe(32)
+        api_key = secrets.token_urlsafe(32)
 
-        existing_key = db.session.execute(db.select(User).filter_by(api_key=api_key)).scalar_one_or_none()
+        # Create hashed_key to store in the DB
+        hashed_key = ApiUser.api_to_hash(api_key)
+
+        existing_key = db.session.execute(db.select(User).filter_by(api_key=hashed_key)).scalar_one_or_none()
         if existing_key and existing_key.username != username:
             print("Error: This exact API key is already assigned to a different user.")
         else:
             break
 
-    user.api_key = api_key
+    # The hashed ke is stored in the DB
+    user.api_key = hashed_key
     db.session.commit()
     print(f"Success: API key for '{username}' saved to the database.")
 
+    # The non-hashed key is stored in the client
     # Save API key to guiclient/data/settings.json
     SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
     
@@ -142,7 +149,9 @@ def new_auth(config):
         if ans == 'y':
             create_user(db)
                 
-        ans = input("\nWould you like to create/update an API key? [y/N]: ").strip().lower()
+        print("\nNext we can generate a new API key for the local GUI client and overwrite any existing key.")
+        print("(You can add keys for other devices later via the web admin)")
+        ans = input("Generate the local client API key now? [y/N]: ").strip().lower()
         if ans == 'y':
             create_api_key(db, config['BASE_DIR'])
                 

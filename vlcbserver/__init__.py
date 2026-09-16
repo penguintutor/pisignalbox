@@ -11,7 +11,7 @@ import logging, os
 import random
 import string
 import secrets
-from .core.models import db, User
+from .core.models import db, User, ApiUser
 from .logging_config import setup_logging
 from .core.utils import log_http_request, forbidden_error
 
@@ -29,12 +29,17 @@ def load_user_from_request(request):
     #server_api_key = current_app.config.get("api_key")
 
     # If no api_key received then ignore request
-    if not api_key:
+    # Very basic check that it's at least 10 characters - should in fact be much more
+    if not api_key or len(api_key) < 10:
         # Don't print due to possible false requests
         return None
+
+    # Now convert to hashed key which is used to check against dtabase
+    hashed_key = ApiUser.api_to_hash(api_key)
+
     # get database user based on API key
     user = db.session.execute(
-            db.select(User).filter_by(api_key=api_key)
+            db.select(User).filter_by(api_key=hashed_key)
         ).scalar_one_or_none()
 
     if user:
