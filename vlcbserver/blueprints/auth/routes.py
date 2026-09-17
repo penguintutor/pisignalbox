@@ -49,7 +49,7 @@ def login():
 
             # If password_hash is None then password logins disabled
             # Still gives the same password invalid message - don't tell them why
-            if not user.has_password:
+            if not user or not user.has_password:
                 flash("Invalid username or password.", "error")
                 return redirect(url_for('auth.login', next=next_page))
                     
@@ -64,6 +64,9 @@ def login():
                 
             flash("Invalid username or password.", "error")
             return redirect(url_for('auth.login', next=next_page))
+        # If user didn't enter either username or password
+        flash("Please enter username and password.", "warning")
+        return redirect(url_for('auth.login', next=next_page))
         
 
     # Serve the HTML file from the template folder
