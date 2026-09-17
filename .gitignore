@@ -10,6 +10,7 @@ data/layout
 data/layouts/*
 instances/*
 mail_config.json
+logs/
 
 # Lib is excluded as submodule
 lib/
