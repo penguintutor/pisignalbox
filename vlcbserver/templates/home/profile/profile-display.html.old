@@ -1,0 +1,8 @@
+<div class="field-container" hx-target="this" hx-swap="outerHTML">
+    <p><strong>Full Name:</strong> {{ user.full_name or user.username }}</p>
+    
+    <button class="btn btn-secondary" 
+            hx-get="{{ url_for('home.edit_full_name') }}">
+        Edit Name
+    </button>
+</div>

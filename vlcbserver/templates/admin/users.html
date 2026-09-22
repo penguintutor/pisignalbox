@@ -290,6 +290,8 @@
                 btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i>';
             }
         } catch (error) {
+            // If no response received
+            console.error("Network request failed:", error);
             alert("A network error occurred.");
             btn.disabled = false;
             btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i>';
@@ -320,6 +322,8 @@
                 alert("Failed to revoke key.");
             }
         } catch (error) {
+            // If no response received
+            console.error("Network request failed:", error);
             alert("A network error occurred.");
         }
     }
@@ -434,6 +438,7 @@
                 alert(data.error || "Failed to update password.");
             }
         } catch (error) {
+            console.error("Network request failed:", error);
             alert("A network error occurred.");
         }
         
@@ -466,6 +471,7 @@
                 alert("Failed to revoke web access.");
             }
         } catch (error) {
+            console.error("Network request failed:", error);
             alert("A network error occurred.");
         }
     }

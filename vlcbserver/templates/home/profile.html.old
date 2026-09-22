@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="form-panel">
+    <div class="form-header">
+        <div>
+            <h2>User Profile</h2>
+            <p class="form-subtitle">Update user profile.</p>
+
+        </div>
+    </div>
+
+    <div class="form-box">
+        <form method="POST" action="/admin/users/save" id="user-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" id="original-username" name="original_username" value="">
+
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="fullname">Full Name</label>
+                <input type="text" id="fullname" name="fullname" required>
+            </div>
+
+            <div class="form-footer">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('user').close()">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="submit-btn">Save User</button>
+            </div>
+        </form>
+    </div>
+
+
+
+</div>
+
+<dialog id="user-modal" class="admin-modal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3 id="modal-title">Add New User</h3>
+            <button type="button" class="close-btn" onclick="document.getElementById('user-modal').close()">&times;</button>
+        </div>
+        <form method="POST" action="/admin/users/save" id="user-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" id="original-username" name="original_username" value="">
+
+            <div class="form-group">
+                <label for="modal-username">Username</label>
+                <input type="text" id="modal-username" name="username" required>
+            </div>
+            <div class="form-group">
+                <label for="modal-fullname">Full Name</label>
+                <input type="text" id="modal-fullname" name="fullname" required>
+            </div>
+            <div class="form-group">
+                <label for="modal-email">Email Address</label>
+                <input type="email" id="modal-email" name="email">
+            </div>
+            <div class="form-group">
+                <label for="modal-role">Role</label>
+                <select id="modal-role" name="role" class="form-select">
+                {{ render_role_select(current_role=None, roles_dict=ROLES) }}
+                </select>
+            </div>
+            <div class="form-group" id="password-form-group">
+                <label for="modal-password" id="modal-password-label">Password</label>
+                <input type="password" id="modal-password" name="password" 
+                placeholder="Enter password" 
+                minlength="8" maxlength="128" 
+                pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).+" 
+                title="Password must contain at least one number, one uppercase letter, and one lowercase letter.">
+                <small id="password-help" class="form-hint"></small>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="document.getElementById('user-modal').close()">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="modal-submit-btn">Save User</button>
+            </div>
+        </form>
+    </div>
+</dialog>
+
+{% endblock %}

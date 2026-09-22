@@ -1,0 +1,55 @@
+<form id="user-details-card" class="card p-3" 
+      hx-post="{{ url_for('home.view_save_profile') }}" 
+      hx-target="this" 
+      hx-swap="outerHTML">
+
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    
+    <!-- Error State -->
+    {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+
+    <!-- Read-Only Fields (Static Text) -->
+    <p><strong>Username:</strong> {{ user.username }} <small class="text-muted">(Cannot be changed)</small></p>
+    <p><strong>Role:</strong> <span class="role-badge role-{{ user.role }}">{{ user.role }}</span>
+        <small class="text-muted">(Change through admin page)</small>
+    </p>
+
+    <!-- Editable Fields (Inputs) -->
+    <div class="mb-2">
+        <label for="full_name"><strong>Full Name:</strong></label>
+        <input type="text" id="full_name" name="full_name" class="form-control" value="{{ user.full_name }}" required>
+    </div>
+    
+    <div class="mb-2">
+        <label for="short_name"><strong>Short Name:</strong></label>
+        <input type="text" name="short_name" id="short_name" class="form-control" value="{{ user.short_name }}">
+    </div>
+    
+    <div class="mb-3">
+        <label for="email"><strong>Email:</strong></label>
+        <input type="email" name="email" id="email" class="form-control" value="{{ user.email or '' }}" requried>
+    </div>
+    
+    <!-- Action Links (Static while editing) -->
+    <div class="mt-2 mb-3">
+        <p><strong>Password:</strong> <a href="{{ url_for('home.change_password') }}">Change Password</a></p>
+        <p>
+            <strong>API Access:</strong>
+            {% if user.api_key %}
+                Key active. <a href="{{ url_for('home.generate_api_key') }}">Generate new key</a>
+            {% else %}
+                <span class="text-muted">API keys need to be requested through the admin page.</span>
+            {% endif %}
+        </p>
+    </div>
+
+    <!-- Actions -->
+    <div>
+        <button type="submit" class="btn btn-success">Save Details</button>
+        <button type="button" class="btn btn-secondary" hx-get="{{ url_for('home.view_save_profile') }}">
+            Cancel
+        </button>
+    </div>
+</form>

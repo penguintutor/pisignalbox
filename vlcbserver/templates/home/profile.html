@@ -1,5 +1,19 @@
 {% extends "base.html" %}
 
 {% block content %}
-<p>This is the profile page - lots more to add here</p>
+
+<div class="profile-panel">
+    <div class="profile-header">
+        <div>
+            <h2>User Profile</h2>
+            <p class="profile-subtitle">Update user profile.</p>
+
+            <div id="profile-section">
+                {% include '/home/profile/details_display.html' %}
+            </div>
+
+        </div>
+    </div>
+</div>
+
 {% endblock %}
