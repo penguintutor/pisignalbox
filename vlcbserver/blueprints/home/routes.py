@@ -67,8 +67,11 @@ def view_save_profile():
     if request.method == 'POST':
         new_email = request.form.get('email', '').strip() or None
         
+        # First check if it's not changing as we can then just use the current details without further checks
+        if new_email and new_email == current_user.email:
+            checked_email = current_user.email
         # Validation: Check if email is changing AND if it's already taken
-        if new_email and new_email != current_user.email:
+        elif new_email:
             # validate using validator
             try:
                 # Validates syntax and normalizes the email

@@ -4,7 +4,7 @@
 {% macro render_user_menu(user) %}
                 {% if user.is_authenticated %}
                 <button class="user-button">
-                    👤 {{ user.username }} ▼
+                    👤 <span id="nav-short-name">{{ user.short_name }}</span> ▼
                 </button>
                 <div class="dropdown-content">
                     <a href="/profile">User Profile</a>
