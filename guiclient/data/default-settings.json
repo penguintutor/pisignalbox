@@ -1,0 +1,15 @@
+{
+    "statuscolors": {
+		"starting": "orange",
+		"running": "green",
+		"finished": "blue",
+		"stopped": "red"
+    },
+    "layoutfile": "modular_layout_1.json",
+	"server": {
+		"protocol": "http",
+		"hostname": "127.0.0.1",
+		"port": 5000,
+		"api_key": ""
+	}
+}

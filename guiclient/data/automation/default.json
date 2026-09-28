@@ -1,0 +1,522 @@
+{
+    "name": "Default",
+    "description": "",
+    "sequences": [
+        {
+            "title": "Sequence 1",
+            "settings": {
+                "num_locos": 2
+            },
+            "steps": [
+                {
+                    "type": "VLCB",
+                    "name": "Set VLCB event 1",
+                    "data": {
+                        "node_id": 301,
+                        "event": "0x12d0004",
+                        "value": "off"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "Loco",
+                    "name": "Loco ID 1 - Function",
+                    "data": {
+                        "locoid": "ID 1",
+                        "action": "Function",
+                        "function": 1,
+                        "function_action": "On"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "Loco",
+                    "name": "Loco set speed",
+                    "data": {
+                        "locoid": "ID 1",
+                        "action": "Set Speed",
+                        "speed": 11
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "User Interface",
+                    "name": "User Interface, None - Set - on",
+                    "data": {
+                        "node_id": null,
+                        "action": "Set",
+                        "value": "on"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "User Interface",
+                    "name": "User Interface, None - Toggle - ",
+                    "data": {
+                        "node_id": null,
+                        "action": "Toggle"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "Gui",
+                    "name": "User Interface, 0 - Toggle - ",
+                    "data": {
+                        "node_id": 0,
+                        "action": "Toggle"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "Gui",
+                    "name": "User Interface, 0 - Set - off",
+                    "data": {
+                        "node_id": 0,
+                        "action": "Set",
+                        "value": "off"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "Loco",
+                    "name": "Loco ID 2 - Stop",
+                    "data": {
+                        "locoid": "ID 2",
+                        "action": "Stop"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "App",
+                    "name": "App, Wait - 345",
+                    "data": {
+                        "command": "Wait",
+                        "delay": "345"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "VLCB",
+                    "name": "VLCB, 301 - 0x12d0005 - on",
+                    "data": {
+                        "node_id": 301,
+                        "event": "0x12d0005",
+                        "value": "on"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "App",
+                    "name": "App, Wait - 67",
+                    "data": {
+                        "command": "Wait",
+                        "delay": "67"
+                    },
+                    "rule": null
+                }
+            ]
+        },
+        {
+            "title": "Sequence 2",
+            "settings": {
+                "num_locos": 0
+            },
+            "steps": [
+                {
+                    "type": "App",
+                    "name": "App, Set Variable - testvar - 123",
+                    "data": {
+                        "command": "Set Variable",
+                        "variable": "testvar",
+                        "value": "123"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "Label",
+                    "name": "Label: label01",
+                    "data": {
+                        "labelid": "label01"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "Jump",
+                    "name": "Jump: label01",
+                    "data": {
+                        "labelid": "label01",
+                        "variable": "testvar",
+                        "condition": "equals",
+                        "value": "test2"
+                    },
+                    "rule": null
+                }
+            ]
+        },
+        {
+            "title": "Test runner 1",
+            "settings": {
+                "num_locos": 0
+            },
+            "steps": [
+                {
+                    "type": "App",
+                    "name": "App, Notify User",
+                    "data": {
+                        "command": "Notify User",
+                        "blocking": "True",
+                        "message": "After 20s delay"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "Label",
+                    "name": "Label: Label01",
+                    "data": {
+                        "labelid": "Label01"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "App",
+                    "name": "App, Wait - 20",
+                    "data": {
+                        "command": "Wait",
+                        "delay": "20"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "VLCB",
+                    "name": "VLCB, 201 - 0x000015 - on",
+                    "data": {
+                        "node_id": 201,
+                        "event": "0x000015",
+                        "value": "on"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "App",
+                    "name": "App, Wait - 10",
+                    "data": {
+                        "command": "Wait",
+                        "delay": "10"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "App",
+                    "name": "App, Notify User",
+                    "data": {
+                        "command": "Notify User",
+                        "blocking": "True",
+                        "message": "Start automation - test runner 1"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "VLCB",
+                    "name": "VLCB, 201 - 0x000016 - on",
+                    "data": {
+                        "node_id": 201,
+                        "event": "0x000016",
+                        "value": "on"
+                    },
+                    "rule": null
+                }
+            ]
+        },
+        {
+            "title": "test add del",
+            "settings": {
+                "num_locos": 0
+            },
+            "steps": [
+                {
+                    "type": "App",
+                    "name": "App, Set Variable - test - 1",
+                    "data": {
+                        "command": "Set Variable",
+                        "variable": "test",
+                        "value": "1"
+                    },
+                    "rule": null
+                }
+            ]
+        },
+        {
+            "title": "Test variable",
+            "settings": {
+                "num_locos": 0
+            },
+            "steps": [
+                {
+                    "type": "App",
+                    "name": "App, Set Variable - test_var_1 - 0",
+                    "data": {
+                        "command": "Set Variable",
+                        "variable": "test_var_1",
+                        "value": "0"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "Label",
+                    "name": "Label: Back to start",
+                    "data": {
+                        "labelid": "Back to start"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "App",
+                    "name": "App, Increment Variable - test_var_1 - 1",
+                    "data": {
+                        "command": "Increment Variable",
+                        "variable": "test_var_1",
+                        "value": "1"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "Jump",
+                    "name": "Jump: Back to start",
+                    "data": {
+                        "labelid": "Back to start",
+                        "variable": "test_var_1",
+                        "condition": "less than",
+                        "value": "5"
+                    },
+                    "rule": null
+                }
+            ]
+        },
+        {
+            "title": "Test loco 1",
+            "settings": {
+                "num_locos": 1
+            },
+            "steps": [
+                {
+                    "type": "Loco",
+                    "name": "Loco ID 1 - Set Direction",
+                    "data": {
+                        "locoid": "ID 1",
+                        "action": "Set Direction",
+                        "direction": "Forward"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "Loco",
+                    "name": "Sound whistle",
+                    "data": {
+                        "locoid": "ID 1",
+                        "action": "Function",
+                        "function": 3,
+                        "function_action": "On"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "App",
+                    "name": "App, Wait - 1",
+                    "data": {
+                        "command": "Wait",
+                        "delay": "1"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "Loco",
+                    "name": "Loco ID 1 - Set Speed",
+                    "data": {
+                        "locoid": "ID 1",
+                        "action": "Set Speed",
+                        "speed": 1
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "App",
+                    "name": "App, Wait - 20",
+                    "data": {
+                        "command": "Wait",
+                        "delay": "20"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "Loco",
+                    "name": "Loco ID 1 - Stop",
+                    "data": {
+                        "locoid": "ID 1",
+                        "action": "Stop"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "App",
+                    "name": "App, Wait - 15",
+                    "data": {
+                        "command": "Wait",
+                        "delay": "15"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "Loco",
+                    "name": "Loco ID 1 - Set Direction",
+                    "data": {
+                        "locoid": "ID 1",
+                        "action": "Set Direction",
+                        "direction": "Reverse"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "Loco",
+                    "name": "Loco ID 1 - Set Speed",
+                    "data": {
+                        "locoid": "ID 1",
+                        "action": "Set Speed",
+                        "speed": 1
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "App",
+                    "name": "App, Wait - 20",
+                    "data": {
+                        "command": "Wait",
+                        "delay": "20"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "Label",
+                    "name": "Label: TestLabel",
+                    "data": {
+                        "labelid": "TestLabel"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "Loco",
+                    "name": "Loco ID 1 - All Stop",
+                    "data": {
+                        "locoid": "ID 1",
+                        "action": "All Stop"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "App",
+                    "name": "App, Set Variable - test_var_1 - 10",
+                    "data": {
+                        "command": "Set Variable",
+                        "variable": "test_var_1",
+                        "value": "10"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "Jump",
+                    "name": "Jump: TestLabel",
+                    "data": {
+                        "labelid": "TestLabel",
+                        "variable": "test",
+                        "condition": "equals",
+                        "value": "7"
+                    },
+                    "rule": null
+                }
+            ]
+        },
+        {
+            "title": "Another sequence for testing",
+            "settings": {
+                "num_locos": 0
+            },
+            "steps": [
+                {
+                    "type": "App",
+                    "name": "App, Wait - 5",
+                    "data": {
+                        "command": "Wait",
+                        "delay": "5"
+                    },
+                    "rule": null
+                }
+            ]
+        },
+        {
+            "title": "NoLoco_test_seq",
+            "settings": {
+                "num_locos": 0
+            },
+            "steps": [
+                {
+                    "type": "App",
+                    "name": "Set variable 0",
+                    "data": {
+                        "command": "Set Variable",
+                        "variable": "noloco_var01",
+                        "value": "0"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "Label",
+                    "name": "Label: noloco_start",
+                    "data": {
+                        "labelid": "noloco_start"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "App",
+                    "name": "App, Notify User",
+                    "data": {
+                        "command": "Notify User",
+                        "blocking": "True",
+                        "message": "Set value to {noloco_var01}"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "App",
+                    "name": "App, Increment Variable - noloco_var01 - 1",
+                    "data": {
+                        "command": "Increment Variable",
+                        "variable": "noloco_var01",
+                        "value": "1"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "Jump",
+                    "name": "Jump: noloco_start",
+                    "data": {
+                        "labelid": "noloco_start",
+                        "variable": "noloco_var01",
+                        "condition": "<=",
+                        "value": "5"
+                    },
+                    "rule": null
+                },
+                {
+                    "type": "App",
+                    "name": "End",
+                    "data": {
+                        "command": "Notify User",
+                        "blocking": "True",
+                        "message": "Ended"
+                    },
+                    "rule": null
+                }
+            ]
+        }
+    ]
+}
