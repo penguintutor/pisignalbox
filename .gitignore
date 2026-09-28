@@ -1,13 +1,17 @@
 *.json
 # Re-include .json files in tests/data/
-!tests/data/*.json
+!tests/data/*
+!guiclient/tests/data/*
 # Allow default settings 
 !defaults.json
 # Secret
 secret.cfg
 data/locos/*
-data/layout
+guiclient/data/locos/*
 data/layouts/*
+guiclient/data/layouts/*
+# Allow the default images
+!default*.png
 instances/*
 mail_config.json
 logs/
