@@ -6,5 +6,5 @@ from vlcbserver.blueprints.home import home_blueprint
 
 @home_blueprint.app_errorhandler(CSRFError)
 def handle_csrf_error(e):
-    flash('Your session expired for security reasons. Please try again.', 'warning')
+    flash('Your session expired for security reasons. Please login again.', 'warning')
     return redirect(url_for('auth.login'))

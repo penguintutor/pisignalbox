@@ -35,13 +35,8 @@
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
-                    {% if category == 'error' %}
-                        {% set alert_class = 'danger' %}
-                    {% elif category == 'success' %}
-                        {% set alert_class = 'success' %}
-                    {% else %}
-                        {% set alert_class = 'info' %} <!-- The catch-all -->
-                    {% endif %}
+                    <!-- By defaulting to 'info', have a catch-all if no category set -->
+                    {% set alert_class = category if category in ['success', 'danger', 'warning', 'info'] else 'info' %}
                     
                     <div class="alert alert-{{ alert_class }} alert-dismissible fade show shadow-sm" role="alert">
                         {{ message }}
