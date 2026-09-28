@@ -65,41 +65,49 @@ def edit_profile():
 @login_required
 def view_save_profile():
     if request.method == 'POST':
+
+        ## Handle email address
         new_email = request.form.get('email', '').strip() or None
-        
         # First check if it's not changing as we can then just use the current details without further checks
         if new_email and new_email == current_user.email:
             checked_email = current_user.email
         # Validation: Check if email is changing AND if it's already taken
         elif new_email:
+            # Make sure max length not exceeded
+            if len(new_email) > User.MAX_LEN_EMAIL:
+                flash (f"Email address is too long. Maximum of {User.MAX_LEN_EMAIL} characters.", "danger")
+                return render_template('home/profile/details_form.html', user=current_user)
             # validate using validator
             try:
                 # Validates syntax and normalizes the email
                 valid = validate_email(new_email, check_deliverability=False)
                 checked_email = valid.normalized
             except EmailNotValidError:
-                error_msg = "Invalid email address provided."
-                return render_template('home/profile/details_form.html', 
-                    user=current_user, 
-                    error=error_msg)
+                flash ("Invalid email address provided.", "danger")
+                return render_template('home/profile/details_form.html', user=current_user)
             existing_user = User.query.filter_by(_email=checked_email).first()
             if existing_user:
-                error_msg = "That email address is already in use."
-                return render_template('home/profile/details_form.html', 
-                    user=current_user, 
-                    error=error_msg)
+                flash ("That email address is already in use.", "danger")
+                return render_template('home/profile/details_form.html', user=current_user)
         # Whilst email can be blank when setup by admin 
         # Don't allow email to be blank after a profile edit
         else:
-            error_msg = "Email address is required."
-            return render_template('home/profile/details_form.html', 
-                user=current_user, 
-                error=error_msg)
-        # Update properties
+            flash ("Email address is required.", "danger")
+            return render_template('home/profile/details_form.html', user=current_user)
+        
+        # Update Full name
+        # Restricts to MAX_LEN_FULLNAME - this is handled by html5 validation already
         raw_input_name = request.form.get('full_name', '').strip()
+        if len(raw_input_name) > User.MAX_LEN_FULLNAME:
+            flash (f"Full name is too long. Maximum of {User.MAX_LEN_FULLNAME} characters.", "danger")
+            return render_template('home/profile/details_form.html', user=current_user)
         full_name = re.sub(r'[<>{}]', '', raw_input_name).strip()
         current_user.full_name = full_name
+
         raw_input_short_name = request.form.get('short_name', '').strip()
+        if len(raw_input_short_name) > User.MAX_LEN_SHORTNAME:
+            flash (f"Short name is too long. Maximum of {User.MAX_LEN_SHORTNAME} characters.", "danger")
+            return render_template('home/profile/details_form.html', user=current_user)
         short_name = re.sub(r'[<>{}]', '', raw_input_short_name).strip()
         current_user.short_name = short_name
         current_user.email = checked_email
@@ -107,11 +115,10 @@ def view_save_profile():
         try:
             db.session.commit()
         except IntegrityError:
-            print ("Fail to update - reoll back change")
+            print ("Fail to update - roll back change")
             db.session.rollback()
-            return render_template('home/profile/details_form.html', 
-                user=current_user, 
-                error="A database error occurred saving your details.")
+            flash ("A database error occurred saving your details.", "danger")
+            return render_template('home/profile/details_form.html', user=current_user)
 
     # Returns the read-only view on GET or successful POST
     return render_template('home/profile/details_display.html', user=current_user)

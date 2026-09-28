@@ -56,15 +56,15 @@
 
             <div class="form-group">
                 <label for="modal-username">Username</label>
-                <input type="text" id="modal-username" name="username" required>
+                <input type="text" id="modal-username" name="username" maxlength="{{ User.MAX_LEN_USERNAME }}" required>
             </div>
             <div class="form-group">
                 <label for="modal-fullname">Full Name</label>
-                <input type="text" id="modal-fullname" name="fullname" required>
+                <input type="text" id="modal-fullname" name="fullname" maxlength="{{ User.MAX_LEN_FULLNAME }}" required>
             </div>
             <div class="form-group">
                 <label for="modal-email">Email Address</label>
-                <input type="email" id="modal-email" name="email">
+                <input type="email" id="modal-email" maxlength="{{ User.MAX_LEN_EMAIL }}" name="email">
             </div>
             <div class="form-group">
                 <label for="modal-role">Role</label>
@@ -76,7 +76,7 @@
                 <label for="modal-password" id="modal-password-label">Password</label>
                 <input type="password" id="modal-password" name="password" 
                 placeholder="Enter password" 
-                minlength="8" maxlength="128" 
+                minlength="{{ User.MIN_LEN_PASSWORD }}" maxlength="{{ User.MAX_LEN_PASSWORD }}" 
                 pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).+" 
                 title="Password must contain at least one number, one uppercase letter, and one lowercase letter.">
                 <small id="password-help" class="form-hint"></small>
@@ -106,7 +106,7 @@
                 <div style="display: flex; gap: 5px;">
                     <input type="password" id="modal-new-password" aria-label="New Password" 
                         placeholder="Enter new password" style="flex-grow: 1;"
-                        minlength="8" maxlength="128" 
+                        minlength="{{ User.MIN_LEN_PASSWORD }}" maxlength="{{ User.MAX_LEN_PASSWORD }}" 
                         pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).+" 
                         title="Password must contain at least one number, one uppercase letter, and one lowercase letter."
                         required>

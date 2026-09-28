@@ -5,11 +5,6 @@
 
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     
-    <!-- Error State -->
-    {% if error %}
-        <div class="alert alert-danger">{{ error }}</div>
-    {% endif %}
-
     <!-- Read-Only Fields (Static Text) -->
     <p><strong>Username:</strong> {{ user.username }} <small class="text-muted">(Cannot be changed)</small></p>
     <p><strong>Role:</strong> <span class="role-badge role-{{ user.role }}">{{ user.role }}</span>
@@ -19,17 +14,17 @@
     <!-- Editable Fields (Inputs) -->
     <div class="mb-2">
         <label for="full_name"><strong>Full Name:</strong></label>
-        <input type="text" id="full_name" name="full_name" class="form-control" value="{{ user.full_name }}" required>
+        <input type="text" id="full_name" name="full_name" class="form-control" value="{{ user.full_name }}" maxlength="{{ User.MAX_LEN_FULLNAME }}" required>
     </div>
     
     <div class="mb-2">
         <label for="short_name"><strong>Short Name:</strong></label>
-        <input type="text" name="short_name" id="short_name" class="form-control" value="{{ user.short_name }}">
+        <input type="text" name="short_name" id="short_name" class="form-control" value="{{ user.short_name }}" maxlength="{{ User.MAX_LEN_SHORTNAME }}">
     </div>
     
     <div class="mb-3">
         <label for="email"><strong>Email:</strong></label>
-        <input type="email" name="email" id="email" class="form-control" value="{{ user.email or '' }}" requried>
+        <input type="email" name="email" id="email" class="form-control" value="{{ user.email or '' }}" maxlength="{{ User.MAX_LEN_EMAIL }}" requried>
     </div>
     
     <!-- Action Links (Static while editing) -->

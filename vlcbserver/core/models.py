@@ -20,23 +20,37 @@ admin - full control useradmin
 
 class User(UserMixin, db.Model):
     __tablename__ = 'users'
+
+    # Make column sizes constants
+    # Single source of truth that can e used in code and html
+    MAX_LEN_USERNAME = 80
+    MAX_LEN_PASSWORD = 128
+    MAX_LEN_PASSWORD_HASH = 128 # This is hash not the password length - here for consistancy
+    MAX_LEN_API_KEY = 128
+    MAX_LEN_EMAIL = 120
+    MAX_LEN_FULLNAME = 150
+    MAX_LEN_ROLE = 50
+    MAX_LEN_SHORTNAME = 50
+
+    MIN_LEN_PASSWORD = 8
+
     
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128), nullable=True)
+    username = db.Column(db.String(MAX_LEN_USERNAME), unique=True, nullable=False)
+    password_hash = db.Column(db.String(MAX_LEN_PASSWORD_HASH), nullable=True)
 
     # API key - nulls for password based logins
-    api_key = db.Column(db.String(128), unique=True, nullable=True)
+    api_key = db.Column(db.String(MAX_LEN_API_KEY), unique=True, nullable=True)
 
     # Additional Fields
     # Email users NULL to enforce uniqueness - as can use that to login as well
-    _email = db.Column('email', db.String(120), nullable=True, unique=True)
-    full_name = db.Column(db.String(150), nullable=False, default="", server_default="")
+    _email = db.Column('email', db.String(MAX_LEN_EMAIL), nullable=True, unique=True)
+    full_name = db.Column(db.String(MAX_LEN_FULLNAME), nullable=False, default="", server_default="")
     # short name uses a setter allowing replacement with username
-    _short_name = db.Column('short_name', db.String(50), nullable=False, default="", server_default="")
+    _short_name = db.Column('short_name', db.String(MAX_LEN_SHORTNAME), nullable=False, default="", server_default="")
     
     # Using a string for role with a default fallback
-    role = db.Column(db.String(50), nullable=False, default='reader')
+    role = db.Column(db.String(MAX_LEN_ROLE), nullable=False, default='reader')
 
     def has_role(self, role_name):
         """Check if the user has a specific role."""

@@ -16,3 +16,4 @@ home_blueprint = Blueprint(
 
 # Import routes at the bottom so they attach to the blueprints above
 from . import routes
+from vlcbserver.core import errors

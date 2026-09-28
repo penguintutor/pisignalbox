@@ -130,6 +130,13 @@ def create_app(config):
     # Register App level routes
     app.after_request(log_http_request)
 
+    # Add User available to all templates
+    @app.context_processor
+    def inject_models():
+        # Everything in this dictionary is automatically 
+        # available to every Jinja template
+        return {'User': User}
+
     #Register routes as @requests
     from vlcbserver.blueprints.api import api_blueprint
     from vlcbserver.blueprints.home import home_blueprint

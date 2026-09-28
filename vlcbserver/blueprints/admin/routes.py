@@ -54,10 +54,22 @@ def save_user():
     # Enforce username as lower_case
     username = raw_username.lower().replace(" ", "_")
     username = re.sub(r'[^a-z0-9_]', '', username)
+    if len(username > User.MAX_LEN_USERNAME):
+        flash(f"Username is too long. Maximum {User.MAX_LEN_USERNAME} characters.", "error")
+        return redirect(url_for('admin.users'))
+
     raw_input_name = request.form.get('fullname')
+    # Reject full name is too long
+    if len(raw_input_name > User.MAX_LEN_FULLNAME):
+            flash(f"Full name is too long. Maximum {User.MAX_LEN_FULLNAME} characters.", "error")
+            return redirect(url_for('admin.users'))
     # Just strip brackets from full name
     fullname = re.sub(r'[<>{}]', '', raw_input_name).strip()
+
     raw_email = request.form.get('email')
+    if len(raw_email > User.MAX_LEN_EMAIL):
+                flash(f"Email address is too long. Maximum {User.MAX_LEN_EMAIL} characters.", "error")
+                return redirect(url_for('admin.users'))
     if raw_email:
         email = clean_email(raw_email)
     else:
@@ -67,11 +79,11 @@ def save_user():
     # Is a pssword supplied
     if raw_password and raw_password.strip():
         # also check lengths
-        if len(raw_password) < 8:
-                flash("Password is too short. Minimum 8 characters.", "error")
+        if len(raw_password) < User.MIN_LEN_PASSWORD:
+                flash(f"Password is too short. Minimum {User.MIN_LEN_PASSWORD} characters.", "error")
                 return redirect(url_for('admin.users'))
-        elif len(raw_password) > 128:
-                flash("Password is too long. Maximum 128 characters.", "error")
+        elif len(raw_password) > User.MAX_LEN_PASSWORD:
+                flash(f"Password is too long. Maximum {User.MAX_LEN_PASSWORD} characters.", "error")
                 return redirect(url_for('admin.users'))
         password_hash = generate_password_hash(raw_password.strip())
     else:
@@ -194,10 +206,10 @@ def save_password():
     elif new_password and new_password.strip():
         # Check that the password meets the min / max length
         # This should be blocked by JavaScript already
-        if len(new_password) < 8:
+        if len(new_password) < User.MIN_LEN_PASSWORD:
             flash("Password is too short", "error")
             return redirect(url_for('admin.users'))
-        elif len(new_password) > 128:
+        elif len(new_password) > User.MAX_LEN_PASSWORD:
             flash("Password is too long", "error")
             return redirect(url_for('admin.users'))
         # Reach here then password has passed the basic length checks - create hash
@@ -300,9 +312,9 @@ def api_save_password():
         return jsonify({'error': 'No password provided'}), 400
 
     # Checks for minimum password length
-    if len(new_password) < 8: 
+    if len(new_password) < User.MIN_LEN_PASSWORD: 
         return jsonify({'error': 'Password is too short'}), 400
-    elif len(new_password) > 128: 
+    elif len(new_password) > User.MAX_LEN_PASSWORD: 
         return jsonify({'error': 'Password is too long'}), 400
 
     user = User.query.filter_by(username=username).first()
