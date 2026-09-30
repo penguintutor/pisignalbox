@@ -1,0 +1,15 @@
+# Web Framework & Extensions
+flask
+flask_login
+flask-wtf
+Flask-SQLAlchemy
+
+# Web Server
+gunicorn
+
+# Utilities & Hardware
+pyvlcb
+strip_tags
+email-validator
+json5
+pyserial

@@ -21,21 +21,12 @@ Install PySide6 using:
     sudo apt install python3-pyside6.qtgui python3-pyside6.qtwidgets python3-pyside6.qtuitools  
 
 
-Additional libraries are required to install using virtual environment (recommended):
+Additional libraries are required to install using virtual environment (recommended). First cd to the pisignalbox folder and then run the following:
 
     mkdir -p ~/venv
     python3 -m venv ~/venv/pisignalbox --system-site-packages
     source ~/venv/pisignalbox/bin/activate
-    pip install pyvlcb
-    pip install strip_tags
-    pip install flask
-    pip install flask_login
-    pip install flask.wtf
-    pip install Flask-SQLAlchemy
-    pip install email-validator
-    pip install json5
-    pip install pyserial
-    pip install gunicorn
+    pip install -r setup/requirements.txt
 
 Note if you would like to use a different virtual environment directory then you may need to create your own startup scripts replacing pisignalbox.sh and/or start_server.sh with your virtual environment. This is not required if using the ~/venv/pisignalbox directory. 
 
