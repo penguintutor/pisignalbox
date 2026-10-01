@@ -36,7 +36,7 @@ def vlcb_request():
 @home_blueprint.route("/", methods=['GET', 'POST'])
 @home_blueprint.route("/home", methods=['GET', 'POST'])
 def home():
-    return render_template('home/index.html')
+    return render_template('home/index.html', user=current_user)
 
     
 @home_blueprint.route("/logout", methods=['GET', 'POST'])
@@ -127,7 +127,53 @@ def view_save_profile():
 @home_blueprint.route('/profile/change_password', methods=['GET', 'POST'])
 @login_required
 def change_password():
-    return render_template('home/profile/details_display.html', user=current_user)
+    if request.method == 'POST':
+        current_password = request.form.get('current_password')
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+
+        # Verify the current password is correct
+        if not check_password_hash(current_user.password_hash, current_password):
+            flash('Incorrect current password.', 'danger')
+            return redirect(url_for('home.change_password'))
+
+        # Make sure not trying to reuse existing password
+        if new_password == current_password:
+            flash('Existing password not allowed. Choose a new password.', 'danger')
+            return redirect(url_for('home.change_password'))
+        
+        # Ensure new passwords match
+        if new_password != confirm_password:
+            flash('New passwords do not match.', 'danger')
+            return redirect(url_for('home.change_password'))
+
+        # Check password meets requirements
+        # check length
+        if len(new_password) < User.MIN_LEN_PASSWORD:
+                flash(f"Password is too short. Minimum {User.MIN_LEN_PASSWORD} characters.", "error")
+                return redirect(url_for('home.change_password'))
+        elif len(new_password) > User.MAX_LEN_PASSWORD:
+                flash(f"Password is too long. Maximum {User.MAX_LEN_PASSWORD} characters.", "error")
+                return redirect(url_for('home.change_password'))
+        # NOTE could add additional checks for requirements here
+        # already "enforced" by UI, but user could bypass
+        # would involve deliberately trying to bypass security
+        # just to enter a weaker password
+
+        password_hash = generate_password_hash(new_password.strip())
+
+        # Update the password
+        current_user.password_hash = password_hash
+
+        # Save to db
+        db.session.commit()
+        
+        flash('Your password has been successfully updated.', 'success')
+        # Adjust 'home.profile' to the name of the route that renders the profile card
+        return redirect(url_for('home.profile')) 
+
+    # Handle GET request: render the form
+    return render_template('home/profile/change_password.html')
 
 # Todo - not yet implemented
 @home_blueprint.route('/profile/new_api_key', methods=['GET', 'POST'])

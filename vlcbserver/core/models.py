@@ -77,7 +77,10 @@ class User(UserMixin, db.Model):
 
     @hybrid_property
     def short_name(self):
-        return self._short_name if self._short_name is not None else self.username
+        if self._short_name is not None and self._short_name != "":
+            return self._short_name
+        else:
+            return self.username
 
     @short_name.setter
     def short_name(self, value):

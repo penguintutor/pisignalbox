@@ -76,7 +76,7 @@ def save_user():
         email = ""
     raw_password = request.form.get('password')
 
-    # Is a pssword supplied
+    # Is a password supplied
     if raw_password and raw_password.strip():
         # also check lengths
         if len(raw_password) < User.MIN_LEN_PASSWORD:
