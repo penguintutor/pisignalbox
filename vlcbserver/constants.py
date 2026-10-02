@@ -8,3 +8,6 @@ ROLES ={
         "update":   "Layout Engineer",      # Can update layout etc.
         "admin":    "Operations Manager"    # All above + user admin
 }
+
+# Lists of which roles have appropriate permission
+OPERATOR_ROLES = ["operator", "update", "admin"]

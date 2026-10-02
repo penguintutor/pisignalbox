@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container mt-3 mb-5" id="train-controller">
+    
+    <input type="hidden" id="csrf_token" name="csrf_token" value="{{ csrf_token() }}">
+
+    <!-- 1. Locomotive Selection -->
+    <div class="card p-3 mb-3 border-primary shadow-sm">
+        <label for="locoSelect" class="form-label fw-bold">Select Locomotive</label>
+        <select class="form-select form-select-lg" id="locoSelect">
+            <option value="" selected disabled>Choose a loco to acquire...</option>
+            <!-- Render these dynamically from your Flask route -->
+            {% for loco in locomotives %}
+                <option value="{{ loco.id }}">{{ loco.name }}</option>
+            {% endfor %}
+            <!-- Mock options for testing UI -->
+            <option value="flying_scotsman">Flying Scotsman</option>
+            <option value="class_43">Class 43 (HST)</option>
+        </select>
+        <div id="acquireStatus" class="mt-2 small text-danger"></div>
+    </div>
+
+    <!-- 2. Locomotive Details (Populated via API) -->
+    <div class="card p-3 mb-3 d-none shadow-sm" id="locoDetailsCard">
+        <div class="row align-items-center">
+            <div class="col-md-4 text-center mb-3 mb-md-0">
+                <img id="locoImage" src="" alt="Locomotive Image" class="img-fluid rounded border">
+            </div>
+            <div class="col-md-8">
+                <h4 id="locoTitle" class="text-primary"></h4>
+                <p id="locoDescription" class="mb-0 text-muted"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Controller Area (Disabled until acquired) -->
+    <fieldset id="controlPanel" disabled>
+        
+        <!-- 3. Speed and Direction Controls -->
+        <div class="card p-3 mb-3 shadow-sm bg-light">
+            
+            <!-- Digital Speed Display -->
+            <div class="row mb-2">
+                <div class="col-12 text-center">
+                    <div class="text-muted small fw-bold text-uppercase">Requested Speed</div>
+                    <div class="display-1 fw-bold font-monospace text-primary" id="speedDisplay">00</div>
+                </div>
+            </div>
+
+            <!-- Speed Slider -->
+            <div class="row mb-4 px-3">
+                <div class="col-12">
+                    <input type="range" class="form-range" id="speedSlider" min="0" max="99" value="0" style="height: 2rem;">
+                </div>
+            </div>
+
+            <!-- Direction Toggle -->
+            <div class="row mb-4">
+                <div class="col-12 d-flex justify-content-center">
+                    <div class="btn-group w-100" role="group" style="max-width: 400px;">
+                        <input type="radio" class="btn-check" name="dirRadio" id="dirForward" value="forward" checked>
+                        <label class="btn btn-outline-success btn-lg" for="dirForward"><i class="bi bi-arrow-up-circle"></i> Forward</label>
+
+                        <input type="radio" class="btn-check" name="dirRadio" id="dirReverse" value="reverse">
+                        <label class="btn btn-outline-primary btn-lg" for="dirReverse"><i class="bi bi-arrow-down-circle"></i> Reverse</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stop Buttons -->
+            <div class="row g-2">
+                <div class="col-6">
+                    <button class="btn btn-danger btn-lg w-100 fw-bold py-3" id="btnStop">STOP</button>
+                </div>
+                <div class="col-6">
+                    <button class="btn btn-dark btn-lg w-100 fw-bold py-3" id="btnStopAll">STOP ALL</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Functions Section -->
+        <div class="card p-3 shadow-sm">
+            <h5 class="fw-bold mb-3">Functions</h5>
+            <!-- Using a responsive grid of buttons for easy touch targeting -->
+            <div class="row g-2" id="functionsContainer">
+                {% for i in range(30) %}
+                <div class="col-6 col-sm-4 col-md-3">
+                    <button class="btn btn-outline-secondary w-100 py-2 func-btn text-start d-flex justify-content-between align-items-center" data-func-id="{{ i }}">
+                        <span class="fw-bold">F{{ i }}</span> 
+                        <span class="small text-truncate ms-2 func-desc">Fn {{ i }}</span>
+                    </button>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </fieldset>
+
+</div>
+
+<!-- Steal/Share Modal -->
+<div class="modal fade" id="acquireModal" tabindex="-1" aria-labelledby="acquireModalLabel" aria-hidden="true" data-bs-backdrop="static">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-warning">
+        <h5 class="modal-title" id="acquireModalLabel">Locomotive in Use</h5>
+      </div>
+      <div class="modal-body">
+        This locomotive is currently controlled by another user. Would you like to steal control, or share it?
+      </div>
+      <div class="modal-footer d-flex justify-content-between">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" id="btnCancelAcquire">Cancel</button>
+        <div>
+            <button type="button" class="btn btn-info" id="btnShare">Share</button>
+            <button type="button" class="btn btn-danger" id="btnSteal">Steal</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    
+    // Elements
+    const csrfToken = document.getElementById('csrf_token').value;
+    const locoSelect = document.getElementById('locoSelect');
+    const acquireStatus = document.getElementById('acquireStatus');
+    const controlPanel = document.getElementById('controlPanel');
+    const locoDetailsCard = document.getElementById('locoDetailsCard');
+    
+    const speedSlider = document.getElementById('speedSlider');
+    const speedDisplay = document.getElementById('speedDisplay');
+    const dirRadios = document.getElementsByName('dirRadio');
+    const btnStop = document.getElementById('btnStop');
+    const btnStopAll = document.getElementById('btnStopAll');
+    const funcButtons = document.querySelectorAll('.func-btn');
+    
+    // Modal initialization (assuming Bootstrap 5)
+    const acquireModalEl = document.getElementById('acquireModal');
+    const acquireModal = new bootstrap.Modal(acquireModalEl);
+    
+    let currentLocoId = null;
+
+    // Helper: Standard API fetch wrapper
+    async function callAPI(endpoint, data) {
+        try {
+            // Replaces placeholder with Flask url_for behavior.
+            // In a real template, you might set these in global JS variables.
+            const url = endpoint; 
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify(data)
+            });
+            return await response.json();
+        } catch (error) {
+            console.error("API Error:", error);
+            return { error: true, message: "Network error" };
+        }
+    }
+
+    // Acquire Locomotive
+    locoSelect.addEventListener('change', function() {
+        const selectedId = this.value;
+        if (!selectedId) return;
+        attemptAcquire(selectedId, "request");
+    });
+
+    function attemptAcquire(locoId, mode) {
+        acquireStatus.innerText = "Attempting to acquire...";
+        
+        callAPI('{{ url_for("api.loco.aquire") }}', { id: locoId, mode: mode }).then(res => {
+        //callAPI('/api/loco_aquire', { id: locoId, mode: mode }).then(res => {
+            if (res.status === 'acquired') {
+                currentLocoId = locoId;
+                acquireStatus.innerText = "";
+                controlPanel.disabled = false; // Enable controls
+                loadLocoDetails(locoId);
+                
+                // Reset UI to safe defaults
+                speedSlider.value = 0;
+                speedDisplay.innerText = "00";
+                
+            } else if (res.status === 'in_use') {
+                acquireModal.show();
+                
+                // Attach one-time listeners for modal buttons
+                document.getElementById('btnSteal').onclick = () => {
+                    acquireModal.hide();
+                    attemptAcquire(locoId, "steal");
+                };
+                document.getElementById('btnShare').onclick = () => {
+                    acquireModal.hide();
+                    attemptAcquire(locoId, "share");
+                };
+                document.getElementById('btnCancelAcquire').onclick = () => {
+                    locoSelect.value = ""; // Reset dropdown
+                    acquireStatus.innerText = "Acquisition cancelled.";
+                };
+            } else {
+                acquireStatus.innerText = res.message || "Failed to acquire loco.";
+                locoSelect.value = "";
+            }
+        });
+    }
+
+    // Load Locomotive Details
+    function loadLocoDetails(locoId) {
+        callAPI('{{ url_for("api.loco.details") }}', { id: locoId }).then(res => {
+            if(!res.error) {
+                document.getElementById('locoImage').src = res.image_url;
+                document.getElementById('locoTitle').innerText = res.title;
+                document.getElementById('locoDescription').innerText = res.description;
+                locoDetailsCard.classList.remove('d-none');
+                
+                // Optional: Update function button text dynamically based on the loco
+                if(res.functions) {
+                    funcButtons.forEach(btn => {
+                        let fId = btn.getAttribute('data-func-id');
+                        let descSpan = btn.querySelector('.func-desc');
+                        descSpan.innerText = res.functions[fId] || "Unassigned";
+                    });
+                }
+            }
+        });
+    }
+
+    // Speed & Direction Updates
+    function sendSpeedDir() {
+        if (!currentLocoId) return;
+        const speed = parseInt(speedSlider.value);
+        const direction = document.querySelector('input[name="dirRadio"]:checked').value;
+        
+        callAPI('{{ url_for("api.loco.speeddir") }}', { 
+            id: currentLocoId, 
+            speed: speed, 
+            direction: direction 
+        });
+    }
+
+    // Instant digital display update (fires while dragging)
+    speedSlider.addEventListener('input', function() {
+        speedDisplay.innerText = this.value.padStart(2, '0');
+    });
+
+    // Send API request ONLY when the user finishes dragging (better for API load)
+    speedSlider.addEventListener('change', sendSpeedDir);
+
+    // Update on direction change
+    dirRadios.forEach(radio => {
+        radio.addEventListener('change', sendSpeedDir);
+    });
+
+    // Stop Controls
+    btnStop.addEventListener('click', function() {
+        speedSlider.value = 0;
+        speedDisplay.innerText = "00";
+        callAPI('{{ url_for("api.loco.stop") }}', { id: currentLocoId });
+    });
+
+    btnStopAll.addEventListener('click', function() {
+        speedSlider.value = 0;
+        speedDisplay.innerText = "00";
+        callAPI('{{ url_for("api.loco.stop_all") }}', {});
+    });
+
+    // Functions 
+    funcButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const funcId = this.getAttribute('data-func-id');
+            // Toggle active visual state
+            this.classList.toggle('btn-primary');
+            this.classList.toggle('btn-outline-secondary');
+            
+            let isActive = this.classList.contains('btn-primary');
+            
+            callAPI('{{ url_for("api.loco.function") }}', { 
+                id: currentLocoId, 
+                function: funcId, 
+                state: isActive 
+            });
+        });
+    });
+
+});
+</script>
+
+{% endblock %}

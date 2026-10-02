@@ -142,10 +142,12 @@ def create_app(config):
     from vlcbserver.blueprints.home import home_blueprint
     from vlcbserver.blueprints.auth import auth_blueprint
     from vlcbserver.blueprints.admin import admin_blueprint
+    from vlcbserver.blueprints.loco import loco_blueprint
     app.register_blueprint(api_blueprint)
     app.register_blueprint(home_blueprint)
     app.register_blueprint(auth_blueprint)
     app.register_blueprint(admin_blueprint)
+    app.register_blueprint(loco_blueprint)
 
     # Exempt the API blueprint from CSRF API calls can POST to it
     # without needing a web session token

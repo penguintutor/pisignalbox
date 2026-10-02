@@ -26,11 +26,11 @@ from . import home_blueprint
 # Web Routes (CSRF Protected, requires Session)
 # ==========================================
 
-
-@home_blueprint.route("/vlcb", methods=['GET', 'POST'])
-@login_required
-def vlcb_request():
-    return process_vlcb_logic()
+# Replaced by API
+#@home_blueprint.route("/vlcb", methods=['GET', 'POST'])
+#@login_required
+#def vlcb_request():
+#    return process_vlcb_logic()
 
 
 # Home page does not require authentication
@@ -39,7 +39,8 @@ def vlcb_request():
 def home():
     return render_template('home/index.html', user=current_user)
 
-    
+
+
 @home_blueprint.route("/logout", methods=['GET', 'POST'])
 @login_required
 def logout():

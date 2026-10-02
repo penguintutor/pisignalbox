@@ -6,7 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from sqlalchemy import case
 from sqlalchemy.ext.hybrid import hybrid_property
-from vlcbserver.constants import ROLES
+from vlcbserver.constants import ROLES, OPERATOR_ROLES
 
 db = SQLAlchemy()
 
@@ -52,6 +52,13 @@ class User(UserMixin, db.Model):
     
     # Using a string for role with a default fallback
     role = db.Column(db.String(MAX_LEN_ROLE), nullable=False, default='reader')
+
+    def is_operator(self):
+        # Does the user have permission to operate trains and the layout?
+        if self.role in OPERATOR_ROLES:
+            return True
+        return False
+
 
     def has_role(self, role_name):
         """Check if the user has a specific role."""
