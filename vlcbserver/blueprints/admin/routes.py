@@ -47,28 +47,30 @@ def users():
     return render_template('admin/users.html', users=users)
 
 
+# SonarQube disabled for this function due to the cognitive complexity
+# Uses additional validation checks for each variable
 @admin_blueprint.route('/users/save', methods=['POST'])
-def save_user():
+def save_user():    # NOSONAR
     # Retrieve form data
     original_username = request.form.get('original_username')
     raw_username = request.form.get('username')
     # Enforce username as lower_case
     username = raw_username.lower().replace(" ", "_")
     username = re.sub(r'[^a-z0-9_]', '', username)
-    if len(username > User.MAX_LEN_USERNAME):
+    if len(username) > User.MAX_LEN_USERNAME:
         flash(f"Username is too long. Maximum {User.MAX_LEN_USERNAME} characters.", "error")
         return redirect(url_for('admin.users'))
 
     raw_input_name = request.form.get('fullname')
     # Reject full name is too long
-    if len(raw_input_name > User.MAX_LEN_FULLNAME):
+    if len(raw_input_name) > User.MAX_LEN_FULLNAME:
             flash(f"Full name is too long. Maximum {User.MAX_LEN_FULLNAME} characters.", "error")
             return redirect(url_for('admin.users'))
     # Just strip brackets from full name
     fullname = re.sub(r'[<>{}]', '', raw_input_name).strip()
 
     raw_email = request.form.get('email')
-    if len(raw_email > User.MAX_LEN_EMAIL):
+    if len(raw_email) > User.MAX_LEN_EMAIL:
                 flash(f"Email address is too long. Maximum {User.MAX_LEN_EMAIL} characters.", "error")
                 return redirect(url_for('admin.users'))
     if raw_email:
@@ -95,7 +97,9 @@ def save_user():
     # Fallback to match your DB default in case of a malformed request
     if not role or role not in ROLES:
         role = 'reader'
-    
+
+    # This adds to the cognitive complexity, but again prefer to keep it 
+    # simple rather than trying to combine add / update into a single code block
     # Update Existing User
     if original_username:
         user = User.query.filter_by(username=original_username).first()

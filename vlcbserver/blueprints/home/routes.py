@@ -124,7 +124,7 @@ def view_save_profile():
     # Returns the read-only view on GET or successful POST
     return render_template('home/profile/details_display.html', user=current_user)
 
-# Todo - not yet implemented
+# Allows user to change their own password
 @home_blueprint.route('/profile/change_password', methods=['GET', 'POST'])
 @login_required
 def change_password():
@@ -176,12 +176,13 @@ def change_password():
     # Handle GET request: render the form
     return render_template('home/profile/change_password.html')
 
-# Todo - not yet implemented
+# Returns the API key page for user
 @home_blueprint.route('/profile/new_api_key', methods=['GET', 'POST'])
 @login_required
 def new_api_key():
     return render_template('home/profile/generate_api_key.html', user=current_user)
 
+# Changes the API key via ajax
 @home_blueprint.route('/profile/generate-api-key', methods=['POST'])
 @login_required
 def generate_api_key():
