@@ -1,6 +1,7 @@
 import time
 import re
-from flask import current_app, flash, request, session, redirect, render_template, url_for
+import secrets
+from flask import current_app, flash, request, session, redirect, render_template, url_for, jsonify
 from flask_login import LoginManager, UserMixin, login_user, current_user, logout_user
 from vlcbserver.core.utils import login_required
 from urllib.parse import urlparse
@@ -178,7 +179,30 @@ def change_password():
 # Todo - not yet implemented
 @home_blueprint.route('/profile/new_api_key', methods=['GET', 'POST'])
 @login_required
+def new_api_key():
+    return render_template('home/profile/generate_api_key.html', user=current_user)
+
+@home_blueprint.route('/profile/generate-api-key', methods=['POST'])
+@login_required
 def generate_api_key():
-    # Todo check that there is already an API key - can only update
-    # if already enabled by an admin user
-    return render_template('home/profile/details_display.html', user=current_user)
+    # Ensure the user already has API access enabled by an admin
+    # Adjust this check based on how your User model defines 'has_api_key'
+    if not current_user.has_api_key: 
+        return jsonify({'error': 'API authentication is not enabled for your account. Please contact an admin.'}), 403
+
+    # Generate a cryptographically secure 32-character hex key
+    raw_api_key = secrets.token_hex(User.REQ_LEN_APIKEY)
+
+    # Hash it using your model's static method
+    current_user.api_key = User.api_to_hash(raw_api_key)
+
+    # Save to the database
+    try:
+        db.session.commit()
+        # Return the plaintext key ONCE so the JS can display it for copying
+        return jsonify({'api_key': raw_api_key}), 200
+    except Exception as e:
+        db.session.rollback()
+        # Log the error securely
+        print(f"Error generating API key for {current_user.username}: {e}")
+        return jsonify({'error': 'Database error occurred'}), 500

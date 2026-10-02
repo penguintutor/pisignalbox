@@ -34,6 +34,7 @@ class User(UserMixin, db.Model):
 
     MIN_LEN_PASSWORD = 8
 
+    REQ_LEN_APIKEY = 32
     
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(MAX_LEN_USERNAME), unique=True, nullable=False)

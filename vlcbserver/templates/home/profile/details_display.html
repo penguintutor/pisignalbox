@@ -18,7 +18,7 @@
         <p>
             <strong>API Access:</strong>
             {% if user.api_key %}
-                Key active. <a href="{{ url_for('home.generate_api_key') }}">Generate new key</a>
+                Key active. <a href="{{ url_for('home.new_api_key') }}">Generate new key</a>
             {% else %}
                 <span class="text-muted">API keys need to be requested through the admin page.</span>
             {% endif %}

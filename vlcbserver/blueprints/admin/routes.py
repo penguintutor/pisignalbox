@@ -17,6 +17,7 @@ from vlcbserver.constants import ROLES
 from . import admin_blueprint
 
 
+
 # Secure Admin Blueprint by default
 # This means it doesn't need a @login_required / @role_required('admin')
 # before each method. Note only applies to the admin blueprint
@@ -267,7 +268,7 @@ def api_generate_key():
         return jsonify({'error': 'User not found'}), 404
 
     # Generate a cryptographically secure 32-character hex key
-    raw_api_key = secrets.token_hex(16)
+    raw_api_key = secrets.token_hex(User.REQ_LEN_APIKEY)
 
     # Hash it using your model's static method and save to the DB
     user.api_key = User.api_to_hash(raw_api_key)
