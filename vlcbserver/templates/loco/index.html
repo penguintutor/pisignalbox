@@ -6,7 +6,7 @@
     
     <input type="hidden" id="csrf_token" name="csrf_token" value="{{ csrf_token() }}">
 
-    <!-- 1. Locomotive Selection -->
+    <!-- Locomotive Selection -->
     <div class="card p-3 mb-3 border-primary shadow-sm">
         <label for="locoSelect" class="form-label fw-bold">Select Locomotive</label>
         <select class="form-select form-select-lg" id="locoSelect">
@@ -22,14 +22,14 @@
         <div id="acquireStatus" class="mt-2 small text-danger"></div>
     </div>
 
-    <!-- 2. Locomotive Details (Populated via API) -->
+    <!-- Locomotive Details (Populated via API) -->
     <div class="card p-3 mb-3 d-none shadow-sm" id="locoDetailsCard">
         <div class="row align-items-center">
             <div class="col-md-4 text-center mb-3 mb-md-0">
-                <img id="locoImage" src="" alt="Locomotive Image" class="img-fluid rounded border">
+                <img id="locoImage" src="" alt="Locomotive" class="img-fluid rounded border">
             </div>
             <div class="col-md-8">
-                <h4 id="locoTitle" class="text-primary"></h4>
+                <h4 id="locoTitle" class="text-primary">Details:</h4>
                 <p id="locoDescription" class="mb-0 text-muted"></p>
             </div>
         </div>
@@ -38,13 +38,13 @@
     <!-- Main Controller Area (Disabled until acquired) -->
     <fieldset id="controlPanel" disabled>
         
-        <!-- 3. Speed and Direction Controls -->
+        <!-- Speed and Direction Controls -->
         <div class="card p-3 mb-3 shadow-sm bg-light">
             
             <!-- Digital Speed Display -->
             <div class="row mb-2">
                 <div class="col-12 text-center">
-                    <div class="text-muted small fw-bold text-uppercase">Requested Speed</div>
+                    <label for="speedSlider" class="text-muted small fw-bold text-uppercase d-block mb-0">Requested Speed</label>
                     <div class="display-1 fw-bold font-monospace text-primary" id="speedDisplay">00</div>
                 </div>
             </div>
@@ -59,13 +59,18 @@
             <!-- Direction Toggle -->
             <div class="row mb-4">
                 <div class="col-12 d-flex justify-content-center">
-                    <div class="btn-group w-100" role="group" style="max-width: 400px;">
-                        <input type="radio" class="btn-check" name="dirRadio" id="dirForward" value="forward" checked>
-                        <label class="btn btn-outline-success btn-lg" for="dirForward"><i class="bi bi-arrow-up-circle"></i> Forward</label>
+                    <fieldset class="border-0 p-0 m-0 w-100 d-flex justify-content-center">
+                        <!-- Invisible legend for screen readers -->
+                        <legend class="visually-hidden">Direction Selection</legend>
+                        
+                        <div class="btn-group w-100" style="max-width: 400px;">
+                            <input type="radio" class="btn-check" name="dirRadio" id="dirForward" value="forward" checked>
+                            <label class="btn btn-outline-success btn-lg" for="dirForward"><i class="bi bi-arrow-up-circle"></i> Forward</label>
 
-                        <input type="radio" class="btn-check" name="dirRadio" id="dirReverse" value="reverse">
-                        <label class="btn btn-outline-primary btn-lg" for="dirReverse"><i class="bi bi-arrow-down-circle"></i> Reverse</label>
-                    </div>
+                            <input type="radio" class="btn-check" name="dirRadio" id="dirReverse" value="reverse">
+                            <label class="btn btn-outline-primary btn-lg" for="dirReverse"><i class="bi bi-arrow-down-circle"></i> Reverse</label>
+                        </div>
+                    </fieldset>
                 </div>
             </div>
 
@@ -80,7 +85,7 @@
             </div>
         </div>
 
-        <!-- 4. Functions Section -->
+        <!-- Functions Section -->
         <div class="card p-3 shadow-sm">
             <h5 class="fw-bold mb-3">Functions</h5>
             <!-- Using a responsive grid of buttons for easy touch targeting -->
