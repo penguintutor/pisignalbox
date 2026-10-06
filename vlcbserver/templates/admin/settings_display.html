@@ -1,0 +1,41 @@
+<div id="app-settings-card" class="card p-4 w-100 shadow-sm" hx-target="this" hx-swap="outerHTML">
+    <div class="card-body">
+        <h3 class="card-title mb-4 border-bottom pb-2">Application Settings</h3>
+        
+        <!-- Read-Only Fields -->
+        <div class="row mb-3">
+            <div class="col-md-3 fw-bold">Local GUI Settings:</div>
+            <div class="col-md-9">
+                {% if settings.use_local_gui %}
+                    <span class="badge bg-success">Enabled</span>
+                {% else %}
+                    <span class="badge bg-secondary">Disabled</span>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if settings.use_local_gui %}
+        <div class="row mb-3">
+            <div class="col-md-3 fw-bold">Local GUI Path:</div>
+            <div class="col-md-9 text-break font-monospace bg-light p-2 rounded">
+                {{ settings.gui_path or 'Not configured' }}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Future Setting Placeholder -->
+        <div class="row mb-3">
+            <div class="col-md-3 fw-bold">Future Setting (Placeholder):</div>
+            <div class="col-md-9 text-muted text-break">
+                <em>This layout uses Bootstrap grid rows and columns, allowing much longer text fields to stretch horizontally across the interface without being cramped.</em>
+            </div>
+        </div>
+
+        <!-- Edit Button (Loads Form via HTMX) -->
+        <div class="mt-4 pt-2 border-top">
+            <button class="btn btn-primary px-4" hx-get="{{ url_for('admin.edit_settings') }}">
+                Edit Settings
+            </button>
+        </div>
+    </div>
+</div>

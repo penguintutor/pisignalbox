@@ -1,0 +1,74 @@
+<form id="app-settings-card" class="card p-4 w-100 shadow-sm border-primary" 
+      hx-post="{{ url_for('admin.edit_settings') }}" 
+      hx-target="this" 
+      hx-swap="outerHTML">
+
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="card-body">
+        <h3 class="card-title mb-4 border-bottom pb-2 text-primary">Edit Application Settings</h3>
+
+        <!-- Toggle for Local GUI -->
+        <div class="row mb-4 align-items-center">
+            <div class="col-md-3 fw-bold">
+                <label for="use_local_gui">Enable Local GUI:</label>
+            </div>
+            <div class="col-md-9">
+                <div class="form-check form-switch fs-5">
+                    <input class="form-check-input" type="checkbox" role="switch" 
+                        id="use_local_gui" name="use_local_gui" 
+                        {% if settings.use_local_gui %}checked aria-checked="true"{% else %}aria-checked="false"{% endif %}
+                        onchange="togglePathSelection(this.checked); this.setAttribute('aria-checked', this.checked ? 'true' : 'false');">
+                </div>
+            </div>
+        </div>
+
+        <!-- Path Selection (Conditional Visibility) -->
+        <div id="path_selection_container" class="row mb-4 {% if not settings.use_local_gui %}d-none{% endif %}">
+            <div class="col-md-3 fw-bold">
+                <label for="gui_path">Local GUI Path:</label>
+            </div>
+            <div class="col-md-9">
+                <div class="input-group mb-1">
+                    <input type="text" id="gui_path" name="gui_path" class="form-control font-monospace" 
+                           value="{{ settings.gui_path }}" placeholder="e.g., /config/gui" readonly>
+                    <button class="btn btn-outline-secondary" type="button" 
+                            hx-get="{{ url_for('admin.browse_dir') }}" 
+                            hx-target="#dir-browser-container">
+                        Browse System
+                    </button>
+                </div>
+                <small class="text-muted">Select a directory restricted to the application root.</small>
+                
+                <!-- Target container for the HTMX Directory Browser -->
+                <div id="dir-browser-container" class="mt-3"></div>
+            </div>
+        </div>
+
+        <!-- Future Setting Placeholder -->
+        <div class="row mb-4">
+            <div class="col-md-3 fw-bold">
+                <label for="future_setting">Future Setting:</label>
+            </div>
+            <div class="col-md-9">
+                <textarea id="future_setting" class="form-control" rows="3" disabled>This placeholder uses a full-width textarea configuration inside a fluid container, explicitly designed to handle paragraphs of settings text without arbitrary line breaks.</textarea>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="mt-4 pt-2 border-top d-flex gap-2">
+            <button type="submit" class="btn btn-success px-4">Save Changes</button>
+            <button type="button" class="btn btn-secondary px-4" hx-get="{{ url_for('admin.settings') }}">
+                Cancel
+            </button>
+        </div>
+    </div>
+
+    <!-- Simple vanilla JS to handle the conditional GUI path showing -->
+    <script>
+        function togglePathSelection(isChecked) {
+            const container = document.getElementById('path_selection_container');
+            container.style.display = isChecked ? 'flex' : 'none';
+        }
+    </script>
+</form>

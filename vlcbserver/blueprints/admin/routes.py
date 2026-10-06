@@ -17,6 +17,17 @@ from vlcbserver.constants import ROLES
 from . import admin_blueprint
 
 
+# Simulated settings dictionary (replace with DB integration)
+app_settings = {
+    'use_local_gui': False,
+    'gui_path': ''
+}
+
+
+
+# ==========================================
+# Enforce admin only
+# ==========================================
 
 # Secure Admin Blueprint by default
 # This means it doesn't need a @login_required / @role_required('admin')
@@ -32,6 +43,11 @@ def check_admin_access():
     if not current_user.has_role('admin'):
         # Return a 403 Forbidden error if they are logged in but lack permissions
         abort(403)
+
+
+# ==========================================
+# User admin (default for admin)
+# ==========================================
 
 @admin_blueprint.route('/')
 def dashboard():
@@ -356,10 +372,59 @@ def api_revoke_password():
         print(f"Error revoking web access: {e}")
         return jsonify({'error': 'Database error occurred'}), 500
 
-@admin_blueprint.route('/settings', methods=['POST'])
+
+
+# ==========================================
+# Settings - eg. config file location
+# ==========================================
+
+@admin_blueprint.route('/settings', methods=['GET'])
 def settings():
-    # Todo implement this
-    return redirect(url_for('admin.users'))
+    return render_template('admin/settings.html', settings=app_settings)
+
+@admin_blueprint.route('/settings/edit', methods=['GET', 'POST'])
+def edit_settings():
+    return render_template('admin/settings_form.html', settings=app_settings)
+
+@admin_blueprint.route('/settings/details', methods=['POST'])
+def view_save_settings():
+    # Handle the toggle checkbox
+    app_settings['use_local_gui'] = 'use_local_gui' in request.form
+    app_settings['gui_path'] = request.form.get('gui_path', '')
+    
+    # Future settings mapping would go here
+    
+    return render_template('admin/settings_display.html', settings=app_settings)
+
+@admin_blueprint.route('/browse-dir', methods=['GET'])
+def browse_dir():
+    """Secure, jail-rooted directory browser returning an HTMX fragment."""
+    # Jail to the top directory of the application
+    base_dir = current_app.root_path
+    
+    # Get requested relative path
+    req_path = request.args.get('path', '').strip('/')
+    
+    # Resolve absolute target path and verify it stays within base_dir
+    target_path = os.path.abspath(os.path.join(base_dir, req_path))
+    if not target_path.startswith(base_dir):
+        abort(403) # Prevent directory traversal escapes
+        
+    try:
+        dirs = [d for d in os.listdir(target_path) if os.path.isdir(os.path.join(target_path, d))]
+        dirs.sort()
+    except Exception:
+        dirs = []
+        
+    # Calculate parent directory for the "Up" button navigation
+    parent_path = os.path.dirname(req_path) if req_path else ''
+    
+    return render_template('admin/_dir_browser.html', 
+                           current_rel_path=req_path, 
+                           parent_path=parent_path, 
+                           dirs=dirs,
+                           is_root=(target_path == base_dir))
+
 
 # *******************
 # Helper functions 

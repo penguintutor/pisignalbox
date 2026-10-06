@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="profile-panel">
+    <div class="profile-header">
+        <div>
+            <h2>Application Settings</h2>
+            <p class="profile-subtitle">Update Settings.</p>
+
+            <div id="profile-section">
+                {% include '/admin/settings_display.html' %}
+            </div>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}
