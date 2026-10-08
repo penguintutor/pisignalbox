@@ -1,5 +1,6 @@
 import time
 import re
+import os, pwd
 import secrets
 from flask import current_app, flash, request, session, redirect, render_template, url_for, abort, jsonify
 from flask_login import LoginManager, UserMixin, login_user, login_required, current_user, logout_user
@@ -14,15 +15,8 @@ from vlcbserver.vlcb_bridge import send_data, get_data
 from vlcbserver.core.models import User, db
 from vlcbserver.core.utils import role_required
 from vlcbserver.constants import ROLES
+from vlcbserver.settings import update_server_settings
 from . import admin_blueprint
-
-
-# Simulated settings dictionary (replace with DB integration)
-app_settings = {
-    'use_local_gui': False,
-    'gui_path': ''
-}
-
 
 
 # ==========================================
@@ -53,6 +47,12 @@ def check_admin_access():
 def dashboard():
     # Only users with role='admin' can see this
     return render_template('admin/index.html')
+
+""" Debug - allows an admin to see what user the system is running under"""
+@admin_blueprint.route("/debug-user")
+def debug_user():
+    uid = os.geteuid()
+    return f"Running as: {pwd.getpwuid(uid).pw_name} (UID: {uid})"
 
 @admin_blueprint.route('/users')
 def users():
@@ -380,19 +380,31 @@ def api_revoke_password():
 
 @admin_blueprint.route('/settings', methods=['GET'])
 def settings():
-    return render_template('admin/settings.html', settings=app_settings)
+    return render_template('admin/settings.html', settings=get_app_settings())
 
 @admin_blueprint.route('/settings/edit', methods=['GET', 'POST'])
 def edit_settings():
+    app_settings = get_app_settings()
+    # Handle the toggle checkbox
+    app_settings['use_gui_settings'] = 'use_gui_settings' in request.form
+    app_settings['gui_settings_path'] = request.form.get('gui_settings_path', '')
+
     return render_template('admin/settings_form.html', settings=app_settings)
 
-@admin_blueprint.route('/settings/details', methods=['POST'])
+@admin_blueprint.route('/settings/details', methods=['POST', 'GET'])
 def view_save_settings():
-    # Handle the toggle checkbox
-    app_settings['use_local_gui'] = 'use_local_gui' in request.form
-    app_settings['gui_path'] = request.form.get('gui_path', '')
-    
-    # Future settings mapping would go here
+    app_settings = get_app_settings()
+    # If post then it's a save request
+    if request.method == 'POST':
+        # Handle the toggle checkbox
+        app_settings['use_gui_settings'] = 'use_gui_settings' in request.form
+        app_settings['gui_settings_path'] = request.form.get('gui_settings_path', '')
+
+        # Update current_app settings and save 
+        success = update_server_settings(app_settings)
+        if success == False:
+            flash("Error trying to save the server config file - updates will not persist. See the setup instructions for permissions.", "danger")
+            return render_template('admin/settings_form.html', settings=app_settings)
     
     return render_template('admin/settings_display.html', settings=app_settings)
 
@@ -439,3 +451,19 @@ def clean_email(raw_email):
         # Handle the error (e.g., flash a message to the user)
         flash("Email included invalid characters, left blank", "warning")
         return ""
+
+# Creates a dict by pulling the relevant details from the current_app config
+# Instead of having all settings - only provides the ones relevant to these settings
+def get_app_settings():
+    app_settings = {}
+    # GUI settings is default to off (ie. until configured)
+    app_settings['use_gui_settings'] = current_app.config.get("use_gui_settings", False)
+    # Keep the path from the config - even if disabled (so it exists when enabled)
+    app_settings['gui_settings_path'] = current_app.config.get("gui_settings_path", "")
+    # Server settings defaults to True - and if GUI settings is set to False then this will become true
+    if app_settings['use_gui_settings'] == False:
+        app_settings['use_server_settings'] = True
+    else:
+        app_settings['use_server_settings'] = current_app.config.get("use_server_settings", True)
+    return app_settings
+    

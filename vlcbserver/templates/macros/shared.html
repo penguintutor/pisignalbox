@@ -78,3 +78,21 @@
     </nav>
 </div>
 {% endmacro %}
+
+
+
+{% macro render_flashed_messages(dismissible=true) %}
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                {% set alert_class = category if category in ['success', 'danger', 'warning', 'info'] else 'info' %}
+                <div class="alert alert-{{ alert_class }} {% if dismissible %}alert-dismissible{% endif %} fade show shadow-sm" role="alert">
+                    {{ message }}
+                    {% if dismissible %}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+{% endmacro %}

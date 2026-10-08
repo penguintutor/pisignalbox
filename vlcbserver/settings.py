@@ -1,7 +1,11 @@
 # Uses json5 to allow comments in the config file
 import json5
+# Uses json when updating files that don't need comment - includes "" around keys
+import json
+import logging
 from vlcbserver.config import Config
 
+logger = logging.getLogger(__name__)
 
 def load_settings(default_path, custom_path):
     # Load defaults first
@@ -40,6 +44,7 @@ def get_config(cfg):
     config.update({
         'BASE_DIR': cfg.BASE_DIR,
         'CONFIG_DIR': cfg.CONFIG_DIR,
+        'SERVER_JSON': cfg.CUSTOM_SETTINGS,
         # Flask-SQLAlchemy expects a URI string. Uses an f-string to inject the Path.
         'SQLALCHEMY_DATABASE_URI': f"sqlite:///{cfg.DATABASE_PATH}",
         # Disabling this saves memory and suppresses a warning
@@ -72,3 +77,45 @@ def cfg_checks(cfg):
     # If checks passed then return true
     return True
 
+""" Update the settings in server.json """
+""" Any existing entries in server.json are maintained unless included
+in the new settings in which case replaced with new settings"""
+# Sets the settings into both current_app and then saves into server.json
+# If custom directory is set then it updates that one, if not then default
+def update_server_settings(new_settings):
+    # Import current_app here as other functions run before current_app set
+    from flask import current_app
+
+    # merge into current app first
+    # Note if fails then they are still updated locally just save fails
+    current_app.config.update(new_settings)
+
+    custom_path = current_app.config.get("SERVER_JSON")
+    # Load the current custom settings
+    if custom_path.exists():
+        try:
+            with open(custom_path, 'r') as f:
+                custom_settings = json5.load(f)
+                
+        except ValueError as e:
+            logger.warning(f"Warning: '{custom_path}' contains invalid JSON5. Read / Update failed. Error: {e}")
+            return False
+
+        # Merge the dicts, overwriting values loaded from custom settings
+        custom_settings.update(new_settings)
+
+    # If not then create new file with new_settings
+    else:
+        custom_settings = new_settings
+
+    # Write the settings back 
+    # Note that this will lose any comments - saved as standard json
+    try:
+        with open(custom_path, 'w') as f:
+            json.dump(custom_settings, f, indent=4)
+
+    except Exception as e:
+        logger.warning (f"Error Saving custom server settings file {custom_path} {e}")
+        return False
+
+    return True

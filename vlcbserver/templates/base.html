@@ -1,5 +1,6 @@
 {% from "macros/shared.html" import render_user_menu, render_layout_menu %}
 {% from "macros/shared.html" import render_hamburger_menu with context %}
+{% from 'macros/shared.html' import render_flashed_messages %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -33,19 +34,7 @@
     
     <main class="page-container container-wide">
         
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <!-- By defaulting to 'info', have a catch-all if no category set -->
-                    {% set alert_class = category if category in ['success', 'danger', 'warning', 'info'] else 'info' %}
-                    
-                    <div class="alert alert-{{ alert_class }} alert-dismissible fade show shadow-sm" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
+        {{ render_flashed_messages() }}
 
         {% block content %}{% endblock %}
         

@@ -6,7 +6,7 @@
         <div class="row mb-3">
             <div class="col-md-3 fw-bold">Local GUI Settings:</div>
             <div class="col-md-9">
-                {% if settings.use_local_gui %}
+                {% if settings.use_gui_settings %}
                     <span class="badge bg-success">Enabled</span>
                 {% else %}
                     <span class="badge bg-secondary">Disabled</span>
@@ -14,14 +14,25 @@
             </div>
         </div>
 
-        {% if settings.use_local_gui %}
+        {% if settings.use_gui_settings %}
         <div class="row mb-3">
             <div class="col-md-3 fw-bold">Local GUI Path:</div>
             <div class="col-md-9 text-break font-monospace bg-light p-2 rounded">
-                {{ settings.gui_path or 'Not configured' }}
+                {{ settings.gui_settings_path or 'Not configured' }}
             </div>
         </div>
         {% endif %}
+
+        <div class="row mb-3">
+            <div class="col-md-3 fw-bold">Server Settings (override GUI settings):</div>
+            <div class="col-md-9">
+                {% if settings.use_server_settings %}
+                    <span class="badge bg-success">Enabled</span>
+                {% else %}
+                    <span class="badge bg-secondary">Disabled</span>
+                {% endif %}
+            </div>
+        </div>
 
         <!-- Future Setting Placeholder -->
         <div class="row mb-3">

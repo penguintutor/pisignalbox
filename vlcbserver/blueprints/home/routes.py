@@ -54,18 +54,21 @@ def logout():
 @home_blueprint.route("/profile", methods=['GET', 'POST'])
 @login_required
 def profile():
+    print ("call /profile")
     return render_template('home/profile.html', user=current_user)
 
 # Provides the form so the user can edit
 @home_blueprint.route("/profile/edit", methods=['GET', 'POST'])
 @login_required
 def edit_profile():
+    print ("edit profile")
     return render_template('home/profile/details_form.html', user=current_user)
 
 # Handles both the 'Cancel' button (GET) and 'Save' button (POST)
 @home_blueprint.route('/profile/details', methods=['GET', 'POST'])
 @login_required
 def view_save_profile():
+    print ("view save profile")
     if request.method == 'POST':
 
         ## Handle email address

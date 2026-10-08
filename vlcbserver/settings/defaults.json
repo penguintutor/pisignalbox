@@ -44,6 +44,21 @@
     // should be no need to change this, but if the vlcb data 
     // is generated much faster from the USB than the api calls
     // for updates then this could be increased
-    "max_entries": 100
+    "max_entries": 100,
+
+    // Shall we load config files from a gui data directory?
+    // If there are duplicate entries with the local data directory then 
+    // they will be overwritten
+    "use_gui_settings": false,
+    // If true then supply the directory name
+    "gui_settings_path": "",
+    // Note that GUI settings are always read-only from the server
+    // Tell the GUI to update
+
+    // Do we use local data directory to override use_gui_settings
+    // Note that if use_gui_settings is false then this is ignored and must
+    // be true - otherwise there would be no settings
+    "use_server_settings": true
+    // The local settings are always in the settings/data directory
 
 }

@@ -34,6 +34,15 @@ Then clone this repository onto your computer. You can use the GitHub download o
 
     git clone https://github.com/penguintutor/pisignalbox.git ~/pisignalbox
 
+### Setting update permissions
+
+The user or group that will run the program needs update permissions to the server.json file and the settings/data directory. The following will allow permission for your own user (required if running directly with ./start_server.sh) and using a production server eg. Gunicorn or Nginx
+
+    sudo chown :www-data pisignalbox/vlcbserver/settings/server.json
+    sudo chown :www-data pisignalbox/vlcbserver/settings/data/
+    sudo chmod 664 pisignalbox/vlcbserver/settings/server.json
+    sudo chmod 775 pisignalbox/vlcbserver/settings/data/
+
 ### Adding Users and API-Key
 
 To use the web interface then a username needs to be setup first.
