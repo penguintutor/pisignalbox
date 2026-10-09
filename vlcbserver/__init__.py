@@ -1,5 +1,5 @@
 import sys
-from flask import Flask, current_app, request, jsonify, redirect, url_for
+from flask import Flask, current_app, request, jsonify, redirect, url_for, make_response
 from flask_wtf.csrf import CSRFProtect
 from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
@@ -67,8 +67,14 @@ def unauthorized():
 
     # Path A: The automated script forgot its API key
     if request.path.startswith('/api/'):
-        # Return a strict machine-readable HTTP 401 error
+        # Return a machine-readable HTTP 401 error
         return jsonify({"error": "Unauthorized. Missing or invalid X-API-Key."}), 401
+
+    # Catch HTMX requests and force a full-page redirect to login
+    if request.headers.get('HX-Request'):
+        response = make_response()
+        response.headers['HX-Redirect'] = url_for('auth.login')
+        return response
     
     # Path B: A user tried to access /dashboard without logging in
     # Redirect them to the HTML login page, and remember where they were trying to go
