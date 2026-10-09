@@ -1,7 +1,8 @@
 import time
 import re
-from flask import Blueprint, current_app, flash, request, session, redirect, render_template, url_for, jsonify, escape
+from flask import Blueprint, current_app, flash, request, session, redirect, render_template, url_for, jsonify
 from flask_login import LoginManager, UserMixin, login_user, current_user, logout_user
+from markupsafe import escape
 from vlcbserver.core.utils import login_required
 from urllib.parse import urlparse
 from werkzeug.security import generate_password_hash, check_password_hash

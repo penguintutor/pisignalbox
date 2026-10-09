@@ -428,8 +428,18 @@ def browse_dir():
     base_dir = Path(current_app.config.get('BASE_DIR')).resolve()
     
     req_path = request.args.get('path', '').strip('/')
+    
+    # STRICT STRING VALIDATION (Clears CodeQL)
+    # Reject directory traversal and absolute path characters immediately 
+    # before they can touch pathlib or the OS file system.
+    if '..' in req_path or req_path.startswith('/') or req_path.startswith('\\') or ':' in req_path:
+        abort(403)
+        
+    # FILE SYSTEM RESOLUTION
     target_path = (base_dir / req_path).resolve()
     
+    # DEFENSE IN DEPTH
+    # Keep this as an guarantee we haven't escaped the jail.
     if not target_path.is_relative_to(base_dir):
         abort(403) 
         
@@ -439,8 +449,6 @@ def browse_dir():
     except Exception:
         dirs = []
         
-    # FIX: Ensure parent_path returns '' instead of '.' for first-level directories
-    # to prevent CSS selector syntax errors in HTMX targets.
     parent_path = str(Path(req_path).parent) if req_path else ''
     if parent_path == '.':
         parent_path = ''
@@ -450,7 +458,6 @@ def browse_dir():
                            parent_path=parent_path, 
                            dirs=dirs,
                            is_root=(target_path == base_dir))
-
 
 # *******************
 # Helper functions 
