@@ -11,7 +11,7 @@ import logging, os
 import vlcbserver
 from vlcbserver.vlcb_bridge import send_data, get_data
 from vlcbserver.core.models import User, db
-from vlcbserver.core.utils import role_required
+from vlcbserver.core.utils import role_required, get_safe_redirect
 from vlcbserver.blueprints.home import home_blueprint
 from vlcbserver.core.email import send_reset_email
 from . import auth_blueprint
@@ -56,11 +56,13 @@ def login():
             if user and check_password_hash(user.password_hash, password):
                 login_user(user)
                 
-                # Security Check: Ignore absolute URLs to prevent Open Redirect attacks
-                if not next_page or urlparse(next_page).netloc != '':
-                    next_page = url_for('home.home')
-
-                return redirect(next_page)
+                # Check if next_page exists and is safe
+                # Force next to safe relative path
+                safe_next = get_safe_redirect(next_page)
+                if not safe_next:
+                    safe_next = url_for('home.home')
+                
+                return redirect(safe_next)
                 
             flash("Invalid username or password.", "error")
             return redirect(url_for('auth.login', next=next_page))

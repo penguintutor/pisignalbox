@@ -3,6 +3,7 @@ from functools import wraps
 from flask import abort, request, render_template
 from flask_login import current_user
 from flask_login import login_required as original_login_required
+from urllib.parse import urlparse
 from vlcbserver.vlcb_bridge import send_data, get_data
 import logging, os
 
@@ -79,6 +80,40 @@ def _validate_vlcb_request (request_string):
     pattern = r'^:[a-zA-Z0-9]{2}[a-fA-F0-9]{3}[a-zA-Z0-9][a-zA-Z0-9]{2,12};$'
     
     return bool(re.match(pattern, request_string))
+
+# Best to use get_safe_redirect rather than is_safe_redirect 
+# As get safe changes to relative instead of full path
+def is_safe_redirect(target_url):
+    """Validates that a URL is a safe, relative path to prevent Open Redirects."""
+    if not target_url:
+        return False
+    
+    parsed = urlparse(target_url.replace('\\', ''))
+    return not parsed.netloc and not parsed.scheme
+
+def get_safe_redirect(target_url):
+    """
+    Parses a redirect URL and forces it to be a safe, relative path.
+    Strips off any domains or schemes to prevent Open Redirects.
+    """
+    if not target_url:
+        return None
+    
+    parsed = urlparse(target_url.replace('\\', ''))
+    
+    # Grab only the path part (e.g., '/loco/')
+    safe_path = parsed.path
+    
+    # Prevent protocol-relative bypasses (e.g., '//malicious.com')
+    # by ensuring it starts with exactly one slash if it has paths
+    if safe_path.startswith('//'):
+        safe_path = '/' + safe_path.lstrip('/')
+        
+    # Append the query string if it exists (e.g., '?tab=1')
+    if parsed.query:
+        safe_path += f"?{parsed.query}"
+        
+    return safe_path
 
 #@app.after_request
 def log_http_request(response):

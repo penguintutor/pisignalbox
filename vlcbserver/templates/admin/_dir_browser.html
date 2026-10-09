@@ -4,10 +4,10 @@
             <strong>Current:</strong> {{ current_rel_path }}
         </span>
         
-        <!-- Button to finalize selection and remove the UI -->
+        <!-- Safely clears the container without deleting it -->
         <button class="btn btn-sm btn-success" type="button"
                 onclick="
-                    document.getElementById('gui_settings_path').value = '{{ current_rel_path }}';
+                    document.getElementById('gui_settings_path').value = '{{ current_rel_path }}'; 
                     document.getElementById('dir-browser-container').innerHTML = '';
                 ">
             Select Directory
@@ -21,8 +21,8 @@
             {% if not is_root %}
             <button type="button" class="list-group-item list-group-item-action bg-light"
                     hx-get="{{ url_for('admin.browse_dir', path=parent_path) }}"
-                    hx-target="closest #dir-browser-ui"
-                    hx-swap="outerHTML">
+                    hx-target="#dir-browser-container"
+                    hx-swap="innerHTML">
                 📁 .. (Up)
             </button>
             {% endif %}
@@ -33,8 +33,8 @@
                 
                 <button type="button" class="list-group-item list-group-item-action"
                         hx-get="{{ url_for('admin.browse_dir', path=next_path) }}"
-                        hx-target="closest #dir-browser-ui"
-                        hx-swap="outerHTML">
+                        hx-target="#dir-browser-container"
+                        hx-swap="innerHTML">
                     📁 {{ d }}
                 </button>
             {% else %}
