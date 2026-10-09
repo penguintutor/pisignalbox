@@ -152,5 +152,6 @@ class User(UserMixin, db.Model):
             return None
             
         # .encode('utf-8') is required because hashlib only hashes bytes, not strings
+        # codeql[py/weak-sensitive-data-hashing] Justification: API keys are high-entropy CSPRNG strings. Fast deterministic hashing is required for O(1) DB lookups.
         return hashlib.sha256(api_key.encode('utf-8')).hexdigest()
     
