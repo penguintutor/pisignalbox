@@ -18,7 +18,8 @@ To install on Raspberry Pi OS Trixie (or later)
 Install PySide6 using:
 
     sudo apt update
-    sudo apt install python3-pyside6.qtgui python3-pyside6.qtwidgets python3-pyside6.qtuitools  
+    sudo apt install python3-pyside6.qtgui python3-pyside6.qtwidgets python3-pyside6.qttest
+python3-pyside6.qtuitools  
 
 
 Additional libraries are required to install using virtual environment (recommended). First cd to the pisignalbox folder and then run the following:

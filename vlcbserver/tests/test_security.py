@@ -7,7 +7,7 @@ def test_all_routes_are_secure(app):
     """
     
     # Blueprints secured natively via before_request
-    SECURE_BLUEPRINTS = ['admin']
+    SECURE_BLUEPRINTS = ['admin', 'api', 'loco']
     
     # Endpoints that are intentionally open to the public
     PUBLIC_ENDPOINTS = [

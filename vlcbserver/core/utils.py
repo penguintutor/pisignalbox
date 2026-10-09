@@ -139,4 +139,4 @@ def log_http_request(response):
 
 #@app.app_errorhandler(403)
 def forbidden_error():
-    return render_template('403.html', message="You do not have permission to view this page."), 403
+    return render_template('errors/403.html', message="You do not have permission to view this page."), 403

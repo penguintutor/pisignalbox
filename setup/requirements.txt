@@ -13,3 +13,7 @@ strip_tags
 email-validator
 json5
 pyserial
+
+# Development & Debugging
+pytest
+pytest-qt
