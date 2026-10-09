@@ -9,6 +9,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from strip_tags import strip_tags
 from email_validator import validate_email, EmailNotValidError
 import threading
+from pathlib import Path
 import logging, os
 import vlcbserver
 from vlcbserver.vlcb_bridge import send_data, get_data
@@ -385,9 +386,6 @@ def settings():
 @admin_blueprint.route('/settings/edit', methods=['GET', 'POST'])
 def edit_settings():
     app_settings = get_app_settings()
-    # Handle the toggle checkbox
-    app_settings['use_gui_settings'] = 'use_gui_settings' in request.form
-    app_settings['gui_settings_path'] = request.form.get('gui_settings_path', '')
 
     return render_template('admin/settings_form.html', settings=app_settings)
 
@@ -399,6 +397,21 @@ def view_save_settings():
         # Handle the toggle checkbox
         app_settings['use_gui_settings'] = 'use_gui_settings' in request.form
         app_settings['gui_settings_path'] = request.form.get('gui_settings_path', '')
+        app_settings['use_server_settings'] = 'use_server_settings' in request.form
+
+        #print (f"Add dir {current_app.config.get('BASE_DIR')} type {type(current_app.config.get('BASE_DIR'))}")
+
+        # Check for a valid path
+        # If not valid then doesn't allow save
+        # Note that the browser is relative based but may includes a / - if that's the case then strip it
+        #full_path = current_app.config.get('BASE_DIR') / app_settings['gui_settings_path'].lstrip('/')
+        full_path, relative_path = resolve_directory_paths(current_app.config.get('BASE_DIR'), app_settings['gui_settings_path'])
+        if not full_path.is_dir():
+            #print (f"Invalid path {full_path}")
+            flash("Invalid path entered. It must be relative to the install directory. Use the browser to find a suitable path", "danger")
+            return render_template('admin/settings_form.html', settings=app_settings)
+        # replace the relative_path with our known safe relative path
+        app_settings['gui_settings_path'] = str(relative_path)
 
         # Update current_app settings and save 
         success = update_server_settings(app_settings)
@@ -412,7 +425,8 @@ def view_save_settings():
 def browse_dir():
     """Secure, jail-rooted directory browser returning an HTMX fragment."""
     # Jail to the top directory of the application
-    base_dir = current_app.root_path
+    # As string - rather than path
+    base_dir = str(current_app.config.get('BASE_DIR'))
     
     # Get requested relative path
     req_path = request.args.get('path', '').strip('/')
@@ -466,4 +480,24 @@ def get_app_settings():
     else:
         app_settings['use_server_settings'] = current_app.config.get("use_server_settings", True)
     return app_settings
+
+""" Join a path safely to the base directory 
+Allows beginning / (stipped) and full path (stripped before joining)"""
+def resolve_directory_paths(base_path: Path, requested_path_str: str) -> tuple[Path, Path]:
+    base_str = str(base_path)
     
+    # Strip the base path if it was passed in completely
+    if requested_path_str == base_str or requested_path_str.startswith(base_str + '/'):
+        requested_path_str = requested_path_str[len(base_str):]
+        
+    # Join and resolve() to calculate the true absolute path (evaluates any '../')
+    full_path = (base_path / requested_path_str.lstrip('/')).resolve()
+    
+    # Security check: Ensure the resolved path didn't escape the base directory
+    if not full_path.is_relative_to(base_path):
+        raise ValueError("Security Error: Path traversal attempt outside base directory.")
+        
+    # Calculate the clean relative path for your database/storage
+    relative_path = full_path.relative_to(base_path)
+    
+    return full_path, relative_path

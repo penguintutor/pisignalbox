@@ -1,38 +1,46 @@
-<div class="card card-body bg-light border-secondary">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <span class="font-monospace text-primary">
-            <strong>/{{ current_rel_path }}</strong>
+<div id="dir-browser-ui" class="card border-secondary shadow-sm">
+    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+        <span class="font-monospace text-truncate" style="max-width: 70%;">
+            <strong>Current:</strong> {{ current_rel_path }}
         </span>
-        <button type="button" class="btn btn-sm btn-primary" 
-                onclick="document.getElementById('gui_path').value = '{{ current_rel_path }}'; document.getElementById('dir-browser-container').innerHTML = '';">
-            ✓ Select Directory
+        
+        <!-- Button to finalize selection and remove the UI -->
+        <button class="btn btn-sm btn-success" type="button"
+                onclick="document.getElementById('gui_settings_path').value = '{{ current_rel_path }}'; this.closest('#dir-browser-ui').remove();">
+            Select Directory
         </button>
     </div>
     
-    <div class="list-group list-group-flush border" style="max-height: 250px; overflow-y: auto;">
-        {% if not is_root %}
-        <a href="javascript:void(0)" class="list-group-item list-group-item-action py-2 bg-white fw-bold" 
-           hx-get="{{ url_for('admin.browse_dir', path=parent_path) }}" 
-           hx-target="#dir-browser-container">
-           ⬅️ Up a level (..)
-        </a>
-        {% endif %}
-        
-        {% for dir in dirs %}
-        <a href="javascript:void(0)" class="list-group-item list-group-item-action py-2 bg-white"
-           hx-get="{{ url_for('admin.browse_dir', path=(current_rel_path ~ '/' ~ dir).strip('/')) }}" 
-           hx-target="#dir-browser-container">
-           📁 {{ dir }}
-        </a>
-        {% else %}
-        <div class="list-group-item text-muted py-2 bg-white"><em>No subdirectories found</em></div>
-        {% endfor %}
-    </div>
+    <div class="card-body p-0" style="max-height: 300px; overflow-y: auto;">
+        <div class="list-group list-group-flush font-monospace">
+            
+            <!-- "Up" Directory Button -->
+            {% if not is_root %}
+            <button type="button" class="list-group-item list-group-item-action bg-light"
+                    hx-get="{{ url_for('admin.browse_dir', path=parent_path) }}"
+                    hx-target="#dir-browser-ui"
+                    hx-swap="outerHTML">
+                📁 .. (Up)
+            </button>
+            {% endif %}
 
-    <div class="mt-3 text-end">
-        <button type="button" class="btn btn-sm btn-outline-danger" 
-                onclick="document.getElementById('dir-browser-container').innerHTML = '';">
-            Close Browser
-        </button>
+            <!-- Subdirectories -->
+            {% for d in dirs %}
+                <!-- Calculate the full relative path for this subdirectory -->
+                {% set next_path = current_rel_path ~ '/' ~ d if current_rel_path else d %}
+                
+                <button type="button" class="list-group-item list-group-item-action"
+                        hx-get="{{ url_for('admin.browse_dir', path=next_path) }}"
+                        hx-target="#dir-browser-ui"
+                        hx-swap="outerHTML">
+                    📁 {{ d }}
+                </button>
+            {% else %}
+                <div class="list-group-item text-muted fst-italic">
+                    No subdirectories found.
+                </div>
+            {% endfor %}
+            
+        </div>
     </div>
 </div>
