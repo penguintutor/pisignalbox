@@ -52,7 +52,7 @@ def process_vlcb_logic():
             print(f"routes vlcb_request - this is invalid request {this_arg}")
         # Return null data regardless of whether success or not
         # we've only added to the queue so don't know
-        # Client can watch to see if it's been went from the api read
+        # Client can watch to see if it's been sent from the api read
         return "0,0,0"
         
     else:

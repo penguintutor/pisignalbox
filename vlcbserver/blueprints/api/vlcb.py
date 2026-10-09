@@ -1,6 +1,6 @@
 import time
 import re
-from flask import Blueprint, current_app, flash, request, session, redirect, render_template, url_for, jsonify
+from flask import Blueprint, current_app, flash, request, session, redirect, render_template, url_for, jsonify, escape
 from flask_login import LoginManager, UserMixin, login_user, current_user, logout_user
 from vlcbserver.core.utils import login_required
 from urllib.parse import urlparse
@@ -49,5 +49,5 @@ def check_api_operator_access():
 @api_vlcb_bp.route("/", methods=['GET', 'POST'])
 @login_required
 def vlcb_request():
-    return process_vlcb_logic()
+    return escape(process_vlcb_logic())
 
