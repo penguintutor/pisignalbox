@@ -54,7 +54,6 @@ def logout():
 @home_blueprint.route("/profile", methods=['GET', 'POST'])
 @login_required
 def profile():
-    print ("call /profile")
     return render_template('home/profile.html', user=current_user)
 
 # Provides the form so the user can edit

@@ -32,14 +32,23 @@ function showToast(message, type = 'success', duration = 4000) {
     if (type === 'error') icon = '✕';
     if (type === 'info') icon = 'ℹ';
 
+    // Define the static HTML structure safely (NO user input here)
     toast.innerHTML = `
         <span class="toast-icon">${icon}</span>
-        <span class="toast-message">${message}</span>
-        <button type="button" class="toast-close" onclick="this.parentElement.remove()">&times;</button>
+        <span class="toast-message"></span>
+        <button type="button" class="toast-close">&times;</button>
     `;
 
-    container.appendChild(toast);
+    // Safely inject the user-provided message as text
+    toast.querySelector('.toast-message').textContent = message;
 
+    // Remove inline 'onclick' to comply with strict Content Security Policies (CSP)
+    toast.querySelector('.toast-close').addEventListener('click', () => {
+        toast.remove();
+    });
+
+    container.appendChild(toast);
+    
     // Auto-remove after duration
     setTimeout(() => {
         toast.classList.add('toast-hiding');
