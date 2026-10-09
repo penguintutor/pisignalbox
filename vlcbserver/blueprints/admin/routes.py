@@ -436,6 +436,7 @@ def browse_dir():
         abort(403)
         
     # FILE SYSTEM RESOLUTION
+    # codeql[py/path-injection] Justification: Input is stripped of traversal chars and strictly validated via is_relative_to() bounds.
     target_path = (base_dir / req_path).resolve()
     
     # DEFENSE IN DEPTH
