@@ -23,6 +23,7 @@
                         id="use_gui_settings" name="use_gui_settings" 
                         {% if settings.use_gui_settings %}checked aria-checked="true"{% else %}aria-checked="false"{% endif %}
                         onchange="handleGuiSettingsToggle(this);">
+                </div>
             </div>
         </div>
 
@@ -37,7 +38,8 @@
                            value="{{ settings.gui_settings_path }}" placeholder="e.g., guiclient/data">
                     <button class="btn btn-outline-secondary" type="button" 
                             hx-get="{{ url_for('admin.browse_dir') }}" 
-                            hx-target="#dir-browser-container">
+                            hx-target="#dir-browser-container"
+                            hx-swap="innerHTML"> <!-- THIS STOPS THE INHERITANCE -->
                         Browse System
                     </button>
                 </div>

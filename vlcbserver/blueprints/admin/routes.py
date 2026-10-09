@@ -421,29 +421,29 @@ def view_save_settings():
     
     return render_template('admin/settings_display.html', settings=app_settings)
 
+
 @admin_blueprint.route('/browse-dir', methods=['GET'])
 def browse_dir():
     """Secure, jail-rooted directory browser returning an HTMX fragment."""
-    # Jail to the top directory of the application
-    # As string - rather than path
-    base_dir = str(current_app.config.get('BASE_DIR'))
+    base_dir = Path(current_app.config.get('BASE_DIR')).resolve()
     
-    # Get requested relative path
     req_path = request.args.get('path', '').strip('/')
+    target_path = (base_dir / req_path).resolve()
     
-    # Resolve absolute target path and verify it stays within base_dir
-    target_path = os.path.abspath(os.path.join(base_dir, req_path))
-    if not target_path.startswith(base_dir):
-        abort(403) # Prevent directory traversal escapes
+    if not target_path.is_relative_to(base_dir):
+        abort(403) 
         
     try:
-        dirs = [d for d in os.listdir(target_path) if os.path.isdir(os.path.join(target_path, d))]
+        dirs = [d.name for d in target_path.iterdir() if d.is_dir()]
         dirs.sort()
     except Exception:
         dirs = []
         
-    # Calculate parent directory for the "Up" button navigation
-    parent_path = os.path.dirname(req_path) if req_path else ''
+    # FIX: Ensure parent_path returns '' instead of '.' for first-level directories
+    # to prevent CSS selector syntax errors in HTMX targets.
+    parent_path = str(Path(req_path).parent) if req_path else ''
+    if parent_path == '.':
+        parent_path = ''
     
     return render_template('admin/_dir_browser.html', 
                            current_rel_path=req_path, 
