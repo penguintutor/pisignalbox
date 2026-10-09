@@ -61,7 +61,8 @@ def login():
                 safe_next = get_safe_redirect(next_page)
                 if not safe_next:
                     safe_next = url_for('home.home')
-                
+
+                # codeql[py/url-redirection] Justification: Input is sanitized by get_safe_redirect which strips netloc/scheme.
                 return redirect(safe_next)
                 
             flash("Invalid username or password.", "error")
