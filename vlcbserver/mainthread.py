@@ -2,7 +2,7 @@ import logging
 import queue
 import time
 from datetime import datetime
-from vlcbserver.vlcb_bridge import command_queue, add_sensor_update, cleanup_sensor_data, sensor_data
+from vlcbserver.vlcb_bridge import command_queue, add_sensor_update, cleanup_sensor_data
 
 
         

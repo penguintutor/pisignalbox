@@ -4,7 +4,10 @@
 
 import os
 import logging
+from flask import current_app
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 class Config:
     def __init__(self, base_dir: Path | str | None = None):
@@ -39,3 +42,4 @@ class Config:
         env_log_dir = os.environ.get('APP_LOG_DIR', None)
         if env_log_dir:
             self.LOG_PATH = Path(env_log_dir) / 'vlcbserver.log'
+

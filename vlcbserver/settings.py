@@ -1,8 +1,12 @@
+### Profiles loading of overall application settings 
+### Also see data.py which loads from the relevant data directories 
+### which contains layouts, locos etc. 
 # Uses json5 to allow comments in the config file
 import json5
 # Uses json when updating files that don't need comment - includes "" around keys
 import json
 import logging
+from flask import current_app
 from vlcbserver.config import Config
 
 logger = logging.getLogger(__name__)
@@ -119,3 +123,29 @@ def update_server_settings(new_settings):
         return False
 
     return True
+
+def get_data_dirs(config):
+    """ Returns a list of dirs to load from loads in the order that is listed"""
+    """ Provides the full path"""
+    data_dirs = []
+    cfg = config or current_app.config
+    # Is gui path enabled - if so then load that first
+    if cfg.get("use_gui_settings"):
+        # check the path is valid
+        full_path = cfg.get('BASE_DIR') / cfg.get("gui_settings_path", "")
+        if full_path.is_dir():
+            data_dirs.append(full_path)
+        else:
+            logger.warning (f"Local GUI path is not valid {full_path}")
+            
+    # If local enabled then use the normal directory
+    # However if there is no other directory then use that anyway so as not
+    # to try with no directories
+    if cfg.get("use_server_settings") or not data_dirs:
+        full_path = cfg.get('CONFIG_DIR') / "data"
+        if full_path.is_dir():
+            data_dirs.append(full_path)
+        else:
+            logger.warning (f"Server data dir path is not valid {full_path}")
+
+    return data_dirs

@@ -11,14 +11,15 @@ import logging
 import vlcbserver
 from vlcbserver import create_app
 import vlcbserver.blueprints.home
-from vlcbserver.vlcb_bridge import command_queue, add_sensor_update, cleanup_sensor_data, sensor_data
+from vlcbserver.vlcb_bridge import command_queue, add_sensor_update, cleanup_sensor_data, _sensor_data
 # Uses json5 to allow comments in the config file
 import json5
 from pathlib import Path
 import queue
 from vlcbserver.config import Config
-from vlcbserver.settings import get_config, load_settings, cfg_checks
+from vlcbserver.settings import get_config, load_settings, cfg_checks, get_data_dirs
 from vlcbserver.mainthread import run_connected_loop
+from vlcbserver.domain.loco.locomanager import loco_manager
 
 
 # --- Configuration Paths ---
@@ -80,6 +81,17 @@ def mainThread(debug, config):
         # Once connected, hand control over to the processing loop
         run_connected_loop(usb, config)
 
+
+def load_data_files (config):
+    """ Creates the various manager classes and loads
+    with data from the appropriate data directories 
+    These are all stored as singletons"""
+
+    # Get the data dirs - may include gui and/or local
+    data_dirs = get_data_dirs(config)
+
+    loco_manager.load_locos(data_dirs)
+
 def gunicorn_app():
     """
     Entry point exclusively for Gunicorn/systemd production environment.
@@ -97,6 +109,7 @@ def gunicorn_app():
     # Create the Flask app
     app = create_app(config)
     logging.info ("*** Application Start (Gunicorn Production) ***")
+    load_data_files(app.config)
 
     # Start ONLY the hardware thread. 
     # Notice we hardcode debug=False since it's production.
@@ -106,7 +119,7 @@ def gunicorn_app():
     # We DO NOT start flaskThread.
     # We DO NOT enter a while True loop.
     
-    # 4. Hand the app over to Gunicorn
+    # Hand the app over to Gunicorn
     return app
 
 
@@ -120,6 +133,7 @@ def run_server(cfg, config):
     app = create_app(config)
 
     logging.info ("*** cfg.Application Start ***")
+    load_data_files(app.config)
 
     # run as two threads - main thread and flask thread
     # Set daemon=True. This tells Python: "If the main script exits, 

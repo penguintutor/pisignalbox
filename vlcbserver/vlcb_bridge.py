@@ -8,8 +8,11 @@ import queue
 command_queue = queue.Queue()
 
 # Shared State (Hardware -> Flask)
-sensor_data = []
-sensor_data_index = 0 # index number for first entry in array
+# Renamed to prefix with a _
+# Although these are still shared to protect against threaded writes 
+# they should only be updated using the helper functions
+_sensor_data = []
+_sensor_data_index = 0 # index number for first entry in array
 # eg. if 10 entries removed from start then this will be increased to 10 and
 # new entries will be relative to that
 
@@ -24,8 +27,8 @@ def get_data(start=0, last=None):
     """Called by Flask routes to read the current state."""
     # Copy the data in a state_lock so the lock can be released during processing
     with state_lock:
-        local_sensor_data_index = sensor_data_index
-        local_sensor_data = sensor_data.copy()
+        local_sensor_data_index = _sensor_data_index
+        local_sensor_data = _sensor_data.copy()
 
     # if start is higher than last then return error
     data_last = local_sensor_data_index + len(local_sensor_data)
@@ -57,15 +60,15 @@ def get_data(start=0, last=None):
 def add_sensor_update(item):
     """Called by the main hardware thread to update state."""
     with state_lock:
-        sensor_data.append(item)
+        _sensor_data.append(item)
     
 def cleanup_sensor_data(max_entries):
     """ remove superflous entries over max_entries"""
     # We must declare index as global since we are modifying an integer
-    global sensor_data_index
+    global _sensor_data_index
 
-    if (len(sensor_data) > max_entries):
+    if (len(_sensor_data) > max_entries):
         with state_lock:
-            num_pop = len(sensor_data) - max_entries
-            del sensor_data[0:num_pop]
-            sensor_data_index += num_pop
+            num_pop = len(_sensor_data) - max_entries
+            del _sensor_data[0:num_pop]
+            _sensor_data_index += num_pop
