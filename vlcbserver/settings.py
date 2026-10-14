@@ -124,10 +124,12 @@ def update_server_settings(new_settings):
 
     return True
 
-def get_data_dirs(config):
+def get_data_dirs(config=None):
     """ Returns a list of dirs to load from loads in the order that is listed"""
     """ Provides the full path"""
     data_dirs = []
+    # if not set then use current_app 
+    # so this can be called by other methods
     cfg = config or current_app.config
     # Is gui path enabled - if so then load that first
     if cfg.get("use_gui_settings"):

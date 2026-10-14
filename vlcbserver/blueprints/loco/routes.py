@@ -14,6 +14,8 @@ from vlcbserver.vlcb_bridge import send_data, get_data
 from vlcbserver.core.models import User, db
 from vlcbserver.core.utils import role_required
 from vlcbserver.constants import ROLES
+from vlcbserver.railway.loco import locomanager
+from vlcbserver.railway.loco.locomanager import loco_manager
 from . import loco_blueprint
 
 
@@ -35,5 +37,9 @@ def check_operator_access():
 
 @loco_blueprint.route('/')
 def dashboard():
-    return render_template('loco/index.html', )
+    locos = loco_manager.get_list_loco_names()
+    return render_template('loco/index.html', locomotives=locos)
+
+
+
 

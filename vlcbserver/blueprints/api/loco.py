@@ -1,5 +1,9 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, send_from_directory, jsonify, request, current_app
 from flask_login import LoginManager, UserMixin, login_user, login_required, current_user, logout_user
+from pathlib import Path
+from vlcbserver.settings import get_data_dirs
+from vlcbserver.railway.loco import locomanager
+from vlcbserver.railway.loco.locomanager import loco_manager
 
 
 # No url_prefix, it is applied when registering (see __init__.py)
@@ -32,24 +36,33 @@ def check_api_operator_access():
 def get_locos():
     return jsonify({"status": "success", "data": "loco list"})
 
-#@api_loco_bp.route('/<int:loco_id>', methods=['POST'])
-#def update_loco(loco_id):
-#    pass
+
 
 # Todo implement this
-@api_loco_bp.route('/aquire', methods=['GET', 'POST'])
-def aquire():
-    print ("Aquire requested")
-    return jsonify({"status": "acquired"})
-
-# Todo implement this
-@api_loco_bp.route('/details', methods=['GET'])
+@api_loco_bp.route('/details', methods=['GET', 'POST'])
 def details():
-    return jsonify({"name": "Loconame"})
+    # Try JSON body first (for POST fetch requests)
+    data = request.get_json(silent=True) or {}
+    # Check JSON first, then fall back to request.values (covers GET)
+    loco_ref = data.get("loco_ref") or request.values.get("loco_ref")
+
+    # get loco_details from_manager
+    if loco_ref:
+        loco_details = loco_manager.get_loco_details_dict(loco_ref)
+    else:
+        # Fall back if loco not found
+        loco_details = {
+            "name": "N/A", 
+            "image_url": "/loco/image/notfound", 
+            "title": "Loco Title",
+            "summary": "About loco"
+            }
+
+    return jsonify(loco_details)
 
 
 # Todo implement this
-@api_loco_bp.route('/speeddir', methods=['GET'])
+@api_loco_bp.route('/speeddir', methods=['GET', 'POST'])
 def speeddir():
     # Return success just means successfully sent to the controller
     # Does not guarentee the loco received it
@@ -57,7 +70,7 @@ def speeddir():
 
 
 # Todo implement this
-@api_loco_bp.route('/stop', methods=['GET'])
+@api_loco_bp.route('/stop', methods=['GET', 'POST'])
 def stop():
     # Return success just means successfully sent to the controller
     # Does not guarentee the loco received it
@@ -65,7 +78,7 @@ def stop():
 
 
 # Todo implement this
-@api_loco_bp.route('/stop_all', methods=['GET'])
+@api_loco_bp.route('/stop_all', methods=['GET', 'POST'])
 def stop_all():
     # Return success just means successfully sent to the controller
     # Does not guarentee the loco received it
@@ -73,8 +86,53 @@ def stop_all():
 
 
 # Todo implement this
-@api_loco_bp.route('/function', methods=['GET'])
+@api_loco_bp.route('/function', methods=['GET', 'POST'])
 def function():
     # Return success just means successfully sent to the controller
     # Does not guarentee the loco received it
     return jsonify({"status": "success"})
+
+
+# loco_id is the shortname from he filename
+@api_loco_bp.route('/aquire', methods=['GET', 'POST'])
+def aquire():
+    # Try JSON body first (for POST fetch requests)
+    data = request.get_json(silent=True) or {}
+    # Check JSON first, then fall back to request.values (covers GET)
+    loco_ref = data.get("loco_ref") or request.values.get("loco_ref")
+    # mode defaults to aquire if not specified (allow aquire / steal / share)
+    mode = data.get("mode") or request.values.get("mode", "aquire")
+
+    if not loco_ref:
+        return jsonify({"error": "Missing loco ref"}), 400
+    
+    print (f"Aquiring loco {loco_ref}, {mode}")
+    return jsonify({"status": "acquired"})
+
+
+@api_loco_bp.route('/image', methods=['GET', 'POST'])
+def image():
+    # Try JSON body first (for POST fetch requests)
+    data = request.get_json(silent=True) or {}
+    # Check JSON first, then fall back to request.values (covers GET)
+    filename = data.get("filename") or request.values.get("filename")
+
+    if filename:
+        # Filename is local ref - but could be in any data directory
+        # cycle through the directories until find one (reverse direction as 
+        # later override earlier)
+        for dir in reversed(get_data_dirs()):
+            # Add this dir to the filename - if it exists then immediately return
+            loco_dir = dir / "locos"
+            full_path = loco_dir / filename
+            if full_path.is_file():
+                # Send from dictionary ensures that the filename doesn't perform
+                # any path traversal
+                return send_from_directory(loco_dir, filename)
+    # Reach here - either no filename supplied, or not found, so use default
+    filename = "default-loco-image.png"
+    static_dir = Path(current_app.config.get('BASE_DIR')).resolve() / "static"
+    return send_from_directory(static_dir, filename)
+
+
+    

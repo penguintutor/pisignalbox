@@ -19,7 +19,7 @@ import queue
 from vlcbserver.config import Config
 from vlcbserver.settings import get_config, load_settings, cfg_checks, get_data_dirs
 from vlcbserver.mainthread import run_connected_loop
-from vlcbserver.domain.loco.locomanager import loco_manager
+from vlcbserver.railway.loco.locomanager import loco_manager
 
 
 # --- Configuration Paths ---

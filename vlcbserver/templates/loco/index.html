@@ -11,13 +11,10 @@
         <label for="locoSelect" class="form-label fw-bold">Select Locomotive</label>
         <select class="form-select form-select-lg" id="locoSelect">
             <option value="" selected disabled>Choose a loco to acquire...</option>
-            <!-- Render these dynamically from your Flask route -->
+            <!-- Render list of loco names -->
             {% for loco in locomotives %}
-                <option value="{{ loco.id }}">{{ loco.name }}</option>
+                <option value="{{ loco.loco_ref }}">{{ loco.name }}</option>
             {% endfor %}
-            <!-- Mock options for testing UI -->
-            <option value="flying_scotsman">Flying Scotsman</option>
-            <option value="class_43">Class 43 (HST)</option>
         </select>
         <div id="acquireStatus" class="mt-2 small text-danger"></div>
     </div>
@@ -146,7 +143,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const acquireModalEl = document.getElementById('acquireModal');
     const acquireModal = new bootstrap.Modal(acquireModalEl);
     
-    let currentLocoId = null;
+    let currentLocoRef = null;
 
     // Helper: Standard API fetch wrapper
     async function callAPI(endpoint, data) {
@@ -171,21 +168,20 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Acquire Locomotive
     locoSelect.addEventListener('change', function() {
-        const selectedId = this.value;
-        if (!selectedId) return;
-        attemptAcquire(selectedId, "request");
+        const selectedRef = this.value;
+        if (!selectedRef) return;
+        attemptAcquire(selectedRef, "request");
     });
 
-    function attemptAcquire(locoId, mode) {
+    function attemptAcquire(locoRef, mode) {
         acquireStatus.innerText = "Attempting to acquire...";
         
-        callAPI('{{ url_for("api.loco.aquire") }}', { id: locoId, mode: mode }).then(res => {
-        //callAPI('/api/loco_aquire', { id: locoId, mode: mode }).then(res => {
+        callAPI('{{ url_for("api.loco.aquire") }}', { loco_ref: locoRef, mode: mode }).then(res => {
             if (res.status === 'acquired') {
-                currentLocoId = locoId;
+                currentLocoRef = locoRef;
                 acquireStatus.innerText = "";
                 controlPanel.disabled = false; // Enable controls
-                loadLocoDetails(locoId);
+                loadLocoDetails(locoRef);
                 
                 // Reset UI to safe defaults
                 speedSlider.value = 0;
@@ -197,11 +193,11 @@ document.addEventListener("DOMContentLoaded", function() {
                 // Attach one-time listeners for modal buttons
                 document.getElementById('btnSteal').onclick = () => {
                     acquireModal.hide();
-                    attemptAcquire(locoId, "steal");
+                    attemptAcquire(locoRef, "steal");
                 };
                 document.getElementById('btnShare').onclick = () => {
                     acquireModal.hide();
-                    attemptAcquire(locoId, "share");
+                    attemptAcquire(locoRef, "share");
                 };
                 document.getElementById('btnCancelAcquire').onclick = () => {
                     locoSelect.value = ""; // Reset dropdown
@@ -215,18 +211,19 @@ document.addEventListener("DOMContentLoaded", function() {
     }
 
     // Load Locomotive Details
-    function loadLocoDetails(locoId) {
-        callAPI('{{ url_for("api.loco.details") }}', { id: locoId }).then(res => {
+    function loadLocoDetails(locoRef) {
+        callAPI('{{ url_for("api.loco.details") }}', { loco_ref: locoRef }).then(res => {
+            const imageUrl = '{{ url_for("api.loco.image") }}';
             if(!res.error) {
-                document.getElementById('locoImage').src = res.image_url;
+                document.getElementById('locoImage').src = `${imageUrl}?filename=${encodeURIComponent(res.image_url)}`;
                 document.getElementById('locoTitle').innerText = res.title;
-                document.getElementById('locoDescription').innerText = res.description;
+                document.getElementById('locoDescription').innerText = res.summary;
                 locoDetailsCard.classList.remove('d-none');
                 
                 // Optional: Update function button text dynamically based on the loco
                 if(res.functions) {
                     funcButtons.forEach(btn => {
-                        let fId = btn.getAttribute('data-func-id');
+                        let fId = btn.dataset.funcId;
                         let descSpan = btn.querySelector('.func-desc');
                         descSpan.innerText = res.functions[fId] || "Unassigned";
                     });
@@ -237,12 +234,13 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // Speed & Direction Updates
     function sendSpeedDir() {
-        if (!currentLocoId) return;
-        const speed = parseInt(speedSlider.value);
+        if (!currentLocoRef) return;
+        //const speed = parseInt(speedSlider.value);
+        const speed = Number.parseInt(speedSlider.value, 10)
         const direction = document.querySelector('input[name="dirRadio"]:checked').value;
         
         callAPI('{{ url_for("api.loco.speeddir") }}', { 
-            id: currentLocoId, 
+            id: currentLocoRef, 
             speed: speed, 
             direction: direction 
         });
@@ -265,7 +263,7 @@ document.addEventListener("DOMContentLoaded", function() {
     btnStop.addEventListener('click', function() {
         speedSlider.value = 0;
         speedDisplay.innerText = "00";
-        callAPI('{{ url_for("api.loco.stop") }}', { id: currentLocoId });
+        callAPI('{{ url_for("api.loco.stop") }}', { id: currentLocoRef });
     });
 
     btnStopAll.addEventListener('click', function() {
@@ -277,7 +275,8 @@ document.addEventListener("DOMContentLoaded", function() {
     // Functions 
     funcButtons.forEach(btn => {
         btn.addEventListener('click', function() {
-            const funcId = this.getAttribute('data-func-id');
+            //const funcId = this.getAttribute('data-func-id');
+            const funcId = this.dataset.funcId;
             // Toggle active visual state
             this.classList.toggle('btn-primary');
             this.classList.toggle('btn-outline-secondary');
@@ -285,7 +284,7 @@ document.addEventListener("DOMContentLoaded", function() {
             let isActive = this.classList.contains('btn-primary');
             
             callAPI('{{ url_for("api.loco.function") }}', { 
-                id: currentLocoId, 
+                id: currentLocoRef, 
                 function: funcId, 
                 state: isActive 
             });

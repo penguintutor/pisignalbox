@@ -5,7 +5,7 @@ from flask import current_app
 import logging
 from vlcbserver.config import Config
 from vlcbserver.vlcb_bridge import send_data
-from vlcbserver.domain.loco.loco import Loco
+from vlcbserver.railway.loco.loco import Loco
 
 logger = logging.getLogger(__name__)
 
@@ -60,13 +60,13 @@ class LocoManager ():
                 # join "locos" to the data dir loaded
                 loco_dir = dir / "locos"
                 for loco_filename in loco_json:
-                    print (f"Loading file {loco_filename}")
+                    #print (f"Loading file {loco_filename}")
                     # Load the files here
                     try:
                         full_path = loco_dir / loco_filename
                         # Loco key is the filename (no path) with .json stripped
-                        loco_key = loco_filename.removesuffix('.json')
-                        self.add_loco(loco_key, Loco.from_file(full_path))
+                        loco_ref = loco_filename.removesuffix('.json')
+                        self.add_loco(loco_ref, Loco.from_file(loco_ref, full_path))
                     except Exception as e:
                         logger.warning (f"Error loading {full_path} - {e}")
                         continue
@@ -111,9 +111,24 @@ class LocoManager ():
         useful for creating pull down menu i, web page
         """
         return [
-            {"id": loco_key, "name": loco_obj.name}
+            {"loco_ref": loco_key, "name": loco_obj.loco_name}
             for loco_key, loco_obj in self._snapshot.items()
         ]
+
+
+    def get_loco_details_dict (self, loco_id):
+        """ get details for specified loco - returns in dict format
+        used by loco_details """
+        if loco_id in self._locos:
+            return self._locos[loco_id].get_details_dict()
+
+        else:
+            return {
+                "name": "N/A", 
+                "image_url": "/loco/image/notfound", 
+                "title": "Invalid loco selected",
+                "description": "N/A"
+            }
 
 
 

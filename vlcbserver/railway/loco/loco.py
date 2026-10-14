@@ -11,7 +11,7 @@ class Loco:
     # All arguments have default allowing creation of a dummy loco
     # Normally use classmethod from_file to open an existing file
     # If filename specified must include full path
-    def __init__ (self, loco_id=0, session=0, direction=1, speed=0, filename=None):
+    def __init__ (self, loco_id=0, loco_ref = "", session=0, direction=1, speed=0, filename=None):
         # status starts in off, change to rloc when rloc sent, then on when allocated
         # if error after ploc then set to off
         # if gloc then set status to gloc - and then on after acquire (ploc)
@@ -20,7 +20,10 @@ class Loco:
         # If it's "controller" then can prompt the user whether to steal
         # If it's "manual" or "automate" then ignore
         self.acquired_by = ""   
+        # The GUI uses loco_id as it uses index positions
         self.loco_id = loco_id
+        # The web app uses loco_ref which is filename (without .json)
+        self.loco_ref = loco_ref
         self.loco_name = ""	# This needs to be unique (no checking so if not then the first will be returned)
         # Future - look to remove this unique dependency, perhaps use filename instead
         self.loco_data = {}
@@ -103,9 +106,10 @@ class Loco:
     
     # Loads a json file with details of the loco
     # there are more details in the file - just pull out id and name for quick reference
-    def load_file (self, filename):
+    def load_file (self, loco_ref, filename):
         with open(filename, 'r') as data_file:
             self.loco_data = json.load(data_file)
+        self.loco_ref = loco_ref
         self.loco_id = self.loco_data.get("address")
         self.loco_name = self.loco_data.get("displayname", "Loco")
         self.filename = filename
@@ -168,6 +172,19 @@ class Loco:
         this_function = self.loco_data["functions"][func_num]
         # 2 is type
         return [self.function_status[func_num], this_function[2]]
+
+    def get_details_dict(self):
+        """ get details for specified loco - returns in dict format
+        used by loco_details """
+        # Copies current state
+        loco_dict = {
+            "loco_id": self.loco_id,
+            "loco_ref": self.loco_ref,
+            "title": self.get_display_name(),
+            "image_url": self.get_image_filename(),
+            "summary": self.loco_data.get("summary")
+        }
+        return loco_dict
     
     # Do we have an active session (respond True even if force stop)
     def is_active (self):
@@ -331,10 +348,10 @@ class Loco:
     
     # Use this to normally create the class
     @classmethod
-    def from_file (cls, loco_file):
+    def from_file (cls, loco_ref, loco_file):
         # create a initial entry
         new_loco = cls()
-        new_loco.load_file (loco_file)
+        new_loco.load_file (loco_ref, loco_file)
         return new_loco
     
     def __str__(self):
