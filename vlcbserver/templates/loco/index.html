@@ -128,13 +128,19 @@ document.addEventListener("DOMContentLoaded", function() {
     // Elements
     const csrfToken = document.getElementById('csrf_token').value;
     const locoSelect = document.getElementById('locoSelect');
+    const defaultOption = locoSelect.options[0];
     const acquireStatus = document.getElementById('acquireStatus');
     const controlPanel = document.getElementById('controlPanel');
     const locoDetailsCard = document.getElementById('locoDetailsCard');
     
+    const locoImage = document.getElementById('locoImage');
+    const locoTitle = document.getElementById('locoTitle');
+    const locoDescription = document.getElementById('locoDescription');
+    
     const speedSlider = document.getElementById('speedSlider');
     const speedDisplay = document.getElementById('speedDisplay');
     const dirRadios = document.getElementsByName('dirRadio');
+    const dirForward = document.getElementById('dirForward');
     const btnStop = document.getElementById('btnStop');
     const btnStopAll = document.getElementById('btnStopAll');
     const funcButtons = document.querySelectorAll('.func-btn');
@@ -145,11 +151,54 @@ document.addEventListener("DOMContentLoaded", function() {
     
     let currentLocoRef = null;
 
+    // Polling configuration: 6 retries * 5000ms = 30 seconds total wait
+    const MAX_ACQUIRE_RETRIES = 6;
+    const ACQUIRE_RETRY_DELAY_MS = 5000;
+    let acquireTimer = null;
+
+    function clearAcquireTimer() {
+        if (acquireTimer) {
+            clearTimeout(acquireTimer);
+            acquireTimer = null;
+        }
+    }
+
+    // Helper: Reset UI and state back to initial defaults
+    function resetController() {
+        clearAcquireTimer();
+        currentLocoRef = null;
+        controlPanel.disabled = true;
+        acquireStatus.innerText = "";
+
+        // Reset locomotive details to defaults and hide card
+        locoDetailsCard.classList.add('d-none');
+        locoImage.src = "";
+        locoTitle.innerText = "Details:";
+        locoDescription.innerText = "";
+
+        // Reset speed and direction controls
+        speedSlider.value = 0;
+        speedDisplay.innerText = "00";
+        dirForward.checked = true;
+
+        // Reset function buttons back to default labels and inactive state
+        funcButtons.forEach(btn => {
+            const fId = btn.dataset.funcId;
+            const descSpan = btn.querySelector('.func-desc');
+            descSpan.innerText = `Fn ${fId}`;
+            btn.classList.remove('btn-primary');
+            btn.classList.add('btn-outline-secondary');
+        });
+
+        // Revert the first dropdown option to its initial disabled prompt
+        defaultOption.textContent = "Choose a loco to acquire...";
+        defaultOption.disabled = true;
+        locoSelect.value = "";
+    }
+
     // Helper: Standard API fetch wrapper
     async function callAPI(endpoint, data) {
         try {
-            // Replaces placeholder with Flask url_for behavior.
-            // In a real template, you might set these in global JS variables.
             const url = endpoint; 
             const response = await fetch(url, {
                 method: 'POST',
@@ -166,46 +215,80 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    // Acquire Locomotive
+    // Acquire or Disable Locomotive
     locoSelect.addEventListener('change', function() {
         const selectedRef = this.value;
-        if (!selectedRef) return;
-        attemptAcquire(selectedRef, "request");
+        if (!selectedRef) {
+            resetController();
+            return;
+        }
+        attemptAcquire(selectedRef, "request", 0);
     });
 
-    function attemptAcquire(locoRef, mode) {
-        acquireStatus.innerText = "Attempting to acquire...";
+function attemptAcquire(locoRef, mode, retryCount = 0) {
+        clearAcquireTimer();
+
+        if (retryCount === 0) {
+            acquireStatus.innerText = "Attempting to acquire...";
+            // Allow user to cancel/disable while acquisition is in progress
+            defaultOption.textContent = "Disable controller";
+            defaultOption.disabled = false;
+        } else {
+            acquireStatus.innerText = `Waiting for locomotive... (attempt ${retryCount + 1}/${MAX_ACQUIRE_RETRIES + 1})`;
+        }
         
-        callAPI('{{ url_for("api.loco.aquire") }}', { loco_ref: locoRef, mode: mode }).then(res => {
+        callAPI('{{ url_for("api.loco.acquire") }}', { loco_ref: locoRef, mode: mode }).then(res => {
+            // Ignore response if the user changed selection while fetch was in flight
+            if (locoSelect.value !== locoRef) return;
+
             if (res.status === 'acquired') {
                 currentLocoRef = locoRef;
                 acquireStatus.innerText = "";
                 controlPanel.disabled = false; // Enable controls
+                
+                defaultOption.textContent = "Disable controller";
+                defaultOption.disabled = false;
+
                 loadLocoDetails(locoRef);
                 
                 // Reset UI to safe defaults
                 speedSlider.value = 0;
                 speedDisplay.innerText = "00";
+                dirForward.checked = true;
                 
+            } else if (res.status === 'acquiring') {
+                if (retryCount < MAX_ACQUIRE_RETRIES) {
+                    acquireTimer = setTimeout(() => {
+                        attemptAcquire(locoRef, "request", retryCount + 1);
+                    }, ACQUIRE_RETRY_DELAY_MS);
+                } else {
+                    resetController();
+                    acquireStatus.innerText = "Acquire failed: Timed out waiting for locomotive.";
+                }
+
+            } else if (res.status === 'duplicate') {
+                resetController();
+                acquireStatus.innerText = "Unable to allocate due to a duplicate ID in use";
+
             } else if (res.status === 'in_use') {
                 acquireModal.show();
                 
                 // Attach one-time listeners for modal buttons
                 document.getElementById('btnSteal').onclick = () => {
                     acquireModal.hide();
-                    attemptAcquire(locoRef, "steal");
+                    attemptAcquire(locoRef, "steal", 0);
                 };
                 document.getElementById('btnShare').onclick = () => {
                     acquireModal.hide();
-                    attemptAcquire(locoRef, "share");
+                    attemptAcquire(locoRef, "share", 0);
                 };
                 document.getElementById('btnCancelAcquire').onclick = () => {
-                    locoSelect.value = ""; // Reset dropdown
+                    resetController();
                     acquireStatus.innerText = "Acquisition cancelled.";
                 };
             } else {
+                resetController();
                 acquireStatus.innerText = res.message || "Failed to acquire loco.";
-                locoSelect.value = "";
             }
         });
     }
@@ -215,12 +298,12 @@ document.addEventListener("DOMContentLoaded", function() {
         callAPI('{{ url_for("api.loco.details") }}', { loco_ref: locoRef }).then(res => {
             const imageUrl = '{{ url_for("api.loco.image") }}';
             if(!res.error) {
-                document.getElementById('locoImage').src = `${imageUrl}?filename=${encodeURIComponent(res.image_url)}`;
-                document.getElementById('locoTitle').innerText = res.title;
-                document.getElementById('locoDescription').innerText = res.summary;
+                locoImage.src = `${imageUrl}?filename=${encodeURIComponent(res.image_url)}`;
+                locoTitle.innerText = res.title;
+                locoDescription.innerText = res.summary;
                 locoDetailsCard.classList.remove('d-none');
                 
-                // Optional: Update function button text dynamically based on the loco
+                // Update function button text dynamically based on the loco
                 if(res.functions) {
                     funcButtons.forEach(btn => {
                         let fId = btn.dataset.funcId;
@@ -235,8 +318,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // Speed & Direction Updates
     function sendSpeedDir() {
         if (!currentLocoRef) return;
-        //const speed = parseInt(speedSlider.value);
-        const speed = Number.parseInt(speedSlider.value, 10)
+        const speed = Number.parseInt(speedSlider.value, 10);
         const direction = document.querySelector('input[name="dirRadio"]:checked').value;
         
         callAPI('{{ url_for("api.loco.speeddir") }}', { 
@@ -275,7 +357,6 @@ document.addEventListener("DOMContentLoaded", function() {
     // Functions 
     funcButtons.forEach(btn => {
         btn.addEventListener('click', function() {
-            //const funcId = this.getAttribute('data-func-id');
             const funcId = this.dataset.funcId;
             // Toggle active visual state
             this.classList.toggle('btn-primary');

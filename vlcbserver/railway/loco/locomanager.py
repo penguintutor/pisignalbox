@@ -115,6 +115,9 @@ class LocoManager ():
             for loco_key, loco_obj in self._snapshot.items()
         ]
 
+    def get_loco_by_ref(self, loco_ref):
+        return self._locos.get(loco_ref)
+
 
     def get_loco_details_dict (self, loco_id):
         """ get details for specified loco - returns in dict format

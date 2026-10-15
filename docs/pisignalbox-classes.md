@@ -197,7 +197,7 @@ Window to managed Locos
 ### Other Dialogs
 
 * LocoDialog (locodialog.ui)
-* StealDialog (stealdialog.ui) - Used for aquiring a loco already aquired
+* StealDialog (stealdialog.ui) - Used for acquiring a loco already acquired
 
 
 

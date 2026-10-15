@@ -300,7 +300,7 @@ class AutoLocoDialog(QDialog):
         Slot to handle the button click
         """
         print(f"Acquiring locomotive: {loco.get_display_name()}")
-        # Aquire loco
+        # Acquire loco
         self.gui.api.start_request(self.gui.api.vlcb.allocate_loco(loco.loco_id))
         loco.set_status('rloc', "controller")
 

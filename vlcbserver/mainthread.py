@@ -17,12 +17,14 @@ def run_connected_loop(usb, config):
             try:
                 # Read from message queue for any requests from flask
                 # get_nowait() pulls a command if one exists, otherwise throws queue.Empty
-                command = command_queue.get_nowait()
-                #print(f"[Hardware] Sending command to layout: {command}")
-                # Send it to the serial port
-                usb.send_data(command)
-                # Also add it to the data - so other clients can also see it
-                add_sensor_update(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ",o," + command)
+                command_dict = command_queue.get_nowait()
+                if "vlcb" in command_dict:
+                    command = command_dict.get("vlcb")
+                    #print(f"[Hardware] Sending command to layout: {command}")
+                    # Send it to the serial port
+                    usb.send_data(command)
+                    # Also add it to the data - so other clients can also see it
+                    add_sensor_update(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ",o," + command)
                 
             except queue.Empty:
                 # No commands from Flask - break out of loop

@@ -20,7 +20,7 @@ VLCB should be used in preference to Device for mapping purposes
 Note that any device can consume from any event through the use of rules. This guide lists the typical use outside of the custom rules.
 
 ## AppEvent
-Used to notify the Gui when it needs to update its status or interact with a user (eg. Dialog for aquiring loco)
+Used to notify the Gui when it needs to update its status or interact with a user (eg. Dialog for acquiring loco)
 
 Note that due to logging in console all incoming actions from the API (eg. VLCB) are sent as AppEvents. 
 

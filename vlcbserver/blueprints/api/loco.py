@@ -2,6 +2,8 @@ from flask import Blueprint, send_from_directory, jsonify, request, current_app
 from flask_login import LoginManager, UserMixin, login_user, login_required, current_user, logout_user
 from pathlib import Path
 from vlcbserver.settings import get_data_dirs
+from vlcbserver.extensions import vlcb
+from vlcbserver.vlcb_bridge import send_data
 from vlcbserver.railway.loco import locomanager
 from vlcbserver.railway.loco.locomanager import loco_manager
 
@@ -94,20 +96,40 @@ def function():
 
 
 # loco_id is the shortname from he filename
-@api_loco_bp.route('/aquire', methods=['GET', 'POST'])
-def aquire():
+@api_loco_bp.route('/acquire', methods=['GET', 'POST'])
+def acquire():
     # Try JSON body first (for POST fetch requests)
     data = request.get_json(silent=True) or {}
     # Check JSON first, then fall back to request.values (covers GET)
     loco_ref = data.get("loco_ref") or request.values.get("loco_ref")
-    # mode defaults to aquire if not specified (allow aquire / steal / share)
-    mode = data.get("mode") or request.values.get("mode", "aquire")
+    # mode defaults to acquire if not specified (allow acquire / steal / share)
+    mode = data.get("mode") or request.values.get("mode", "acquire")
 
     if not loco_ref:
         return jsonify({"error": "Missing loco ref"}), 400
+
+    # Get the loco object
+    loco = loco_manager.get_loco_by_ref(loco_ref)
+    if not loco:
+        return jsonify({"error": "Invalid loco ref"}), 400
+
+    # If already acquired then no action required
+    if loco.is_acquired():
+        return jsonify({"status": "acquired"})
     
-    print (f"Aquiring loco {loco_ref}, {mode}")
-    return jsonify({"status": "acquired"})
+    #print (f"Acquiring loco {loco_ref}, {mode}")
+    # Create an acquire request
+    vlcb_cmd = vlcb.allocate_loco(loco.loco_id)
+    send_data(vlcb_cmd)
+
+    # Todo
+    # If in use then 
+    # return jsonify({"status": "in_use"})
+    # If a duplicate loco_id (need to check for this)
+    # return jsonify({"status": "duplicate"})
+
+
+    return jsonify({"status": "acquiring"})
 
 
 @api_loco_bp.route('/image', methods=['GET', 'POST'])
