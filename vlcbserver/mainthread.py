@@ -4,13 +4,25 @@ import time
 from datetime import datetime
 from vlcbserver.vlcb_bridge import command_queue, add_sensor_update, cleanup_sensor_data
 from vlcbserver.railway.loco.locomanager import loco_manager
+from vlcbserver.extensions import vlcb
 
+KALIVE_INTERVAL = 4.0   # seconds
 
         
 def run_connected_loop(usb, config):
+    # initialize the timer before starting
+    last_kalive = time.monotonic()
+
     while True:
         # First part of loop - clear out any excessive entries
         cleanup_sensor_data(config.get("max_entries"))
+
+        # Check if 4 seconds have elapsed since last keep-alive
+        now = time.monotonic()
+        if now - last_kalive >= KALIVE_INTERVAL:
+            # keep alive sends directly to usb
+            send_kalive(usb)
+            last_kalive = now
 
         ### Check to see if we have any outgoing messages
         # prioritise sending - so gather all commands
@@ -46,6 +58,7 @@ def run_connected_loop(usb, config):
         # first entry [0] is the number entries - if negative then error
         in_data = usb.read_data()
         _process_inbound_data(in_data)
+
 
 
 def _send_outgoing_messages(usb):
@@ -99,4 +112,13 @@ def _update_loco_status(command_dict):
                 # Inform the loco_manager
                 loco_manager.acquire_sent(command_dict["loco_id"], command_dict["loco_ref"])
 
-            
+
+# Send a kalive packet for all active locos    
+def send_kalive(usb):
+
+    for session in loco_manager.get_active_sessions_mainthread():
+        command = vlcb.keep_alive(session)
+        usb.send_data(command) 
+
+        # Also add it to the data - so other clients can also see it
+        add_sensor_update(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ",o," + command)

@@ -33,10 +33,10 @@ def check_api_operator_access():
 
 
 
-# Todo implement the loco list
 @api_loco_bp.route('/', methods=['GET', 'POST'])
 def get_locos():
-    return jsonify({"status": "success", "data": "loco list"})
+    loco_list = loco_manager.get_list_loco_names()
+    return jsonify({"status": "success", "data": loco_list})
 
 
 
@@ -66,6 +66,40 @@ def details():
 # Todo implement this
 @api_loco_bp.route('/speeddir', methods=['GET', 'POST'])
 def speeddir():
+    # Try JSON body first (for POST fetch requests)
+    data = request.get_json(silent=True) or {}
+    # Check JSON first, then fall back to request.values (covers GET)
+    loco_ref = data.get("loco_ref") or request.values.get("loco_ref")
+    speed_str = data.get("speed") or request.values.get("speed")
+    # Convert to int and Sanitize the speed value
+    speed = speed_int(speed_str)
+    direction = data.get("direction") or request.values.get("direction")
+
+    if not loco_ref:
+        return jsonify({"error": "Missing loco ref"}), 400
+
+    # Get the loco object
+    loco = loco_manager.get_loco_by_ref(loco_ref)
+    if not loco:
+        return jsonify({"error": "Invalid loco ref"}), 400
+
+    # Make sure we have a session - and that's needed for the command
+    session = loco.get_session()
+    if session == 0:
+        return jsonify({"error": "No loco session"}), 400
+
+    speed_dir = to_speeddir(speed, direction)
+
+    vlcb_cmd = vlcb.loco_speeddir(session, speed_dir)
+    send_data(
+        {
+            'vlcb': vlcb_cmd,
+            'dev_type': "loco",
+            'action': "speeddir",
+            'loco_ref': loco_ref,
+            'speeddir': speed_dir
+        }
+    )
     # Return success just means successfully sent to the controller
     # Does not guarentee the loco received it
     return jsonify({"status": "success"})
@@ -165,4 +199,37 @@ def image():
     return send_from_directory(static_dir, filename)
 
 
+################################################
+# helper functions
+# ##############################################
+
+def to_speeddir (speed, dir):
+    # Speed 1 = Emergency stop skip
+    if speed == 1:
+        speed = 2
+
+    # Dir is a string - so convert to a number
+    if dir == "forward":
+        direction = 1
+    elif dir == "reverse":
+        direction = 0
+    # default to stop
+    else:
+        direction = 1
+        speed = 0
+
+    return (direction * 0x80) + speed
+
+
+def speed_int(val):
+    """ convert string to an int. Check it's within the allowed range
+    Anything unexpected return 0"""
+    try:
+        value = int(val)
+    except (ValueError, TypeError):
+        return 0
+
+    if value < 0 or value > 127:
+        return 0
+    return value
     

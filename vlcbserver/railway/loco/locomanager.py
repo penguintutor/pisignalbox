@@ -117,9 +117,24 @@ class LocoManager ():
         self._locos[loco_ref].acquired(session_id, speeddir, functions)
 
 
+    def get_active_sessions_mainthread(self):
+        """ USE on main thread
+        Uses raw entries so doesn't guarentee thread safe
+        Gives good performance - for regular keepalives
+        """
+        session_list = []
+        for loco_ref in self._on_track.values():
+            # check it's got an active session
+            session = self._locos[loco_ref].get_session()
+            if session != 0:
+                session_list.append(session)
+        return session_list
+
     ####################################################
     # Public - read / thread safe updates vi mesg queue
     ####################################################
+
+    
 
     def get_locos_list (self):
         """ Return a list of loco objects"""
