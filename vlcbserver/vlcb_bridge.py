@@ -137,4 +137,4 @@ def _update_local_state(item):
             loco_manager.acquire_confirm(loco_id, data_entry['Session'], data_entry['SpeedDir'], functions)
 
     # Uncomment for the raw data received from USB - very noisy!
-    print (f"vlcb_bridge: VLCB Entry {vlcb_entry}, op_code {ret_opcode}")
+    #print (f"vlcb_bridge: VLCB Entry {vlcb_entry}, op_code {ret_opcode}")

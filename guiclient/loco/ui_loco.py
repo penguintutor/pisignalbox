@@ -53,10 +53,15 @@ class UILocoMixin:
         #    self.api.start_request(self.api.vlcb.release_loco(session))
         #    self.control_loco.release()
 
+        # Keep Alive is now handled by the server
+        # Don't release as that would also release from web app
+        # Todo in future could release but track separately who has requested loco
+        # Although only a minor inconvenience - 
+        # Esp if the server becomes the main controller
         # Check for a valid loco chosen (ie if gone back to 0 then return)
         if index == 0:
-            if self.kalive_timer.isActive():
-                self.kalive_timer.stop()
+        #    if self.kalive_timer.isActive():
+        #        self.kalive_timer.stop()
             return
 
         # Get the loco entry
@@ -262,25 +267,27 @@ class UILocoMixin:
         elif self.control_loco.get_direction() == 0:
             self.ui.locoReverseRadio.setChecked(True)
 
+    # keep alive moved to the server
     # Signal to indicate kalive needs to be checked
     # start / stop as appropriate
-    def update_kalive (self):
-        if loco_manager.locos_active() > 0:
-            if not self.kalive_timer.isActive():
-                self.kalive_timer.start()
-        elif self.kalive_timer.isActive():
-            self.kalive_timer.stop()
+    #def update_kalive (self):
+    #    if loco_manager.locos_active() > 0:
+    #        if not self.kalive_timer.isActive():
+    #            self.kalive_timer.start()
+    #    elif self.kalive_timer.isActive():
+    #        self.kalive_timer.stop()
 
+    # Keep alive moved to the server
     # Keep alive - called every 4 secs
     # Add a keep alive to the send queue
-    def keep_alive (self):
-        # Check we have a session to send a keep alive (ie. not in process of trying
-        # to acquire a new loco
-        # Check all locos 
-        for loco in loco_manager.get_all_locos():
-            if loco.is_active():
-                #print (f"Loco {loco.loco_id} is active")
-                self.api.start_request(self.api.vlcb.keep_alive(loco.get_session()))
+    # def keep_alive (self):
+    #     # Check we have a session to send a keep alive (ie. not in process of trying
+    #     # to acquire a new loco
+    #     # Check all locos 
+    #     for loco in loco_manager.get_all_locos():
+    #         if loco.is_active():
+    #             #print (f"Loco {loco.loco_id} is active")
+    #             self.api.start_request(self.api.vlcb.keep_alive(loco.get_session()))
             
     def steal_loco_check (self):
         steal_dialog = QDialog(self)

@@ -25,11 +25,9 @@ class LocoManager ():
         # Uses dict (in gui a list was used)
         # dict ensures don't end up with duplicates and makes finding easier
         # when dealing with simultaneous updates
+
+        ### Web app managed locos
         self._locos = {}
-        # Uses as snapshot (shallow copy) of the dict so as to avoid problems
-        # when updated - this still points to the same underlying data as self._locos
-        # this should be used whenever iterating over the locos
-        self._snapshot = {}
         # Index lookup of loco ids that are "on track"
         # Note that there may be duplicate loco_ids across the locos available
         # As these are typcally DCC ID codes, but only one loco can be
@@ -39,6 +37,22 @@ class LocoManager ():
         # The loco_id is allocated at acquire request - PLOC 
         # even if request fails as otherwise a delayed response would be an issue
         self._on_track = {}         # key = loco_id (DCC ID), Value = loco_ref (filename - no .json)
+
+        ### Basic aka "unmanaged" locos
+        # If from a client api (inc basic controller) then may not have an existing loco 
+        # in which case it goes in here these use loco_id and stores in a temp loco
+        # These are not accessed by most of the flask commands - only raw client instructions
+        self._on_track_basic = {} 
+        # As loco_id is known up front and unique the loco_ref is replaced with the loco_id
+        # Note there can be a duplicate loco_id between _on_track and _on_track_basic
+        # which effectively means that they are shared
+        self._locos_basic = {}
+
+        # Uses as snapshot (shallow copy) of the dict so as to avoid problems
+        # when updated - this still points to the same underlying data as self._locos
+        # this should be used whenever iterating over the locos
+        # Note that this is only for "standard locos", not basic
+        self._snapshot = {}
 
 
 
@@ -80,6 +94,13 @@ class LocoManager ():
                         logger.warning (f"Error loading {full_path} - {e}")
                         continue
 
+    # Adds a basic loco - with default values - just id is configured
+    def add_loco_basic (self, loco_id):
+        # loco_id and loco_ref are the same in a basic
+        if loco_id in self._locos.basic:
+            logger.info("Duplicate basic loco found - skipping")
+        self._locos_basic[loco_id] = Loco(loco_id, loco_id)
+
                     
     def add_loco (self, loco_key, loco_obj):
         if loco_key in self._locos:
@@ -109,24 +130,46 @@ class LocoManager ():
         self._on_track[loco_id] = loco_ref
         self._locos[loco_ref].set_loco_acquire()
 
+
+    def acquire_sent_basic (self, loco_id):
+        " For unmanaged devices, create loco object and update to be acquire in progress"
+        # create if required
+        # No need to check if it already exists as it skips anyway
+        self.add_loco_basic(loco_id)
+        self._on_track_basic[loco_id] = loco_id
+        self._locos_basic[loco_id].set_loco_acquire()
+
+
     def acquire_confirm(self, loco_id, session_id, speeddir, functions):
-        # check it's on track, otherwise wasn't us
-        if loco_id not in self._on_track:
-            return
-        loco_ref = self._on_track[loco_id]
-        self._locos[loco_ref].acquired(session_id, speeddir, functions)
+        # check it's on track
+        if loco_id in self._on_track:
+            loco_ref = self._on_track[loco_id]
+            self._locos[loco_ref].acquired(session_id, speeddir, functions)
+        # and/or it's client managed
+        if loco_id in self._on_track_basic:
+            self._locos[loco_id].acquired(session_id, speeddir, functions)
 
 
     def get_active_sessions_mainthread(self):
         """ USE on main thread
         Uses raw entries so doesn't guarentee thread safe
         Gives good performance - for regular keepalives
+        - Also includes basic locos (ie. client gui / controller)
         """
         session_list = []
+        # web app managed locos
         for loco_ref in self._on_track.values():
             # check it's got an active session
             session = self._locos[loco_ref].get_session()
-            if session != 0:
+            # Avoid duplicates (more relevant later in basic)
+            if session != 0 and session not in session_list:
+                session_list.append(session)
+        # basic unmanaged locos
+        for loco_ref in self._on_track_basic.values():
+            # check it's got an active session
+            session = self._locos_basic[loco_ref].get_session()
+            # Avoid duplicates
+            if session != 0 and session not in session_list:
                 session_list.append(session)
         return session_list
 
@@ -156,6 +199,9 @@ class LocoManager ():
 
     def get_loco_by_ref(self, loco_ref):
         return self._locos.get(loco_ref)
+
+    def get_loco_basic (self, loco_id):
+        return self._locos_basic.get(loco_id, None)
 
 
     def get_loco_details_dict (self, loco_id):

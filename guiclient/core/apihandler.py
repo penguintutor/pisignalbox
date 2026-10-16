@@ -364,8 +364,9 @@ class ApiHandler(QObject):
                 # Set status to on last gives time to ensure all entries updated
                 # Update controller with new values
                 event_bus.publish(AppEvent({"action":"lcd"}))
+                # Keep alive is now moved to the server
                 # Start the keepalive timer
-                event_bus.publish(AppEvent({"action":"keepalive"}))
+                # event_bus.publish(AppEvent({"action":"keepalive"}))
             ## Update events - these need to notify other devices
             # Accessory On (eg ACON = Acc / ASON = short)
             # Works on both event codes (eg. ACON) and status codes (eg. ARON)

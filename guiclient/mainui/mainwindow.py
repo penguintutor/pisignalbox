@@ -65,10 +65,11 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
     reset_loco_signal = Signal()
     steal_loco_signal = Signal() # Attempt to steal loco
     share_loco_signal = Signal() # Attempt to share loco
-    
+
+    # Keep alive now handled by API server
     # Keep alive timer must always be started and stopped on the GUI thread
     # this will start or stop as appropriate based on loco state
-    update_kalive_signal = Signal()
+    # update_kalive_signal = Signal()
     
     # If locos updated then refresh selection list
     updated_locos_signal = Signal()
@@ -142,12 +143,13 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
         self.timer.setInterval(read_rate)
         self.timer.timeout.connect(self.handle_polling)
         self.timer.start()
-        
+
+        # Keep alive now moved to the server
         # Keep alive timer - used for DCC keep alive
         # Create timer, but don't start until acquire locomotive
-        self.kalive_timer = QTimer(self)
-        self.kalive_timer.setInterval(4000)
-        self.kalive_timer.timeout.connect(self.keep_alive)
+        #self.kalive_timer = QTimer(self)
+        #self.kalive_timer.setInterval(4000)
+        #self.kalive_timer.timeout.connect(self.keep_alive)
         
         # Load the Assets prior to setting up the GUI
         
@@ -177,7 +179,7 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
         self.reset_loco_signal.connect (self.reset_loco)
         self.steal_loco_signal.connect (self.steal_loco)
         self.share_loco_signal.connect (self.share_loco)
-        self.update_kalive_signal.connect (self.update_kalive)
+        #self.update_kalive_signal.connect (self.update_kalive)
         # Other event related signals
         self.updated_locos_signal.connect (self.update_loco_list)
         # Gui signal
@@ -440,8 +442,9 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
                 self.ui.locoStatusLabel.setText (app_event.data['value'])
         elif app_event.action == "lcd":
             self.update_lcd()
-        elif app_event.action == "keepalive":
-            self.update_kalive_signal.emit()
+        # keep alive moved to the server
+        #elif app_event.action == "keepalive":
+        #    self.update_kalive_signal.emit()
         # If locotaken then launch steal_dialog
         elif app_event.action == "locotaken":
             # Only action if it is the controlloco that is taken

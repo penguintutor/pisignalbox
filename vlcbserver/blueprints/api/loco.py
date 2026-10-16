@@ -199,6 +199,61 @@ def image():
     return send_from_directory(static_dir, filename)
 
 
+
+
+################################################
+# Unmanaged Locos 
+# uses client
+# ##############################################
+
+
+# Acquire a basic loco
+@api_loco_bp.route('/client/acquire', methods=['GET', 'POST'])
+def client_acquire():
+    # Try JSON body first (for POST fetch requests)
+    data = request.get_json(silent=True) or {}
+    # Check JSON first, then fall back to request.values (covers GET)
+    loco_id = data.get("loco_id") or request.values.get("loco_id")
+    # format defaults to json 
+    ret_format = data.get("format") or request.values.get("format", "json")
+
+    if not loco_id:
+        if ret_format == "json":
+            return jsonify({"error": "Missing loco ID"}), 400
+        else:
+            return "Error Missing Loco ID", 400
+
+    # Does the loco object exist? If not itis created when we send later
+    loco = loco_manager.get_loco_basic(loco_id)
+    if loco:
+        # If already acquired then no action required
+        if loco.is_acquired():
+            if ret_format=="json":
+                return jsonify({"status": "acquired"})    
+            else: 
+                return "Loco Acquired"
+
+    # Skip check for loco on track - as we can have duplicates when managed by client
+    
+    # Create an acquire request
+    vlcb_cmd = vlcb.allocate_loco(loco_id)
+    send_data(
+        {
+            'vlcb': vlcb_cmd,
+            'dev_type': "loco",
+            'action': "acquire_basic",
+            'loco_id': loco_id
+        }
+    )
+
+    if ret_format == "json":
+        return jsonify({"status": "acquiring"})
+    else:
+        return "Acquiring loco"
+
+
+
+
 ################################################
 # helper functions
 # ##############################################

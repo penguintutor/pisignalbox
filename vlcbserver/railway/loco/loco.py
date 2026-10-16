@@ -61,7 +61,9 @@ class Loco:
         return self.session
 
     def set_loco_acquire (self):
-        self.status = "rloc"
+        # Note if we have a ploc then don't overwrite (most likely resend of rloc after aquired)
+        if self.status != "ploc":
+            self.status = "rloc"
 
     def acquired (self, session, speeddir, functions):
         self.session = session

@@ -67,6 +67,55 @@ class VLCBClient():
             return True
         logger.debug(f"Message not working {response}")
         return False
+
+    # Uses new "unamnaged loco api"
+    def send_loco (self, cmd, loco_id, data=None):
+        
+        # Note that this adds the api prefix to act as an api
+        api_string = f"{self.url}api/loco/client"
+
+        match cmd:
+            case "acquire":
+                request_string = f"{api_string}/acquire?loco_id={loco_id}&format=txt"
+
+
+        # if request_string not set then nothing to send
+        if request_string == "":
+            logger.debug(f"Unknown loco command {cmd}")
+            return False
+
+        
+        logger.debug(f"Send request {request_string}")
+        req = urllib.request.Request(request_string, headers=self.headers)
+        try:
+            request_url = urllib.request.urlopen(req)
+            response = request_url.read()
+        except urllib.error.HTTPError as e:
+            # Catches server errors eg. 404 not found, 401 unathorized, 500 internal server error
+            logger.warning(f"Error sending via http {request_string}: {e.code}, {e.reason}")
+            # Todo - create user friendly messages
+            # probably want to stop the app requests for something that needs an update
+            # eg. 401 - not authorised
+            print (f"HTTP Error {e.code} {e.read().decode('utf-8')}")
+            # None indicates not connected
+            return None
+        except urllib.error.URLError as e:
+            logger.warning(f"Error sending via http, due to network connection error {e.reason}")
+            # None indicates not connected
+            return None
+        except TimeoutError as e:
+            logger.warning(f"Error sending via http, due to timeout {e}")
+            # None indicates not connected
+            return None
+        except Exception as e:
+            logger.warning(f"Error sending via http, other error {e}")
+            # None indicates not connected
+            return None
+        if response[0:7] == "Success":
+            logger.debug(f"Send response received {response}")
+            return True
+        logger.debug(f"Message not working {response}")
+        return False
     
     # Read after last packet 
     def read (self, last_packet):

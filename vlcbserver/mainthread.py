@@ -106,11 +106,14 @@ def _process_inbound_data(in_data):
         logging.debug(f"Received {this_input}")
 
 def _update_loco_status(command_dict):
+    """ Update loco status - on an outbound request to usb """
     if "action" in command_dict:
         match command_dict["action"]:
             case "acquire":
                 # Inform the loco_manager
                 loco_manager.acquire_sent(command_dict["loco_id"], command_dict["loco_ref"])
+            case "acquire_basic":
+                loco_manager.acquire_sent_basic(command_dict["loco_id"])
 
 
 # Send a kalive packet for all active locos    
