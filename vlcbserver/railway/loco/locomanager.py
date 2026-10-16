@@ -3,8 +3,8 @@ import json5
 import json
 from flask import current_app
 import logging
+from typing import Literal
 from vlcbserver.config import Config
-from vlcbserver.vlcb_bridge import send_data
 from vlcbserver.railway.loco.loco import Loco
 
 logger = logging.getLogger(__name__)
@@ -30,6 +30,15 @@ class LocoManager ():
         # when updated - this still points to the same underlying data as self._locos
         # this should be used whenever iterating over the locos
         self._snapshot = {}
+        # Index lookup of loco ids that are "on track"
+        # Note that there may be duplicate loco_ids across the locos available
+        # As these are typcally DCC ID codes, but only one loco can be
+        # managed per ID. If a duplicate is requested then it will fail
+        # then the operator will need to go through the list and mark as 
+        # "Removed from track", so that the loco_id can be reused
+        # The loco_id is allocated at acquire request - PLOC 
+        # even if request fails as otherwise a delayed response would be an issue
+        self._on_track = {}         # key = loco_id (DCC ID), Value = loco_ref (filename - no .json)
 
 
 
@@ -72,8 +81,6 @@ class LocoManager ():
                         continue
 
                     
-
-
     def add_loco (self, loco_key, loco_obj):
         if loco_key in self._locos:
             # Add info that overwriting
@@ -91,6 +98,23 @@ class LocoManager ():
             del self._locos[loco_key]
             self._snapshot = self._locos.copy()
 
+
+    def acquire_sent(self, loco_id, loco_ref):
+        """ A request has been sent to aquire so update the list of on track 
+        locos and update loco with status
+        Assumes that the loco_id is not already in use - which should
+        have been checked before issuing this. If not then it won't break
+        anything but can cause confusion to the operator as it may be 
+        controlling a different loco to the one shown in the client"""
+        self._on_track[loco_id] = loco_ref
+        self._locos[loco_ref].set_loco_acquire()
+
+    def acquire_confirm(self, loco_id, session_id, speeddir, functions):
+        # check it's on track, otherwise wasn't us
+        if loco_id not in self._on_track:
+            return
+        loco_ref = self._on_track[loco_id]
+        self._locos[loco_ref].acquired(session_id, speeddir, functions)
 
 
     ####################################################
@@ -132,6 +156,19 @@ class LocoManager ():
                 "title": "Invalid loco selected",
                 "description": "N/A"
             }
+
+    def on_track (self, loco_id, loco_ref) -> Literal["yes", "no", "inuse"]:
+        """ Is a loco on track - ie. it's ID is in use or has requested it's allocated
+        Returns "yes" for an exact match, "no" for id not in use, or "inuse" if the loco_id is in use
+        by a different loco
+        """
+        if loco_id not in self._on_track:
+            return "no"
+        elif self._on_track[loco_id] == loco_ref:
+            return "yes"
+        # If it exists, but does not match this loco then it's 
+        # in use by another loco
+        return "inuse"
 
 
 

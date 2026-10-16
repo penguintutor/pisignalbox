@@ -3,6 +3,7 @@ import queue
 import time
 from datetime import datetime
 from vlcbserver.vlcb_bridge import command_queue, add_sensor_update, cleanup_sensor_data
+from vlcbserver.railway.loco.locomanager import loco_manager
 
 
         
@@ -18,17 +19,27 @@ def run_connected_loop(usb, config):
                 # Read from message queue for any requests from flask
                 # get_nowait() pulls a command if one exists, otherwise throws queue.Empty
                 command_dict = command_queue.get_nowait()
-                if "vlcb" in command_dict:
-                    command = command_dict.get("vlcb")
-                    #print(f"[Hardware] Sending command to layout: {command}")
-                    # Send it to the serial port
-                    usb.send_data(command)
-                    # Also add it to the data - so other clients can also see it
-                    add_sensor_update(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ",o," + command)
                 
             except queue.Empty:
                 # No commands from Flask - break out of loop
                 break
+
+            # Send the command to the usb
+            if "vlcb" in command_dict:
+                command = command_dict.get("vlcb")
+                #print(f"[Hardware] Sending command to layout: {command}")
+                # Send it to the serial port
+                usb.send_data(command)
+                # Also add it to the data - so other clients can also see it
+                add_sensor_update(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ",o," + command)
+            
+            # If there a dev_type then pass the data to the appropriate handler
+            # so they can update their status
+            if "dev_type" in command_dict:
+                match command_dict["dev_type"]:
+                    case 'loco':
+                        _update_loco_status(command_dict)
+
             
             
         # in_data is a list of data
@@ -74,8 +85,18 @@ def _process_inbound_data(in_data):
         print(f"Warning incorrect data returned, expected {in_data[0]}, received {len(in_data) - 1}")
 
     # Process packet collection
+    # store raw data into sensor_update
+    # See vlcb_bridge for updating loco_manager etc.
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     for this_input in in_data[1:]:
         add_sensor_update(f"{timestamp},i,{this_input}")
         logging.debug(f"Received {this_input}")
+
+def _update_loco_status(command_dict):
+    if "action" in command_dict:
+        match command_dict["action"]:
+            case "acquire":
+                # Inform the loco_manager
+                loco_manager.acquire_sent(command_dict["loco_id"], command_dict["loco_ref"])
+
             

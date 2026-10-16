@@ -4,6 +4,7 @@ import threading
 import queue
 import logging
 from vlcbserver.extensions import vlcb
+from vlcbserver.railway.loco.locomanager import loco_manager
 from pyvlcb import VLCB, VLCBOpcode
 
 # Do we keep a local state of locos devices etc.
@@ -32,6 +33,10 @@ _sensor_data_index = 0 # index number for first entry in array
 # Mutex Lock used to ensure sensor_data and sensor_data_index are always updated together
 state_lock = threading.Lock()
 
+# Send data sends the packet - doesn't check it's a valid request
+# which should be handled by calling - eg. check loco aquired
+# before sending requests to it
+# This provides a way to pass it to the the mainthread
 def send_data(command: dict | str):
     """Called by Flask routes to queue a command for the hardware.
     Can handle a single string command, or a dict
@@ -117,7 +122,8 @@ def _update_local_state(item):
             data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
             # Session,AddrHigh_AddrLow,SpeedDir,Fn1,Fn2,Fn3'
             loco_id = data_entry['AddrHigh_AddrLow'] & 0x3FFF
-            data_values = {
+            # These are the data values returned:
+            """ Eg data_values = {
                 'Loco_id': loco_id,
                 'Session': data_entry['Session'],
                 'Speeddir': data_entry['SpeedDir'],
@@ -126,5 +132,9 @@ def _update_local_state(item):
                 'Fn3': data_entry['Fn3'],
                 'Status': "on"
                 }
-    
-    print (f"vlcb_bridge: VLCB Entry {vlcb_entry}, op_code {ret_opcode}")
+                """
+            functions = [data_entry['Fn1'], data_entry['Fn2'], data_entry['Fn3']]
+            loco_manager.acquire_confirm(loco_id, data_entry['Session'], data_entry['SpeedDir'], functions)
+
+    # Uncomment for the raw data received from USB - very noisy!
+    #print (f"vlcb_bridge: VLCB Entry {vlcb_entry}, op_code {ret_opcode}")

@@ -116,18 +116,26 @@ def acquire():
     # If already acquired then no action required
     if loco.is_acquired():
         return jsonify({"status": "acquired"})
+
+    # Also check if the loco is already in use / "on track"
+    # Just need to check for a "inuse" as send command will put it
+    # on track if not already
+    if loco_manager.on_track(loco.loco_id, loco_ref) == "inuse":
+        # It's in use so cannot use this loco
+        return jsonify({"status": "duplicate"})
     
     #print (f"Acquiring loco {loco_ref}, {mode}")
     # Create an acquire request
     vlcb_cmd = vlcb.allocate_loco(loco.loco_id)
-    send_data(vlcb_cmd)
-
-    # Todo
-    # If in use then 
-    # return jsonify({"status": "in_use"})
-    # If a duplicate loco_id (need to check for this)
-    # return jsonify({"status": "duplicate"})
-
+    send_data(
+        {
+            'vlcb': vlcb_cmd,
+            'dev_type': "loco",
+            'action': "acquire",
+            'loco_id': loco.loco_id,
+            'loco_ref': loco_ref
+        }
+    )
 
     return jsonify({"status": "acquiring"})
 

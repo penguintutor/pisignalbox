@@ -20,7 +20,7 @@ class Loco:
         # If it's "controller" then can prompt the user whether to steal
         # If it's "manual" or "automate" then ignore
         self.acquired_by = ""   
-        # The GUI uses loco_id as it uses index positions
+        # Loco ID is the dcc ID - how we communicate with it
         self.loco_id = loco_id
         # The web app uses loco_ref which is filename (without .json)
         self.loco_ref = loco_ref
@@ -59,6 +59,9 @@ class Loco:
 
     def get_session (self):
         return self.session
+
+    def set_loco_acquire (self):
+        self.status = "rloc"
 
     def acquired (self, session, speeddir, functions):
         self.session = session
