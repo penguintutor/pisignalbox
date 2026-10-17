@@ -97,7 +97,7 @@ class LocoManager ():
     # Adds a basic loco - with default values - just id is configured
     def add_loco_basic (self, loco_id):
         # loco_id and loco_ref are the same in a basic
-        if loco_id in self._locos.basic:
+        if loco_id in self._locos_basic:
             logger.info("Duplicate basic loco found - skipping")
         self._locos_basic[loco_id] = Loco(loco_id, loco_id)
 
@@ -129,6 +129,11 @@ class LocoManager ():
         controlling a different loco to the one shown in the client"""
         self._on_track[loco_id] = loco_ref
         self._locos[loco_ref].set_loco_acquire()
+        # Also check with basic if it's already acquired - in which case we can set this as aquired as automatically shared
+        if self.is_acquired_basic(loco_id):
+            # get the details needed
+            acquire_data = self._locos_basic['loco_id'].get_acquire_status()
+            self.acquire_confirm(loco_id, *acquire_data)
 
 
     def acquire_sent_basic (self, loco_id):
@@ -138,16 +143,23 @@ class LocoManager ():
         self.add_loco_basic(loco_id)
         self._on_track_basic[loco_id] = loco_id
         self._locos_basic[loco_id].set_loco_acquire()
+        # Check to see if aquired in web app in which case set acquired here
+        if loco_id in self._on_track:
+            loco_ref = self._on_track.get(loco_id)
+            if self._locos[loco_ref].is_acquired():
+                acquire_data = self._locos[loco_ref].get_acquire_status()
+                self.acquire_confirm(loco_id, *acquire_data)
 
 
     def acquire_confirm(self, loco_id, session_id, speeddir, functions):
+        """ Acquire received set loco to acquired"""
         # check it's on track
         if loco_id in self._on_track:
             loco_ref = self._on_track[loco_id]
             self._locos[loco_ref].acquired(session_id, speeddir, functions)
         # and/or it's client managed
         if loco_id in self._on_track_basic:
-            self._locos[loco_id].acquired(session_id, speeddir, functions)
+            self._locos_basic[loco_id].acquired(session_id, speeddir, functions)
 
 
     def get_active_sessions_mainthread(self):
@@ -203,6 +215,13 @@ class LocoManager ():
     def get_loco_basic (self, loco_id):
         return self._locos_basic.get(loco_id, None)
 
+    # check if a loco_id is acquired as basic
+    def is_acquired_basic (self, loco_id):
+        if loco_id in self._locos_basic:
+            return self._locos_basic[loco_id].is_acquired()
+        else:
+            return False
+
 
     def get_loco_details_dict (self, loco_id):
         """ get details for specified loco - returns in dict format
@@ -218,18 +237,35 @@ class LocoManager ():
                 "description": "N/A"
             }
 
-    def on_track (self, loco_id, loco_ref) -> Literal["yes", "no", "inuse"]:
+    def on_track (self, loco_id, loco_ref=None) -> Literal["yes", "no", "inuse", "basic"]:
         """ Is a loco on track - ie. it's ID is in use or has requested it's allocated
-        Returns "yes" for an exact match, "no" for id not in use, or "inuse" if the loco_id is in use
-        by a different loco
+        Returns "yes" for an exact match, "no" for id not in use, "inuse" if the loco_id is in use
+        by a different loco, or basic if just allocated to a basic
         """
-        if loco_id not in self._on_track:
-            return "no"
-        elif self._on_track[loco_id] == loco_ref:
-            return "yes"
-        # If it exists, but does not match this loco then it's 
-        # in use by another loco
-        return "inuse"
+        """ if loco_ref = None then checking for basic only. "yes" if it's in basic list, 
+        "inuse" if it's allocated but not as a basic, "no" if it's not in use as any
+        """
+        # Web app loco
+        if loco_ref:
+            if loco_id not in self._on_track:
+                # check if it's a basic 
+                if loco_id in self._on_track_basic:
+                    return "basic"
+                # Neither allocated or basic
+                return "no"
+            elif self._on_track[loco_id] == loco_ref:
+                return "yes"
+            # If it exists, but does not match this loco then it's 
+            # in use by another loco
+            return "inuse"
+        # Basic loco
+        else:
+            if loco_id in self._on_track_basic:
+                return "yes"
+            elif loco_id in self.on_track:
+                return "inuse"
+            else:
+                return "no"
 
 
 

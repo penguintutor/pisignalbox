@@ -345,6 +345,11 @@ class Loco:
             return None
         #print (f"Returning {byte1}, {byte2}")
         return [byte1, byte2]
+
+
+    def get_acquire_status (self):
+        # returns tuple with session_id, speeddir, functions
+        return (self.session, self.get_speeddir(), self.get_functions())
     
     # Return the loco data which is already a dict
     def to_dict (self):

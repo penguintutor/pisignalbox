@@ -154,22 +154,32 @@ def acquire():
     # Also check if the loco is already in use / "on track"
     # Just need to check for a "inuse" as send command will put it
     # on track if not already
-    if loco_manager.on_track(loco.loco_id, loco_ref) == "inuse":
-        # It's in use so cannot use this loco
-        return jsonify({"status": "duplicate"})
+    loco_status = loco_manager.on_track(loco.loco_id, loco_ref) 
+
+    # Build the send_data request - as likely need to issue acquire
+    # No vlcb string - that's only added if needed
+    acquire_data = {
+        'dev_type': "loco",
+        'action': "acquire",
+        'loco_id': loco.loco_id,
+        'loco_ref': loco_ref
+    }
     
+    if loco_status == "inuse":
+        # It's in use through web app so cannot use this loco
+        return jsonify({"status": "duplicate"})
+    elif loco_status == "basic":
+        # if it's already acquired as a basic then we send request without vlcb to allocate internally
+        if loco_manager.is_acquired_basic(loco.loco_id):
+            send_data (acquire_data)
+
+    # Reach here then it's not aquired and should send the actual vlcb acquire command
+
     #print (f"Acquiring loco {loco_ref}, {mode}")
     # Create an acquire request
     vlcb_cmd = vlcb.allocate_loco(loco.loco_id)
-    send_data(
-        {
-            'vlcb': vlcb_cmd,
-            'dev_type': "loco",
-            'action': "acquire",
-            'loco_id': loco.loco_id,
-            'loco_ref': loco_ref
-        }
-    )
+    acquire_data['vlcb'] = vlcb_cmd
+    send_data(acquire_data)
 
     return jsonify({"status": "acquiring"})
 
@@ -213,7 +223,11 @@ def client_acquire():
     # Try JSON body first (for POST fetch requests)
     data = request.get_json(silent=True) or {}
     # Check JSON first, then fall back to request.values (covers GET)
-    loco_id = data.get("loco_id") or request.values.get("loco_id")
+    loco_id_str = data.get("loco_id") or request.values.get("loco_id")
+    try:
+        loco_id = int(loco_id_str)
+    except Exception:
+        return "Error - Invalid loco_id", 400
     # format defaults to json 
     ret_format = data.get("format") or request.values.get("format", "json")
 

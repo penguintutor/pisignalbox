@@ -144,10 +144,11 @@ To run the tests change to the tests directory and run
 
 # Features / limitations
 
-All requests are sent to a message queue, so there may be a short delay in them being actioned. This should not be noticeable
-unless there are a lot of updates in progress.
+All requests are sent to a message queue, so there may be a short delay in them being actioned. This should not be noticeable unless there are a lot of updates in progress.
 
 For loco control the dial shows the desired speed, the LCD display shows the value provided in the last update
+
+When multiple devices try and control the same loco (eg. Web App, GUI App and API) then they will all share control of the Loco.
 
 # Updates
 

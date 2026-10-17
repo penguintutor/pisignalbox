@@ -71,8 +71,11 @@ class ApiHandler(QObject):
             loco_id = event.get_loco_id()
             command = event.get_command()
             if command == "acquire":
+                # Todo: Replace with new loco api
                 self.start_request(self.api.vlcb.allocate_loco(loco_id))
-            # Allow share or steal
+            # Allow share or stealmand to prepend with - eg. send (for cbus) or server etc.
+    # comma is added automatically
+    # set to "" if already formatt
             elif command == "share":
                 self.start_request(self.vlcb.share_loco(loco_id))
             elif command == "steal":
@@ -124,6 +127,9 @@ class ApiHandler(QObject):
     # comma is added automatically
     # set to "" if already formatted
     # Adding priority pushes to front of queue
+    # request is added to the send_queue as a string 
+    # when picked up by thread_getupdate() then as a string it's 
+    # treated as a vlcb packet
     def start_request (self, request, type="send", priority=False):
         # add type to request
         # Priority ignores list length and just inserts at front
@@ -134,6 +140,21 @@ class ApiHandler(QObject):
         if len(self.send_queue) > 10:
             return False
         self.send_queue.append(request)
+        return True
+
+    # Like start_request but designed for the new style server api rules
+    # Instead of forming the raw vlcb packet sends request to the api 
+    # which performs the appropriate action
+    # Allows for server intelligence rather than dumb packet forwarding
+    # When data is added to the send_queue it's sent as a dict so when
+    # thread_getupdate() receives it then it knows it should use the new api
+    def start_api_request (self, data_dict: dict):
+        if "priority" in data_dict and data_dict["priority"] == True:
+            self.send_queu.insert(0, data_dict)
+        # only add to the list if <= 10 items already
+        if len(self.send_queue) > 10:
+            return False
+        self.send_queue.append(data_dict)
         return True
 
         
@@ -169,7 +190,20 @@ class ApiHandler(QObject):
         # see if there is a specific request
         request = self.get_request()
         if request != False:
-            response = self.server.send (request)
+
+            # if it's a dict then use new api send commands
+            if isinstance(request, dict):
+                match request.get("request_type"):
+                    case "loco":
+                        response = self.server.send_loco(request)
+                    case _:
+                        # default - if request_type not recognised
+                        raise TypeError(f"Expected dict with request_type in {request}")
+
+            elif isinstance(request, str):
+                response = self.server.send (request)
+            
+            
             if response == None:
                 self.update_in_progress = False
                 self.status = "Not connected"

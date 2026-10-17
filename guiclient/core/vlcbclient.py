@@ -69,19 +69,34 @@ class VLCBClient():
         return False
 
     # Uses new "unamnaged loco api"
-    def send_loco (self, cmd, loco_id, data=None):
+    # Takes a dict with "request_type" == "loco"
+
+    # Typial data_dict keys 
+    # "request_type" = loco
+    # "cmd" (eg. acquire)
+    # loco_id / session_id
+    # optional speeddir etc....
+
+    def send_loco (self, data_dict):
+        # check that it is a loco command 
+        if "request_type" not in data_dict or data_dict["request_type"]!= "loco":
+            logger.debug("Invalid request")
+            # Returns False - if return None then interpretted as disconnected
+            return False
         
         # Note that this adds the api prefix to act as an api
         api_string = f"{self.url}api/loco/client"
 
-        match cmd:
+        match data_dict.get("cmd"):
             case "acquire":
-                request_string = f"{api_string}/acquire?loco_id={loco_id}&format=txt"
+                loco_id = data_dict.get("loco_id")
+                if loco_id > 0: 
+                    request_string = f"{api_string}/acquire?loco_id={loco_id}&format=txt"
 
 
         # if request_string not set then nothing to send
         if request_string == "":
-            logger.debug(f"Unknown loco command {cmd}")
+            logger.debug(f"Unknown loco command {data_dict['cmd']}")
             return False
 
         

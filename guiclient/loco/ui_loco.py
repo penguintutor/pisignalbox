@@ -93,7 +93,14 @@ class UILocoMixin:
         else:
             self.ui.locoInfoText.setText("")
 
-        self.api.start_request(self.api.vlcb.allocate_loco(self.control_loco.get_id()))
+        # Updated to use new loco client api
+        #self.api.start_request(self.api.vlcb.allocate_loco(self.control_loco.get_id()))
+        data_dict = {
+            "request_type": "loco",
+            "cmd": "acquire",
+            "loco_id": self.control_loco.get_id()
+        }
+        self.api.start_api_request(data_dict)
         self.control_loco.set_status('rloc')
 
         # Update the functions menu
@@ -376,7 +383,14 @@ class UILocoMixin:
         """
         print(f"Acquiring locomotive: {loco.get_display_name()}")
         # Acquire loco
-        self.api.start_request(self.api.vlcb.allocate_loco(loco.loco_id))
+        # self.api.start_request(self.api.vlcb.allocate_loco(loco.loco_id))
+        # Using new api format
+        data_dict = {
+            "request_type": "loco",
+            "cmd": "acquire",
+            "loco_id": loco.loco_id
+        }
+        self.api.start_api_request(data_dict)
         loco.set_status('rloc', "controller")
 
 

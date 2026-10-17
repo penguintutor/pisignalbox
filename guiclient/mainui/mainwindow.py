@@ -448,6 +448,8 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
         # If locotaken then launch steal_dialog
         elif app_event.action == "locotaken":
             # Only action if it is the controlloco that is taken
+            # Todo - note that this means won't get warning if from 
+            # locos tab instead of Controller
             loco_id = app_event.get_loco_id()
             if loco_id == None:
                 return
