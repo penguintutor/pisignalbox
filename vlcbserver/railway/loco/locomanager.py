@@ -131,9 +131,13 @@ class LocoManager ():
         self._locos[loco_ref].set_loco_acquire()
         # Also check with basic if it's already acquired - in which case we can set this as aquired as automatically shared
         if self.is_acquired_basic(loco_id):
+            #print (f"LocoManager - {self._locos_basic}")
             # get the details needed
-            acquire_data = self._locos_basic['loco_id'].get_acquire_status()
-            self.acquire_confirm(loco_id, *acquire_data)
+            acquire_data = self._locos_basic[loco_id].get_acquire_status()
+            #print (f"Acquire data {acquire_data}")
+            session_id, speeddir, functions = acquire_data
+            #print (f"Details: {session_id}, {speeddir}, {functions}")
+            self.acquire_confirm(loco_id, session_id, speeddir, functions)
 
 
     def acquire_sent_basic (self, loco_id):
@@ -266,6 +270,42 @@ class LocoManager ():
                 return "inuse"
             else:
                 return "no"
+
+
+
+    def get_locos_status_web (self):
+        """ Return all locos and what their web app status is"""
+        # Create a thread safe copy of the list of locos to iterate over
+        loco_list = self._locos.copy()
+        available_locos = []
+
+        for loco_ref in loco_list:
+            loco = self._locos[loco_ref]
+            loco_id = loco.get_id()
+            available_locos.append({
+                "id": loco_id,
+                "name": loco.get_display_name(),
+                "image": loco.get_image_filename(),
+                "on_track": loco_id in self._on_track,
+                "acquired": loco.is_acquired(),
+                "shared": loco_id in self._on_track_basic   # Shared is if also in API
+            })
+        return available_locos
+
+    def get_locos_status_basic (self):
+        api_locos = []
+        for loco_id in self._on_track_basic:
+            loco = self._locos_basic[loco_id]
+            api_locos.append({
+                "id": loco_id,
+                "on_track": True,
+                "acquired": loco.is_acquired(),
+                "shared": loco_id in self._on_track        # Shared if web has same id on track
+            })
+        return api_locos
+
+
+
 
 
 

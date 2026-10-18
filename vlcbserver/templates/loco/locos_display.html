@@ -1,0 +1,144 @@
+<div id="locos-card" 
+     class="card p-4 w-100 shadow-sm" 
+     hx-get="{{ url_for('loco.refresh_locos') }}"
+     hx-trigger="every 5s"
+     hx-vals='{"state_hash": "{{ state_hash }}"}'
+     hx-target="this" 
+     hx-swap="outerHTML">
+     
+    <div class="card-body">
+        
+        <!-- Section 1: Available Locomotives -->
+        <h3 class="card-title mb-4 border-bottom pb-2">Available Locomotives</h3>
+        
+        <div class="table-responsive mb-5">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col" style="width: 80px;">ID</th>
+                        <th scope="col" style="width: 100px;">Image</th>
+                        <th scope="col">Name</th>
+                        <th scope="col" class="text-center">On Track</th>
+                        <th scope="col" class="text-center">Acquired</th>
+                        <th scope="col" class="text-center">Shared</th>
+                        <!-- Optional future column for actions -->
+                        <!-- <th scope="col" class="text-end">Action</th> -->
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for loco in available_locos %}
+                    <tr>
+                        <td class="fw-bold font-monospace">{{ loco.id }}</td>
+                        <td>
+                            {% if loco.image %}
+                                <img src="{{ url_for('api.loco.image', filename=loco.image) }}" 
+                                     alt="{{ loco.name }}" 
+                                     class="img-thumbnail" 
+                                     style="width: 60px; height: 40px; object-fit: cover;">
+                            {% else %}
+                                <span class="badge bg-light text-muted border">No Image</span>
+                            {% endif %}
+                        </td>
+                        <td class="fw-semibold">{{ loco.name }}</td>
+                        <td class="text-center">
+                            {% if loco.on_track %}
+                                <span class="badge bg-success">On Track</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Off Track</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if loco.acquired %}
+                                <span class="badge bg-primary">Acquired</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Released</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if loco.shared %}
+                                <span class="badge bg-info text-dark">Shared</span>
+                            {% else %}
+                                <span class="badge bg-secondary">No</span>
+                            {% endif %}
+                        </td>
+                        <!-- Future Acquire Button Example:
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-outline-primary"
+                                    hx-post="{{ url_for('api.loco.acquire', loco_id=loco.id) }}">
+                                Acquire
+                            </button>
+                        </td>
+                        -->
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted fst-italic py-3">
+                            No available locomotives configured.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Section 2: API Connected Locomotives -->
+        <h3 class="card-title mb-4 border-bottom pb-2">API Connected Locomotives</h3>
+        
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th scope="col" style="width: 120px;">Loco ID</th>
+                        <th scope="col" class="text-center">On Track Status</th>
+                        <th scope="col" class="text-center">Acquired</th>
+                        <th scope="col" class="text-center">Shared</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for api_loco in api_locos %}
+                    <tr>
+                        <td class="fw-bold font-monospace">{{ api_loco.id }}</td>
+                        <td class="text-center">
+                            {% if api_loco.on_track %}
+                                <span class="badge bg-success">On Track</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Off Track</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if api_loco.acquired %}
+                                <span class="badge bg-primary">Acquired</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Released</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            {% if api_loco.shared %}
+                                <span class="badge bg-info text-dark">Shared</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Exclusive</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="4" class="text-center text-muted fst-italic py-3">
+                            No locomotives currently connected via API.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Manual Refresh Button (Forces refresh by omitting state_hash via hx-vals='{}') -->
+        <div class="mt-4 pt-2 border-top d-flex gap-2">
+            <button class="btn btn-primary px-4" 
+                    hx-get="{{ url_for('loco.refresh_locos') }}"
+                    hx-vals='{}'>
+                Refresh Status
+            </button>
+        </div>
+
+    </div>
+</div>

@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="appsettings-panel">
+    <div class="appsettings-header">
+        <div>
+            <h2>Locomotive Management</h2>
+            <p class="appsettings-subtitle">View available locomotives and active API session statuses.</p>
+
+            <div id="locos-section">
+                {% include '/loco/locos_display.html' %}
+            </div>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}

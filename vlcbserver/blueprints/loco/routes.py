@@ -1,6 +1,8 @@
 import time
 import re
 import secrets
+import hashlib
+import json
 from flask import current_app, flash, request, session, redirect, render_template, url_for, abort, jsonify
 from flask_login import LoginManager, UserMixin, login_user, login_required, current_user, logout_user
 from urllib.parse import urlparse
@@ -35,11 +37,50 @@ def check_operator_access():
         flash ("<p>You require operator permission to be able to access this feature.</p><p>Please contact an administrator to request additional permissions.</p>")
         return redirect(url_for('home.index'))
 
+# Currently the default page is straight to the controller
 @loco_blueprint.route('/')
 def dashboard():
     locos = loco_manager.get_list_loco_names()
-    return render_template('loco/index.html', locomotives=locos)
+    return render_template('loco/controller.html', locomotives=locos)
 
 
 
+""" Display - holds hash of page sent to only refresh when there are changes """
+def get_loco_context():
+    """Fetches loco lists and calculates a deterministic state hash."""
+    available_locos = loco_manager.get_locos_status_web()
+
+    api_locos = loco_manager.get_locos_status_basic()
+
+    # Convert to JSON string to hash the current state
+    # (If using objects/dataclasses, convert to dicts or tuples first)
+    state_str = json.dumps({"avail": available_locos, "api": api_locos}, sort_keys=True)
+    state_hash = hashlib.md5(state_str.encode('utf-8')).hexdigest()
+
+    return {
+        "available_locos": available_locos,
+        "api_locos": api_locos,
+        "state_hash": state_hash
+    }
+
+
+
+@loco_blueprint.route('/displaylocos')
+def list_locos():
+    """Initial full page load."""
+    context = get_loco_context()
+    return render_template('/loco/locos.html', **context)
+
+
+@loco_blueprint.route('/refreshlocos')
+def refresh_locos():
+    """HTMX polling and manual refresh endpoint."""
+    context = get_loco_context()
+    
+    # Compare client's current DOM hash with the server's current state hash
+    client_hash = request.args.get('state_hash')
+    if client_hash and client_hash == context['state_hash']:
+        return '', 204  # No changes -> HTMX leaves DOM completely untouched
+
+    return render_template('/loco/locos_display.html', **context)
 

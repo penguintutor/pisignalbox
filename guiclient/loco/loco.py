@@ -150,14 +150,31 @@ class Loco:
         self.function_status = [0] * num_functions
     
     def get_functions (self):
-        f_titles = []
-        if "functions" not in self.loco_data.keys():
-            # If no functions defined then return some default ones
-            return ["F0", "F1", "F2", "F3", "F4" ]
-        for this_function in self.loco_data["functions"]:
-            # Function titles includes Fx and text
-            f_titles.append(f"{this_function[0]} - {this_function[1]}")
-        return f_titles
+           """ Returns functions by title"""
+           f_titles = []
+           if "functions" not in self.loco_data.keys():
+               # If no functions defined then provide some default
+               return ["F0","F1","F2", "F3", "F4", "F5" ]
+           for this_function in self.loco_data["functions"]:
+               # Function titles includes Fx and text
+               f_titles.append(f"{this_function[0]} - {this_function[1]}")
+           return f_titles
+   
+       
+    def get_function_bytes(self):
+        data_out = [0, 0, 0]
+        mask = [0b0001, 0b0010, 0b0100, 0b1000]
+        
+        # Handle the upper nibble bit stored at index 0
+        if self.function_status[0]:
+            data_out[0] |= 0b10000
+            
+        for i in range(0, 3):
+            for j in range(0, 4):
+                if self.function_status[(i * 4) + j + 1]:
+                    data_out[i] |= mask[j]
+                    
+        return data_out[0], data_out[1], data_out[2]
     
     # Returns status (ie. 1 on / 0 off) and type "toggle" vs "latch"
     def get_function_status (self, func_num):
