@@ -55,7 +55,8 @@ def get_loco_context():
     # Convert to JSON string to hash the current state
     # (If using objects/dataclasses, convert to dicts or tuples first)
     state_str = json.dumps({"avail": available_locos, "api": api_locos}, sort_keys=True)
-    state_hash = hashlib.md5(state_str.encode('utf-8')).hexdigest()
+    # The hash is just used to check whether to refresh the page - not for security
+    state_hash = hashlib.md5(state_str.encode('utf-8'), usedforsecurity=False).hexdigest()
 
     return {
         "available_locos": available_locos,

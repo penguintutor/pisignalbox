@@ -75,47 +75,35 @@ def speeddir():
     speed = speed_int(speed_str)
     direction = data.get("direction") or request.values.get("direction")
 
-    if not loco_ref:
-        return jsonify({"error": "Missing loco ref"}), 400
-
-    # Get the loco object
-    loco = loco_manager.get_loco_by_ref(loco_ref)
-    if not loco:
-        return jsonify({"error": "Invalid loco ref"}), 400
-
-    # Make sure we have a session - and that's needed for the command
-    session = loco.get_session()
-    if session == 0:
-        return jsonify({"error": "No loco session"}), 400
-
-    speed_dir = to_speeddir(speed, direction)
-
-    vlcb_cmd = vlcb.loco_speeddir(session, speed_dir)
-    send_data(
-        {
-            'vlcb': vlcb_cmd,
-            'dev_type': "loco",
-            'action': "speeddir",
-            'loco_ref': loco_ref,
-            'speeddir': speed_dir
-        }
-    )
-    # Return success just means successfully sent to the controller
-    # Does not guarentee the loco received it
-    return jsonify({"status": "success"})
+    return set_speed_dir(loco_ref, speed, direction)
 
 
-# Todo implement this
 @api_loco_bp.route('/stop', methods=['GET', 'POST'])
 def stop():
-    # Return success just means successfully sent to the controller
-    # Does not guarentee the loco received it
-    return jsonify({"status": "success"})
+    # This is same as speeddir - but we know speed = 0
+    # Use direction = forward
+    # Try JSON body first (for POST fetch requests)
+    data = request.get_json(silent=True) or {}
+    # Check JSON first, then fall back to request.values (covers GET)
+    loco_ref = data.get("loco_ref") or request.values.get("loco_ref")
+
+    return set_speed_dr(loco_ref, 0, "forward")
 
 
 # Todo implement this
 @api_loco_bp.route('/stop_all', methods=['GET', 'POST'])
 def stop_all():
+    # Return success just means successfully sent to the controller
+    # Does not guarentee the loco received it
+
+    vlcb_cmd = vlcb.loco_stop_all()
+    send_data(
+        {
+            'vlcb': vlcb_cmd,
+            'dev_type': "loco",
+            'action': "stop_all"
+        }
+    )
     # Return success just means successfully sent to the controller
     # Does not guarentee the loco received it
     return jsonify({"status": "success"})
@@ -272,6 +260,41 @@ def client_acquire():
 # helper functions
 # ##############################################
 
+# helper - avoid duplicate code as used by multiple methods
+def set_speed_dir(loco_ref, speed, direction):
+
+    if not loco_ref:
+        return jsonify({"error": "Missing loco ref"}), 400
+
+    # Get the loco object
+    loco = loco_manager.get_loco_by_ref(loco_ref)
+    if not loco:
+        return jsonify({"error": "Invalid loco ref"}), 400
+
+    # Make sure we have a session - and that's needed for the command
+    session = loco.get_session()
+    if session == 0:
+        return jsonify({"error": "No loco session"}), 400
+
+    speed_dir = to_speeddir(speed, direction)
+
+    vlcb_cmd = vlcb.loco_speeddir(session, speed_dir)
+    send_data(
+        {
+            'vlcb': vlcb_cmd,
+            'dev_type': "loco",
+            'action': "speeddir",
+            'loco_ref': loco_ref,
+            'speeddir': speed_dir
+        }
+    )
+    # Return success just means successfully sent to the controller
+    # Does not guarentee the loco received it
+    return jsonify({"status": "success"})
+
+
+# Converts speed and direction to byte for speeddir command
+# spped should be int, direction is string eg. "forward" / "reverse"
 def to_speeddir (speed, dir):
     # Speed 1 = Emergency stop skip
     if speed == 1:

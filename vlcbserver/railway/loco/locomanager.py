@@ -167,7 +167,7 @@ class LocoManager ():
 
 
     def get_active_sessions_mainthread(self):
-        """ USE on main thread
+        """ USE on main thread - for keep alives
         Uses raw entries so doesn't guarentee thread safe
         Gives good performance - for regular keepalives
         - Also includes basic locos (ie. client gui / controller)
@@ -188,6 +188,17 @@ class LocoManager ():
             if session != 0 and session not in session_list:
                 session_list.append(session)
         return session_list
+
+    # Sets all loco speeds to 0
+    # Doesn't actually send any commands - that is done before calling this
+    # but is triggered when an emergency stop is triggered so that all 
+    # locos know thye are stopped
+    # Only do for locos that are 
+    def stop_all(self):
+        # All main locos
+        #set_stop 
+        # Todo - implement this
+        pass
 
     ####################################################
     # Public - read / thread safe updates vi mesg queue
@@ -303,9 +314,6 @@ class LocoManager ():
                 "shared": loco_id in self._on_track        # Shared if web has same id on track
             })
         return api_locos
-
-
-
 
 
 

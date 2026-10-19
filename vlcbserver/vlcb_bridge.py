@@ -1,4 +1,5 @@
 """ Provides a command queue for flask to mainthread (usb / hardware)
+Packets sent to the queue are read by run_connected_loop
 """
 import threading
 import queue

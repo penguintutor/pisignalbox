@@ -42,11 +42,12 @@ def run_connected_loop(usb, config):
                 #print(f"[Hardware] Sending command to layout: {command}")
                 # Send it to the serial port
                 usb.send_data(command)
-                # Also add it to the data - so other clients can also see it
+                # Also add it to the data - so run_connected_loopother clients can also see it
                 add_sensor_update(datetime.now().strftime('%Y-%m-%d %H:%M:%S') + ",o," + command)
-            
+
             # If there a dev_type then pass the data to the appropriate handler
             # so they can update their status
+            # Eg. so we can track the status of acquired locos
             if "dev_type" in command_dict:
                 match command_dict["dev_type"]:
                     case 'loco':
@@ -114,6 +115,8 @@ def _update_loco_status(command_dict):
                 loco_manager.acquire_sent(command_dict["loco_id"], command_dict["loco_ref"])
             case "acquire_basic":
                 loco_manager.acquire_sent_basic(command_dict["loco_id"])
+            case "stop_all":
+                loco_manager.stop_all()
 
 
 # Send a kalive packet for all active locos    
