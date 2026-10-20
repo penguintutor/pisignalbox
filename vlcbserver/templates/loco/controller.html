@@ -345,7 +345,7 @@ function attemptAcquire(locoRef, mode, retryCount = 0) {
     btnStop.addEventListener('click', function() {
         speedSlider.value = 0;
         speedDisplay.innerText = "00";
-        callAPI('{{ url_for("api.loco.stop") }}', { id: currentLocoRef });
+        callAPI('{{ url_for("api.loco.stop") }}', { loco_ref: currentLocoRef });
     });
 
     btnStopAll.addEventListener('click', function() {

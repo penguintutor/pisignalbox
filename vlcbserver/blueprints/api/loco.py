@@ -87,7 +87,7 @@ def stop():
     # Check JSON first, then fall back to request.values (covers GET)
     loco_ref = data.get("loco_ref") or request.values.get("loco_ref")
 
-    return set_speed_dr(loco_ref, 0, "forward")
+    return set_speed_dir(loco_ref, 0, "forward")
 
 
 # Todo implement this
