@@ -118,7 +118,7 @@ def _update_local_state(item):
 
     # Look for op-codes which indicate a state change
     match ret_opcode:
-        # Indicates allocation of loco 
+        # Allocation of loco 
         case 'PLOC':
             data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
             # Session,AddrHigh_AddrLow,SpeedDir,Fn1,Fn2,Fn3'
@@ -136,6 +136,14 @@ def _update_local_state(item):
                 """
             functions = [data_entry['Fn1'], data_entry['Fn2'], data_entry['Fn3']]
             loco_manager.acquire_confirm(loco_id, data_entry['Session'], data_entry['SpeedDir'], functions)
+        # Loco Error - eg. loco taken
+        # Pass on to loco_manager and let that deal with 
+        case 'ERR':
+            loco_manager.handle_error(data_entry)
+        # Emergency Stop
+        case ' RESTP': 
+            loco_manager.emergency_stop_received()
+
 
     # Uncomment for the raw data received from USB - very noisy!
     #print (f"vlcb_bridge: VLCB Entry {vlcb_entry}, op_code {ret_opcode}")

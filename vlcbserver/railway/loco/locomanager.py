@@ -4,6 +4,8 @@ import json
 from flask import current_app
 import logging
 from typing import Literal
+from pyvlcb.utils import bytes_to_locoid, byte_to_sessionid
+from vlcbserver.constants import STEAL_SHARE_LOCO
 from vlcbserver.config import Config
 from vlcbserver.railway.loco.loco import Loco
 
@@ -42,6 +44,8 @@ class LocoManager ():
         # If from a client api (inc basic controller) then may not have an existing loco 
         # in which case it goes in here these use loco_id and stores in a temp loco
         # These are not accessed by most of the flask commands - only raw client instructions
+        # same as _on_track , but both key and value are identical - both loco_id
+        # as that is how they are stored in self._locos_basic and allows to be used the same as _on_track
         self._on_track_basic = {} 
         # As loco_id is known up front and unique the loco_ref is replaced with the loco_id
         # Note there can be a duplicate loco_id between _on_track and _on_track_basic
@@ -189,16 +193,30 @@ class LocoManager ():
                 session_list.append(session)
         return session_list
 
+
+    # If an emergency stop is seen then update appropriate locos
+    # Note it could be an emergency stop for just one loco
+    # which is speedchange but value 1 - in which case loco_id is required
+    # if set to None then stop all received
+    def emergency_stop_receieved(self, loco_id=None):
+        if loco_id == None:
+            self.stop_all(True)
+
     # Sets all loco speeds to 0
     # Doesn't actually send any commands - that is done before calling this
     # but is triggered when an emergency stop is triggered so that all 
-    # locos know thye are stopped
-    # Only do for locos that are 
-    def stop_all(self):
+    # locos know they are stopped
+    # Only do for locos that are "on track and allocated"
+    def stop_all(self, emergency=False):
+        # Send to both main locos and api locos 
+        # May send duplicates but only repeating same status
         # All main locos
-        #set_stop 
-        # Todo - implement this
-        pass
+        for loco_ref in self._on_track.values():
+            if self._locos[loco_ref].is_acquired():
+                self._locos[loco_ref].stop(emergency)
+        for loco_ref in self._on_track_basic.values():
+            if self._locos_basic[loco_ref].is_acquired():
+                self._locos_basic[loco_ref].stop(emergency)
 
     ####################################################
     # Public - read / thread safe updates vi mesg queue
@@ -315,6 +333,38 @@ class LocoManager ():
             })
         return api_locos
 
+    def handle_error(self, data_entry):
+        match data_entry['ErrCode']:
+            case 1:
+                loco_id = bytes_to_locoid(data_entry['Byte1'],data_entry['Byte2'])
+                logger.warning(f"Unable to acquire loco {loco_id} due to stack full")
+            case 2:
+                loco_id = bytes_to_locoid(data_entry['Byte1'],data_entry['Byte2'])
+                logger.warning(f"Loco taken {loco_id}")
+                self.handle_loco_taken(loco_id)
+            case 3:
+                session_id = byte_to_sessionid(data_entry['Byte1'])
+                logger.warning(f"Session {session_id} not present error {data_entry['Byte3']}")
+            case 4:
+                consist_id = byte_to_sessionid(data_entry['Byte1'])
+                logger.warning(f"Consist empty {consist_id} not present error {data_entry['Byte3']}")
+            case 5:                
+                session_id = byte_to_sessionid(data_entry['Byte1'])
+                logger.warning(f"Loco session {session_id} not found {data_entry['Byte3']}")
+            case 6:
+                logger.warning(f"Loco CAN Bus error {data_entry['Byte3']}")
+            case 7:
+                loco_id = bytes_to_locoid(data_entry['Byte1'],data_entry['Byte2'])
+                logger.warning(f"Invalid request for loco {loco_id} {data_entry['Byte3']}")
+            case 8:
+                # Eg. Loco stolen by another controller
+                session_id = byte_to_sessionid(data_entry['Byte1'])
+                logger.warning(f"Session {session_id} cancelled {data_entry['Byte3']}")
+
+    def handle_loco_taken(self, loco_id):
+        # Todo implement this for STEAL_SHARE_LOCO == "share"
+        # 
+        pass
 
 
 # Module level singleton

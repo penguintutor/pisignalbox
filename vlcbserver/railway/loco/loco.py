@@ -45,6 +45,15 @@ class Loco:
     def get_speed (self):
         return self.speed
 
+    # Sets the loco to stopped - ie. speed=0
+    # emergency argument is provided for future use if need to track emergency vs standard stop
+    def stop(self, _emergency=False):
+        # Just standard stop for now 
+        # Future: consider whether the web UI should say
+        # Emergency stop pressed etc.
+        self.speed = 0
+
+
     def set_status (self, value, acquired_by=""):
         """ set status - eg rloc if acquiring"""
         # acquired_by is optional - used if rloc, otherwise ignored

@@ -103,6 +103,9 @@ def _process_inbound_data(in_data):
     # See vlcb_bridge for updating loco_manager etc.
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     for this_input in in_data[1:]:
+        # Incoming packets are passe to vlcb_bridge
+        # which handles checking if it's a status update
+        # and updating internal status 
         add_sensor_update(f"{timestamp},i,{this_input}")
         logging.debug(f"Received {this_input}")
 
@@ -115,8 +118,15 @@ def _update_loco_status(command_dict):
                 loco_manager.acquire_sent(command_dict["loco_id"], command_dict["loco_ref"])
             case "acquire_basic":
                 loco_manager.acquire_sent_basic(command_dict["loco_id"])
-            case "stop_all":
-                loco_manager.stop_all()
+
+
+    """ The following are alternatives which are not implemented as not required
+    instead handled via other methods - but would allow additional options
+    "stop_all" - loco_manager.stop_all() - this is handled by mainthread picking up in 
+    vlcb_bridge _update_local_status
+    
+    """
+    
 
 
 # Send a kalive packet for all active locos    
