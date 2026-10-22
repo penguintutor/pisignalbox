@@ -7,6 +7,7 @@ from typing import Literal
 from pyvlcb.utils import bytes_to_locoid, byte_to_sessionid
 from vlcbserver.constants import STEAL_SHARE_LOCO
 from vlcbserver.config import Config
+from vlcbserver.extensions import vlcb
 from vlcbserver.railway.loco.loco import Loco
 
 logger = logging.getLogger(__name__)
@@ -124,7 +125,9 @@ class LocoManager ():
             self._snapshot = self._locos.copy()
 
 
-    def acquire_sent(self, loco_id, loco_ref):
+    # _type is optional - not yet implemented but could be used
+    # for different status messages
+    def acquire_sent(self, loco_id, loco_ref, _type="standard"):
         """ A request has been sent to aquire so update the list of on track 
         locos and update loco with status
         Assumes that the loco_id is not already in use - which should
@@ -144,7 +147,7 @@ class LocoManager ():
             self.acquire_confirm(loco_id, session_id, speeddir, functions)
 
 
-    def acquire_sent_basic (self, loco_id):
+    def acquire_sent_basic (self, loco_id, _type="standard"):
         " For unmanaged devices, create loco object and update to be acquire in progress"
         # create if required
         # No need to check if it already exists as it skips anyway
@@ -334,6 +337,12 @@ class LocoManager ():
         return api_locos
 
     def handle_error(self, data_entry):
+        # Mostly just logging at the moment - handles loco taken as can do 
+        # something about that
+        # If there is some further action needd (eg. send a response to CBUS)
+        # then that should be returned as a send_data dict
+        # Note don't attempt to send from loco_manager just return it to vlcb_bridge where the original
+        # request came from
         match data_entry['ErrCode']:
             case 1:
                 loco_id = bytes_to_locoid(data_entry['Byte1'],data_entry['Byte2'])
@@ -341,7 +350,7 @@ class LocoManager ():
             case 2:
                 loco_id = bytes_to_locoid(data_entry['Byte1'],data_entry['Byte2'])
                 logger.warning(f"Loco taken {loco_id}")
-                self.handle_loco_taken(loco_id)
+                return self.handle_loco_taken(loco_id)
             case 3:
                 session_id = byte_to_sessionid(data_entry['Byte1'])
                 logger.warning(f"Session {session_id} not present error {data_entry['Byte3']}")
@@ -362,9 +371,28 @@ class LocoManager ():
                 logger.warning(f"Session {session_id} cancelled {data_entry['Byte3']}")
 
     def handle_loco_taken(self, loco_id):
-        # Todo implement this for STEAL_SHARE_LOCO == "share"
-        # 
-        pass
+        # Default is to share as allows controller to continue as well
+        if STEAL_SHARE_LOCO == "share":
+            # Send a share request - although this is on the 
+            # main thread still use the normal send as that puts request on
+            # the queue
+            # if it's on_track then also add loco_ref
+            vlcb_cmd = vlcb.share_loco(loco_id)
+            return_dict = {
+                'vlcb': vlcb_cmd,
+                'dev_type': "loco",
+                'action': "acquire_share",
+                'loco_id': loco_id
+                }
+
+            if loco_id in self._on_track:
+                return_dict['loco_ref'] = self._on_track[loco_id]
+            # if it's basic then send back with no loco_ref
+            elif loco_id in self._on_track_basic:
+                return return_dict
+            # If not then not for us so ignore
+        return None
+
 
 
 # Module level singleton

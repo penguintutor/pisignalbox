@@ -117,6 +117,9 @@ def _update_local_state(item):
 
 
     # Look for op-codes which indicate a state change
+    # If a responding action is required then 
+    # response should be provided a dict which can be sent to send_data
+    response = None
     match ret_opcode:
         # Allocation of loco 
         case 'PLOC':
@@ -139,10 +142,16 @@ def _update_local_state(item):
         # Loco Error - eg. loco taken
         # Pass on to loco_manager and let that deal with 
         case 'ERR':
-            loco_manager.handle_error(data_entry)
+            data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
+            response = loco_manager.handle_error(data_entry)
         # Emergency Stop
         case ' RESTP': 
             loco_manager.emergency_stop_received()
+
+    # Check to see if there was a response from a handler
+    # If so then that needs to be sent back to the queue
+    if response:
+        send_data(response)
 
 
     # Uncomment for the raw data received from USB - very noisy!

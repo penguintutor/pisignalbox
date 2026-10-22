@@ -116,8 +116,18 @@ def _update_loco_status(command_dict):
             case "acquire":
                 # Inform the loco_manager
                 loco_manager.acquire_sent(command_dict["loco_id"], command_dict["loco_ref"])
+            case "acquire_share":
+                # This comes from a response to an error so loco_ref is not known
+                # First check in standard locos
+                loco_id = command_dict["loco_id"]
+                # If on_track (not basic) then loco_ref should be supplied
+                if "loco_ref" in command_dict:
+                    loco_manager.acquire_sent(loco_id, command_dict["loco_ref"], "share")    
+                # If not then it's a basic
+                    loco_manager.acquire_sent_basic(loco_id, "share")
             case "acquire_basic":
                 loco_manager.acquire_sent_basic(command_dict["loco_id"])
+            
 
 
     """ The following are alternatives which are not implemented as not required
