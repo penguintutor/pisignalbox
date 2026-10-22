@@ -5,6 +5,9 @@
 # Note due to url restrictions : and ; need to be encoded
 
 import urllib.request, urllib.parse
+from .eventbus import event_bus
+from events import LocoEvent, GuiEvent, AppEvent, DeviceEvent
+import json
 import logging
 
 logger = logging.getLogger(__name__)
@@ -91,7 +94,7 @@ class VLCBClient():
             case "acquire":
                 loco_id = data_dict.get("loco_id")
                 if loco_id > 0: 
-                    request_string = f"{api_string}/acquire?loco_id={loco_id}&format=txt"
+                    request_string = f"{api_string}/acquire?loco_id={loco_id}"
 
 
         # if request_string not set then nothing to send
@@ -126,9 +129,23 @@ class VLCBClient():
             logger.warning(f"Error sending via http, other error {e}")
             # None indicates not connected
             return None
-        if response[0:7] == "Success":
-            logger.debug(f"Send response received {response}")
-            return True
+        # unjson the response
+        try:
+            response_dict = json.loads(response)
+        except Exception as e:
+            logger.warning(f"Send loco returned none JSON format {e}")
+            return None
+        #print (f"VLCB Client - Response {response}")
+        match response_dict["status"]:
+            case "loco acquired":
+                event_bus.publish(LocoEvent('acquired', response_dict))
+                logger.debug(f"Loco acquired for {loco_id}")
+                return True
+            case "Acquiring":
+                logger.debug(f"Acquiring received for {loco_id}")
+                event_bus.publish(LocoEvent('acquiring', response_dict))
+                return True
+
         logger.debug(f"Message not working {response}")
         return False
     

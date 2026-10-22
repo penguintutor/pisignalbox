@@ -3,7 +3,7 @@
 # manages the logical state of locos
 import os
 import json
-from PySide6.QtCore import Qt, QObject, Signal, Slot
+from PySide6.QtCore import Qt, QObject, Signal, Slot, QTimer
 from PySide6.QtGui import QStandardItemModel, QStandardItem
 import logging
 from core import event_bus
@@ -15,6 +15,9 @@ from .locolist import LocoList
 from events import DeviceEvent, LocoEvent, AppEvent, GuiEvent, TimerEvent
 
 logger = logging.getLogger(__name__)
+
+# How  many times to attempt an acquire
+ACQUIRE_ATTEMPTS = 7
 
 # Many of the methods in there (particularly when related to self.locos)
 # are just used to hand off to the other class. This maintains loco_manager as
@@ -81,8 +84,38 @@ class LocoManager(QObject):
                         event.data.get('Speeddir'),
                         (event.data.get('Fn1'), event.data.get('Fn2'), event.data.get('Fn3'))
                     )
-        elif event.event_type == "ERR":
-            self.handle_error (event.data)
+        # New format
+        elif event.event_type == "acquired":
+            loco_id = event.data.get("loco_id")
+            for loco in self.locos.get_all_locos():
+                if loco_id == loco.loco_id:
+                    fn_bytes = event.data.get('function_bytes')
+                    loco.acquired(
+                        event.data.get('session'),
+                        event.data.get('speeddir'),
+                        (fn_bytes[0], fn_bytes[1], fn_bytes[2])
+                    )
+        elif event.event_type == "acquiring":
+            loco_id = event.data.get("loco_id")
+            for loco in self.locos.get_all_locos():
+                if loco_id == loco.loco_id:
+                    # Check how many times attempted
+                    if loco.acquiring() < ACQUIRE_ATTEMPTS:
+                        # Attempt again in 0.5 secs
+                        data_dict = {
+                            "request_type": "loco",
+                            "cmd": "acquire",
+                            "loco_id": loco_id
+                        }
+                        QTimer.singleShot(500, lambda: self.api.start_api_request(data_dict))
+                    else:
+                        loco.cancel_acquire()
+                    # Retry if appropriate
+                    # Todo here
+
+        ### Error handling disabled as now in new API
+        #elif event.event_type == "ERR":
+        #    self.handle_error (event.data)
 
     def loco_from_id (self, loco_id):
         for loco in self.locos.get_all_locos():

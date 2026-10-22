@@ -19,6 +19,8 @@ class Loco:
         # If it's "controller" then can prompt the user whether to steal
         # If it's "manual" or "automate" then ignore
         self.acquired_by = ""   
+        # Try how many times we have attempted to acquire
+        self.acquire_attempts = 0
         self.loco_id = loco_id
         self.loco_name = ""	# This needs to be unique (no checking so if not then the first will be returned)
         # Future - look to remove this unique dependency, perhaps use filename instead
@@ -31,6 +33,16 @@ class Loco:
         # Set filename to allow it to be saved - must be full path - this is unique
         # . review alternatives to using full path - although doesn't cause any issues with portability as not saved within file
         self.filename = filename
+
+    # Call each attempt when trying to acquire
+    # returns the number of attempts
+    def acquiring (self):
+        self.acquire_attempts += 1
+        return self.acquire_attempts -1
+
+    # When cancel (eg. run out of attempts - then reset counter so we can try again in future)
+    def cancel_acquire(self):
+        self.acquire_attempts = 0
     
     def get_id (self):
         return self.loco_id
@@ -61,6 +73,8 @@ class Loco:
         self.set_speeddir (speeddir)    # converts to direction and speed
         self.set_functions (*functions)
         self.status = "on"
+        # reset acquire attempts
+        self.acquire_attempts
         #print (f"Loco {self.loco_id} acquired")
 
     def is_acquired(self):

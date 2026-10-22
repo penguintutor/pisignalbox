@@ -45,7 +45,7 @@ def get_locos():
 def details():
     # Try JSON body first (for POST fetch requests)
     data = request.get_json(silent=True) or {}
-    # Check JSON first, then fall back to request.values (covers GET)
+    # Check JSON first, then fall back to reque"/home/stewart/pisignalbox/guiclient/loco/ui_loco.py", line 37st.values (covers GET)
     loco_ref = data.get("loco_ref") or request.values.get("loco_ref")
 
     # get loco_details from_manager
@@ -117,7 +117,7 @@ def function():
     return jsonify({"status": "success"})
 
 
-# loco_id is the shortname from he filename
+# loco_ref is the shortname from the filename
 @api_loco_bp.route('/acquire', methods=['GET', 'POST'])
 def acquire():
     # Try JSON body first (for POST fetch requests)
@@ -125,7 +125,8 @@ def acquire():
     # Check JSON first, then fall back to request.values (covers GET)
     loco_ref = data.get("loco_ref") or request.values.get("loco_ref")
     # mode defaults to acquire if not specified (allow acquire / steal / share)
-    mode = data.get("mode") or request.values.get("mode", "acquire")
+    # Possible future - but now changed so automatically share
+    #mode = data.get("mode") or request.values.get("mode", "acquire")
 
     if not loco_ref:
         return jsonify({"error": "Missing loco ref"}), 400
@@ -136,6 +137,7 @@ def acquire():
         return jsonify({"error": "Invalid loco ref"}), 400
 
     # If already acquired then no action required
+    # This is returned on subsequent requests
     if loco.is_acquired():
         return jsonify({"status": "acquired"})
 
@@ -202,6 +204,7 @@ def image():
 ################################################
 # Unmanaged Locos 
 # uses client
+# return json format
 # ##############################################
 
 
@@ -231,9 +234,11 @@ def client_acquire():
         # If already acquired then no action required
         if loco.is_acquired():
             if ret_format=="json":
-                return jsonify({"status": "acquired"})    
+                loco_status = loco.get_status_dict()
+                loco_status["status"] = "loco aqcuired"
+                return jsonify(loco_status)    
             else: 
-                return "Loco Acquired"
+                return "Loco acquired"
 
     # Skip check for loco on track - as we can have duplicates when managed by client
     
@@ -249,7 +254,7 @@ def client_acquire():
     )
 
     if ret_format == "json":
-        return jsonify({"status": "acquiring"})
+        return jsonify({"status": "Acquiring", "loco_id": loco_id})
     else:
         return "Acquiring loco"
 

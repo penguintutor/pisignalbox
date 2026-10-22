@@ -71,8 +71,14 @@ class ApiHandler(QObject):
             loco_id = event.get_loco_id()
             command = event.get_command()
             if command == "acquire":
-                # Todo: Replace with new loco api
-                self.start_request(self.api.vlcb.allocate_loco(loco_id))
+                # Replaced with new loco api
+                # self.start_request(self.api.vlcb.allocate_loco(loco_id))
+                data_dict = {
+                    "request_type": "loco",
+                    "cmd": "acquire",
+                    "loco_id": loco_id
+                }
+                self.start_api_request(data_dict)
             # Allow share or stealmand to prepend with - eg. send (for cbus) or server etc.
     # comma is added automatically
     # set to "" if already formatt

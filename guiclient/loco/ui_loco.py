@@ -34,7 +34,8 @@ class UILocoMixin:
         
     # Extract GUI from reset_loco - so can be used from an app event
     def reset_loco_gui (self):
-        self.update_kalive()
+        # Disable keep alive - moved to the server
+        #self.update_kalive()
         # Change combo after reset - that way the post change
         # will not send a release message
         self.ui.locoComboBox.setCurrentIndex(0)
