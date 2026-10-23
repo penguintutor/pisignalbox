@@ -151,10 +151,15 @@ document.addEventListener("DOMContentLoaded", function() {
     
     let currentLocoRef = null;
 
-    // Polling configuration: 6 retries * 5000ms = 30 seconds total wait
+    // Acquire polling configuration: 6 retries * 5000ms = 30 seconds total wait
     const MAX_ACQUIRE_RETRIES = 6;
     const ACQUIRE_RETRY_DELAY_MS = 5000;
     let acquireTimer = null;
+
+    // Status polling configuration
+    const STATUS_POLL_INTERVAL_MS = 2000; // Poll every 2 seconds
+    let statusTimer = null;
+    let isDraggingSlider = false;
 
     function clearAcquireTimer() {
         if (acquireTimer) {
@@ -163,9 +168,23 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
+    function clearStatusTimer() {
+        if (statusTimer) {
+            clearInterval(statusTimer);
+            statusTimer = null;
+        }
+    }
+
+    function startStatusPolling() {
+        clearStatusTimer();
+        statusTimer = setInterval(pollLocoStatus, STATUS_POLL_INTERVAL_MS);
+    }
+
     // Helper: Reset UI and state back to initial defaults
     function resetController() {
         clearAcquireTimer();
+        clearStatusTimer();
+        isDraggingSlider = false;
         currentLocoRef = null;
         controlPanel.disabled = true;
         acquireStatus.innerText = "";
@@ -208,11 +227,48 @@ document.addEventListener("DOMContentLoaded", function() {
                 },
                 body: JSON.stringify(data)
             });
-            return await response.json();
+            const result = await response.json();
+
+            // Centrally handle expired/cancelled locomotive sessions
+            if (result.status === 'session_cancelled') {
+                resetController();
+                acquireStatus.innerText = result.message || "Session cancelled.";
+                return result;
+            }
+
+            return result;
         } catch (error) {
             console.error("API Error:", error);
             return { error: true, message: "Network error" };
         }
+    }
+
+    // Periodic status check for shared control / external updates
+    function pollLocoStatus() {
+        if (!currentLocoRef) return;
+
+        callAPI('{{ url_for("api.loco.status") }}', { loco_ref: currentLocoRef }).then(res => {
+            // Ignore if controller was reset or switched while fetch was in flight
+            if (!currentLocoRef || res.status !== 'valid') return;
+
+            // Update status message (e.g., "Emergency Stop" or "" when normal)
+            acquireStatus.innerText = res.message || "";
+
+            // Update speed only if the user isn't currently dragging the slider
+            if (!isDraggingSlider && res.speed !== undefined) {
+                speedSlider.value = res.speed;
+                speedDisplay.innerText = String(res.speed).padStart(2, '0');
+            }
+
+            // Update direction (1 = forward, 0 = reverse)
+            if (res.direction === 1) {
+                dirForward.checked = true;
+            } else if (res.direction === 0) {
+                dirRadios.forEach(radio => {
+                    if (radio !== dirForward) radio.checked = true;
+                });
+            }
+        });
     }
 
     // Acquire or Disable Locomotive
@@ -225,8 +281,9 @@ document.addEventListener("DOMContentLoaded", function() {
         attemptAcquire(selectedRef, "request", 0);
     });
 
-function attemptAcquire(locoRef, mode, retryCount = 0) {
+    function attemptAcquire(locoRef, mode, retryCount = 0) {
         clearAcquireTimer();
+        clearStatusTimer();
 
         if (retryCount === 0) {
             acquireStatus.innerText = "Attempting to acquire...";
@@ -251,10 +308,13 @@ function attemptAcquire(locoRef, mode, retryCount = 0) {
 
                 loadLocoDetails(locoRef);
                 
-                // Reset UI to safe defaults
+                // Reset UI to safe defaults, then immediately poll for actual current state
                 speedSlider.value = 0;
                 speedDisplay.innerText = "00";
                 dirForward.checked = true;
+
+                pollLocoStatus();
+                startStatusPolling();
                 
             } else if (res.status === 'acquiring') {
                 if (retryCount < MAX_ACQUIRE_RETRIES) {
@@ -297,14 +357,14 @@ function attemptAcquire(locoRef, mode, retryCount = 0) {
     function loadLocoDetails(locoRef) {
         callAPI('{{ url_for("api.loco.details") }}', { loco_ref: locoRef }).then(res => {
             const imageUrl = '{{ url_for("api.loco.image") }}';
-            if(!res.error) {
+            if (!res.error && res.status !== 'session_cancelled') {
                 locoImage.src = `${imageUrl}?filename=${encodeURIComponent(res.image_url)}`;
                 locoTitle.innerText = res.title;
                 locoDescription.innerText = res.summary;
                 locoDetailsCard.classList.remove('d-none');
                 
                 // Update function button text dynamically based on the loco
-                if(res.functions) {
+                if (res.functions) {
                     funcButtons.forEach(btn => {
                         let fId = btn.dataset.funcId;
                         let descSpan = btn.querySelector('.func-desc');
@@ -328,13 +388,21 @@ function attemptAcquire(locoRef, mode, retryCount = 0) {
         });
     }
 
+    // Lock slider updates from polling while user is actively interacting
+    speedSlider.addEventListener('pointerdown', () => { isDraggingSlider = true; });
+    speedSlider.addEventListener('pointerup', () => { isDraggingSlider = false; });
+
     // Instant digital display update (fires while dragging)
     speedSlider.addEventListener('input', function() {
+        isDraggingSlider = true;
         speedDisplay.innerText = this.value.padStart(2, '0');
     });
 
     // Send API request ONLY when the user finishes dragging (better for API load)
-    speedSlider.addEventListener('change', sendSpeedDir);
+    speedSlider.addEventListener('change', function() {
+        isDraggingSlider = false;
+        sendSpeedDir();
+    });
 
     // Update on direction change
     dirRadios.forEach(radio => {

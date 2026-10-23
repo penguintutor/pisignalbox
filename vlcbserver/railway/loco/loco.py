@@ -256,9 +256,10 @@ class Loco:
         speed = self.speed
         if self.speed > 127:
             speed = 127
+        # Removed this instead use get_message
         # If emergency stop then send 1 as speed
-        if self.status == "stop":
-            speed = 1
+        #if self.status == "stop":
+        #    speed = 1
         return (self.direction * 0x80) + speed
     
     # Takes combined speed & dir and updates direction / speed
@@ -266,8 +267,19 @@ class Loco:
     def set_speeddir (self, speed_dir):
         self.direction = speed_dir >> 7
         self.speed = speed_dir & 0x7F
-        if self.speed > 1:
-            self.speed += 1
+        # Don't add 1 as that increases current request value by 1 as well
+        # Compared with CANCAB this will usually display a value 1 higher
+        # than the display on the CANCAB
+        # This however uses the actual value from the CANBUS
+        # 1 is typically not displayed as that is used for loco stop
+        #if self.speed > 1:
+        #    self.speed += 1
+
+    # Gets a status message about the loco
+    def get_message (self):
+        if self.status == "stop":
+            return "Emergency Stop"
+        return ""
     
     # emergency stop
     def set_stop (self):

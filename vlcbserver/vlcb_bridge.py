@@ -147,11 +147,16 @@ def _update_local_state(item):
         # Emergency Stop
         case ' RESTP': 
             loco_manager.emergency_stop_received()
+        # Speed/Dir
+        case 'DSPD':
+            # Update any locos matching session with the speeddir seen on CBUS
+            data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
+            loco_manager.update_session_speeddir(data_entry.get("Session"), data_entry.get('SpeedDir'))
 
     # Check to see if there was a response from a handler
     # If so then that needs to be sent back to the queue
     if response:
-        print (f"vlcb_bridge - response from error handler {response}")
+        #print (f"vlcb_bridge - response from error handler {response}")
         send_data(response)
 
 

@@ -125,6 +125,20 @@ class LocoManager ():
             self._snapshot = self._locos.copy()
 
 
+    def update_session_speeddir (self, session_id, speeddir):
+        """ Updates the speeddir for any trains with matching
+        session_id. Takes a single value for speed and dir 
+        which is the format used by DSDP command 
+        
+        This is called by vlcb_bridge whenever a DSPD package
+        is seen on the track"""
+        for loco_ref in self._on_track.values():
+            if self._locos[loco_ref].get_session() == session_id:
+                self._locos[loco_ref].set_speeddir(speeddir)
+        for loco_ref in self._on_track_basic.values():
+            if self._locos_basic[loco_ref].get_session() == session_id:
+                self._locos_basic[loco_ref].set_speeddir(speeddir)
+
     # _type is optional - not yet implemented but could be used
     # for different status messages
     def acquire_sent(self, loco_id, loco_ref, _type="standard"):
@@ -220,6 +234,96 @@ class LocoManager ():
         for loco_ref in self._on_track_basic.values():
             if self._locos_basic[loco_ref].is_acquired():
                 self._locos_basic[loco_ref].stop(emergency)
+
+
+    def session_cancel(self, session_id):
+        # Search all locos that are on track or on track basic
+        # Set their session and status
+        # Still continue after finding in case another uses the same session_id
+        for loco_ref in self._on_track.values():
+            if self._locos[loco_ref].get_session() == session_id:
+                self._locos[loco_ref].released()
+        for loco_ref in self._on_track_basic.values():
+            if self._locos_basic[loco_ref].get_session() == session_id:
+                self._locos_basic[loco_ref].released()
+
+    def handle_loco_taken(self, loco_id):
+        # Default is to share as allows controller to continue as well
+        if STEAL_SHARE_LOCO == "share":
+            # Send a share request - although this is on the 
+            # main thread still use the normal send as that puts request on
+            # the queue
+            # if it's on_track then also add loco_ref
+            vlcb_cmd = vlcb.share_loco(loco_id)
+            data_dict = {
+                'vlcb': vlcb_cmd,
+                'dev_type': "loco",
+                'action': "acquire_share",
+                'loco_id': loco_id
+                }
+
+            if loco_id in self._on_track:
+                data_dict['loco_ref'] = self._on_track[loco_id]
+                return data_dict
+            # if it's basic then send back with no loco_ref
+            elif loco_id in self._on_track_basic:
+                return data_dict
+            # If not then not for us so ignore
+        return None
+
+
+
+
+    def handle_error(self, data_entry):
+        # Mostly just logging at the moment - handles loco taken as can do 
+        # something about that
+        # If there is some further action needd (eg. send a response to CBUS)
+        # then that should be returned as a send_data dict
+        # Note don't attempt to send from loco_manager just return it to vlcb_bridge where the original
+        # request came from
+        # These are logger.info to avoid displaying on console as these are typical
+        # CBUS errors 
+        match data_entry['ErrCode']:
+            case 1:
+                loco_id = bytes_to_locoid(data_entry['Byte1'],data_entry['Byte2'])
+                logger.info(f"ERR - Unable to acquire loco {loco_id} due to stack full")
+            case 2:
+                loco_id = bytes_to_locoid(data_entry['Byte1'],data_entry['Byte2'])
+                logger.info(f"ERR - Loco taken {loco_id}")
+                #handle_loco_taken returns a data dict 
+                return self.handle_loco_taken(loco_id)
+            case 3:
+                session_id = byte_to_sessionid(data_entry['Byte1'])
+                logger.info(f"ERR - Session {session_id} not present error")
+            case 4:
+                consist_id = byte_to_sessionid(data_entry['Byte1'])
+                logger.info(f"ERR - Consist empty {consist_id} not present error")
+            case 5:                
+                session_id = byte_to_sessionid(data_entry['Byte1'])
+                logger.info(f"ERR - Loco session {session_id} not found")
+            case 6:
+                logger.info("ERR - Loco CAN Bus error")
+            case 7:
+                loco_id = bytes_to_locoid(data_entry['Byte1'],data_entry['Byte2'])
+                logger.info(f"ERR - Invalid request for loco {loco_id}")
+            case 8:
+                # Eg. Loco stolen by another controller
+                session_id = byte_to_sessionid(data_entry['Byte1'])
+                logger.info(f"ERR - Session {session_id} cancelled")
+                # session_cancel is within this method - but returned for consistancy
+                # or if want to add push notification etc.
+                # still updates self.session_cancel eventually
+                data_dict = {
+                    "dev_type": "loco",
+                    "action": "session_cancel",
+                    "session_id": session_id
+                }
+                return data_dict
+
+
+
+
+
 
     ####################################################
     # Public - read / thread safe updates vi mesg queue
@@ -335,66 +439,6 @@ class LocoManager ():
                 "shared": loco_id in self._on_track        # Shared if web has same id on track
             })
         return api_locos
-
-    def handle_error(self, data_entry):
-        # Mostly just logging at the moment - handles loco taken as can do 
-        # something about that
-        # If there is some further action needd (eg. send a response to CBUS)
-        # then that should be returned as a send_data dict
-        # Note don't attempt to send from loco_manager just return it to vlcb_bridge where the original
-        # request came from
-        match data_entry['ErrCode']:
-            case 1:
-                loco_id = bytes_to_locoid(data_entry['Byte1'],data_entry['Byte2'])
-                logger.warning(f"ERR - Unable to acquire loco {loco_id} due to stack full")
-            case 2:
-                loco_id = bytes_to_locoid(data_entry['Byte1'],data_entry['Byte2'])
-                logger.warning(f"ERR - Loco taken {loco_id}")
-                #handle_loco_taken returns a data dict 
-                return self.handle_loco_taken(loco_id)
-            case 3:
-                session_id = byte_to_sessionid(data_entry['Byte1'])
-                logger.warning(f"ERR - Session {session_id} not present error")
-            case 4:
-                consist_id = byte_to_sessionid(data_entry['Byte1'])
-                logger.warning(f"ERR - Consist empty {consist_id} not present error")
-            case 5:                
-                session_id = byte_to_sessionid(data_entry['Byte1'])
-                logger.warning(f"ERR - Loco session {session_id} not found")
-            case 6:
-                logger.warning("ERR - Loco CAN Bus error")
-            case 7:
-                loco_id = bytes_to_locoid(data_entry['Byte1'],data_entry['Byte2'])
-                logger.warning(f"ERR - Invalid request for loco {loco_id}")
-            case 8:
-                # Eg. Loco stolen by another controller
-                session_id = byte_to_sessionid(data_entry['Byte1'])
-                logger.warning(f"ERR - Session {session_id} cancelled")
-
-    def handle_loco_taken(self, loco_id):
-        # Default is to share as allows controller to continue as well
-        if STEAL_SHARE_LOCO == "share":
-            # Send a share request - although this is on the 
-            # main thread still use the normal send as that puts request on
-            # the queue
-            # if it's on_track then also add loco_ref
-            vlcb_cmd = vlcb.share_loco(loco_id)
-            data_dict = {
-                'vlcb': vlcb_cmd,
-                'dev_type': "loco",
-                'action': "acquire_share",
-                'loco_id': loco_id
-                }
-
-            if loco_id in self._on_track:
-                data_dict['loco_ref'] = self._on_track[loco_id]
-                return data_dict
-            # if it's basic then send back with no loco_ref
-            elif loco_id in self._on_track_basic:
-                return data_dict
-            # If not then not for us so ignore
-        return None
-
 
 
 # Module level singleton
