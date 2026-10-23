@@ -55,6 +55,9 @@ class LocoEvent:
     # If type is ID then should include command - returns "" if not included
     def get_command(self):
         return self.data.get("command", "")
+
+    def get_send_delay(self):
+        return self.data.get("send_delay", 0)
     
     # Argument is any value isn self.data - takes key
     def get_arg(self, key):

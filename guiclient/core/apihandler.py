@@ -1,4 +1,5 @@
 from PySide6.QtCore import Qt, QTimer, QObject, QThreadPool, QRunnable
+from functools import partial
 import logging
 from .vlcbclient import VLCBClient
 from .worker import Worker
@@ -70,6 +71,7 @@ class ApiHandler(QObject):
             # loco_id is common, although many use session_id and some don't need either
             loco_id = event.get_loco_id()
             command = event.get_command()
+            send_delay = event.get_send_delay()
             if command == "acquire":
                 # Replaced with new loco api
                 # self.start_request(self.api.vlcb.allocate_loco(loco_id))
@@ -78,8 +80,12 @@ class ApiHandler(QObject):
                     "cmd": "acquire",
                     "loco_id": loco_id
                 }
-                self.start_api_request(data_dict)
-            # Allow share or stealmand to prepend with - eg. send (for cbus) or server etc.
+                # May want to delay resend - if so then send_delay used
+                if send_delay == 0:
+                    self.start_api_request(data_dict)
+                else:
+                    QTimer.singleShot(send_delay, partial(self.start_api_request, data_dict))
+            # Steal or share normally handled by server - but could add here
     # comma is added automatically
     # set to "" if already formatt
             elif command == "share":

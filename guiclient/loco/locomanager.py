@@ -102,16 +102,21 @@ class LocoManager(QObject):
                     # Check how many times attempted
                     if loco.acquiring() < ACQUIRE_ATTEMPTS:
                         # Attempt again in 0.5 secs
-                        data_dict = {
-                            "request_type": "loco",
-                            "cmd": "acquire",
-                            "loco_id": loco_id
-                        }
-                        QTimer.singleShot(500, lambda: self.api.start_api_request(data_dict))
+                        #data_dict = {
+                        #    "request_type": "loco",
+                        #    "cmd": "acquire",
+                        #    "loco_id": loco_id
+                        #}
+                        # Uses partial (instead of lambda) to avoid data_dict change whilst waiting
+                        #QTimer.singleShot(500, partial(self.api.start_api_request, data_dict))
+                        event_bus.publish(LocoEvent('api', {
+                            'command': 'acquire',
+                            'loco_id': loco_id,
+                            'send_delay': 500       # delay send by 500mS
+                            }))
                     else:
                         loco.cancel_acquire()
-                    # Retry if appropriate
-                    # Todo here
+
 
         ### Error handling disabled as now in new API
         #elif event.event_type == "ERR":

@@ -185,7 +185,7 @@ class Loco:
         mask = [0b0001, 0b0010, 0b0100, 0b1000]
         
         # Handle the upper nibble bit stored at index 0
-        if self.function_status[0]:get_f
+        if self.function_status[0]:
             data_out[0] |= 0b10000
             
         for i in range(0, 3):
@@ -379,11 +379,11 @@ class Loco:
 
     # Gets loco status in a dict that can be returned via API 
     def get_status_dict (self):
-        return_dict = {
+        return {
             'loco_id': self.loco_id,
             'loco_ref': self.loco_ref,
             'session': self.session,
-            'speeddir': self.get_speed_dir(),
+            'speeddir': self.get_speeddir(),
             'function_bytes': self.get_function_bytes()
         }
     
@@ -394,7 +394,7 @@ class Loco:
     
     # Use this to normally create the class
     @classmethod
-    def from_file (cls, loco_ref, loco_fileit's an old node. Alternatively we could load anyway (max 100 past entries are stored)
+    def from_file (cls, loco_ref, loco_file):
         # or we could no):
         # create a initial entry
         new_loco = cls()

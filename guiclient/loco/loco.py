@@ -193,7 +193,10 @@ class Loco:
     # Returns status (ie. 1 on / 0 off) and type "toggle" vs "latch"
     def get_function_status (self, func_num):
         # Check valid - should not get this as func_num should be based on the loaded functions
-        if ("functions" not in self.loco_data.keys()) or (len(self.loco_data["functions"]) < func_num):
+        if (
+            "functions" not in self.loco_data
+            or (len(self.loco_data["functions"]) < func_num)
+        ):
             return [self.function_status[func_num], "trigger"]
         this_function = self.loco_data["functions"][func_num]
         # 2 is type

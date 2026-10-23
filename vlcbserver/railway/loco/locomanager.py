@@ -346,29 +346,30 @@ class LocoManager ():
         match data_entry['ErrCode']:
             case 1:
                 loco_id = bytes_to_locoid(data_entry['Byte1'],data_entry['Byte2'])
-                logger.warning(f"Unable to acquire loco {loco_id} due to stack full")
+                logger.warning(f"ERR - Unable to acquire loco {loco_id} due to stack full")
             case 2:
                 loco_id = bytes_to_locoid(data_entry['Byte1'],data_entry['Byte2'])
-                logger.warning(f"Loco taken {loco_id}")
+                logger.warning(f"ERR - Loco taken {loco_id}")
+                #handle_loco_taken returns a data dict 
                 return self.handle_loco_taken(loco_id)
             case 3:
                 session_id = byte_to_sessionid(data_entry['Byte1'])
-                logger.warning(f"Session {session_id} not present error {data_entry['Byte3']}")
+                logger.warning(f"ERR - Session {session_id} not present error")
             case 4:
                 consist_id = byte_to_sessionid(data_entry['Byte1'])
-                logger.warning(f"Consist empty {consist_id} not present error {data_entry['Byte3']}")
+                logger.warning(f"ERR - Consist empty {consist_id} not present error")
             case 5:                
                 session_id = byte_to_sessionid(data_entry['Byte1'])
-                logger.warning(f"Loco session {session_id} not found {data_entry['Byte3']}")
+                logger.warning(f"ERR - Loco session {session_id} not found")
             case 6:
-                logger.warning(f"Loco CAN Bus error {data_entry['Byte3']}")
+                logger.warning("ERR - Loco CAN Bus error")
             case 7:
                 loco_id = bytes_to_locoid(data_entry['Byte1'],data_entry['Byte2'])
-                logger.warning(f"Invalid request for loco {loco_id} {data_entry['Byte3']}")
+                logger.warning(f"ERR - Invalid request for loco {loco_id}")
             case 8:
                 # Eg. Loco stolen by another controller
                 session_id = byte_to_sessionid(data_entry['Byte1'])
-                logger.warning(f"Session {session_id} cancelled {data_entry['Byte3']}")
+                logger.warning(f"ERR - Session {session_id} cancelled")
 
     def handle_loco_taken(self, loco_id):
         # Default is to share as allows controller to continue as well
@@ -378,7 +379,7 @@ class LocoManager ():
             # the queue
             # if it's on_track then also add loco_ref
             vlcb_cmd = vlcb.share_loco(loco_id)
-            return_dict = {
+            data_dict = {
                 'vlcb': vlcb_cmd,
                 'dev_type': "loco",
                 'action': "acquire_share",
@@ -386,10 +387,11 @@ class LocoManager ():
                 }
 
             if loco_id in self._on_track:
-                return_dict['loco_ref'] = self._on_track[loco_id]
+                data_dict['loco_ref'] = self._on_track[loco_id]
+                return data_dict
             # if it's basic then send back with no loco_ref
             elif loco_id in self._on_track_basic:
-                return return_dict
+                return data_dict
             # If not then not for us so ignore
         return None
 

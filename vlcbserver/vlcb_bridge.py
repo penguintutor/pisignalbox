@@ -151,6 +151,7 @@ def _update_local_state(item):
     # Check to see if there was a response from a handler
     # If so then that needs to be sent back to the queue
     if response:
+        print (f"vlcb_bridge - response from error handler {response}")
         send_data(response)
 
 

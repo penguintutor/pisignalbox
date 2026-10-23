@@ -228,7 +228,7 @@ def client_acquire():
         else:
             return "Error Missing Loco ID", 400
 
-    # Does the loco object exist? If not itis created when we send later
+    # Does the loco object exist? If not it is created when we send later
     loco = loco_manager.get_loco_basic(loco_id)
     if loco:
         # If already acquired then no action required
