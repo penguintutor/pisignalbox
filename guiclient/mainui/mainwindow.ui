@@ -50,7 +50,7 @@
          </size>
         </property>
         <property name="currentIndex">
-         <number>3</number>
+         <number>0</number>
         </property>
         <widget class="QWidget" name="locoTab">
          <attribute name="title">
@@ -116,7 +116,7 @@
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_2">
             <item>
-             <widget class="QDial" name="locoDial">
+             <widget class="LocoThrottleDial" name="locoDial">
               <property name="minimumSize">
                <size>
                 <width>150</width>
@@ -892,6 +892,11 @@
    <class>TrackViewDisplay</class>
    <extends>QLabel</extends>
    <header>trackviewdisplay.py</header>
+  </customwidget>
+  <customwidget>
+   <class>LocoThrottleDial</class>
+   <extends>QDial</extends>
+   <header>locothrottledial</header>
   </customwidget>
  </customwidgets>
  <resources/>
