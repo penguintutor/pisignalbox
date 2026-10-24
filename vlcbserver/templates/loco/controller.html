@@ -49,7 +49,7 @@
             <!-- Speed Slider -->
             <div class="row mb-4 px-3">
                 <div class="col-12">
-                    <input type="range" class="form-range" id="speedSlider" min="0" max="127" value="0" style="height: 2rem;">
+                    <input type="range" class="form-range" id="speedSlider" min="0" max="126" value="0" style="height: 2rem;">
                 </div>
             </div>
 
@@ -381,7 +381,7 @@ document.addEventListener("DOMContentLoaded", function() {
         const speed = Number.parseInt(speedSlider.value, 10);
         const direction = document.querySelector('input[name="dirRadio"]:checked').value;
         
-        callAPI('{{ url_for("api.loco.speeddir") }}', { 
+        callAPI('{{ url_for("api.loco.speed_dir") }}', { 
             loco_ref: currentLocoRef, 
             speed: speed, 
             direction: direction 

@@ -39,8 +39,6 @@ def get_locos():
     return jsonify({"status": "success", "data": loco_list})
 
 
-
-# Todo implement this
 @api_loco_bp.route('/details', methods=['GET', 'POST'])
 def details():
     # Try JSON body first (for POST fetch requests)
@@ -63,9 +61,10 @@ def details():
     return jsonify(loco_details)
 
 
-# Todo implement this
-@api_loco_bp.route('/speeddir', methods=['GET', 'POST'])
-def speeddir():
+# Note changed to speed_dir to make it clear it's not the 
+# same as speeddir used by cbus - this needs speed and direction separately
+@api_loco_bp.route('/speed_dir', methods=['GET', 'POST'])
+def speed_dir():
     # Try JSON body first (for POST fetch requests)
     data = request.get_json(silent=True) or {}
     # Check JSON first, then fall back to request.values (covers GET)
@@ -286,16 +285,17 @@ def set_speed_dir(loco_ref, speed, direction):
         return jsonify(session_dict.get("message_dict")), session_dict.get("http_code")
     session_id = session_dict["session_id"] 
 
-    speed_dir = to_speeddir(speed, direction)
+    #
+    speeddir = to_speeddir(speed, direction)
 
-    vlcb_cmd = vlcb.loco_speeddir(session_id, speed_dir)
+    vlcb_cmd = vlcb.loco_speeddir(session_id, speeddir)
     send_data(
         {
             'vlcb': vlcb_cmd,
             'dev_type': "loco",
             'action': "speeddir",
             'loco_ref': loco_ref,
-            'speeddir': speed_dir
+            'speeddir': speeddir
         }
     )
     # Return success just means successfully sent to the controller
@@ -304,12 +304,11 @@ def set_speed_dir(loco_ref, speed, direction):
 
 
 # Converts speed and direction to byte for speeddir command
-# spped should be int, direction is string eg. "forward" / "reverse"
+# speed should be int, direction is string eg. "forward" / "reverse"
+# Note this takes the normalised speed input and converts to the raw byte 
+# used by CBUS (which has skipped the emergency stop)
 def to_speeddir (speed, dir):
-    # Speed 1 = Emergency stop skip
-    if speed == 1:
-        speed = 2
-
+    
     # Dir is a string - so convert to a number
     if dir == "forward":
         direction = 1
@@ -320,7 +319,11 @@ def to_speeddir (speed, dir):
         direction = 1
         speed = 0
 
-    return (direction * 0x80) + speed
+    if speed == 0:
+        cbus_speed = 0
+    else:
+        cbus_speed = min(speed +1, 127)
+    return (direction * 0x80) + cbus_speed
 
 
 def speed_int(val):
@@ -331,8 +334,10 @@ def speed_int(val):
     except (ValueError, TypeError):
         return 0
 
-    if value < 0 or value > 127:
+    if value < 0:
         return 0
+    if value > 126:
+        return 126
     return value
 
 

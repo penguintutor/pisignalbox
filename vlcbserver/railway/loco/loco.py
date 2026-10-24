@@ -29,12 +29,43 @@ class Loco:
         self.loco_data = {}
         self.session = session # If session == 0 then no session allocated (don't support none DCC)
         self.direction = direction # Values 1 = forward, 0 = reverse
-        self.speed = speed # Allow 0 to 128 but maximum sent is 127. Speed 1 = emergency stop (not used - instead status = stop)
+        #self.speed = speed # Allow 0 to 128 but maximum sent is 127. Speed 1 = emergency stop (not used - instead status = stop)
+        # This is a standardized speed 0 = stop, 1 = speed 1 etc. Up to 126 (above that is stored as 126 regardless)
+        self._speed = speed # 0 to 126
+        # Hold if the stop was due to an emergency stop (either CBUS speed =1 , or ermergency stop all)
+        self.e_stop = False # True if emergency stop
         # Track all functions. Only F0 to F12 are found from PLOC - rest assume start off
         self.function_status = [0] * 29
         # Set filename to allow it to be saved - must be full path - this is unique
         # . review alternatives to using full path - although doesn't cause any issues with portability as not saved within file
         self.filename = filename
+
+
+    @property
+    def speed(self) -> int:
+        """
+        Standardized speed for the API, Web Client, and GUI Client.
+        Always 0 when stopped (including during an E-Stop).
+        """
+        if self.e_stop:
+            return 0
+        return self._speed
+
+    @speed.setter
+    def speed(self, val: int) -> None:
+        """
+        Sets the logical speed from the API/UI.
+        Setting a speed clears any active E-Stop state.
+        """
+        self._speed = max(0, min(int(val), 126))
+        self.e_stop = False
+
+    def emergency_stop(self) -> None:
+        """Triggers an emergency stop regardless of the underlying controller."""
+        self._speed = 0
+        self.e_stop = True
+
+
     
     def get_id (self):
         return self.loco_id
@@ -42,16 +73,20 @@ class Loco:
     def get_direction (self):
         return self.direction
 
+    # get normalised speed
     def get_speed (self):
+        # Notes self.speed is a getter that handles the conversion already
         return self.speed
 
     # Sets the loco to stopped - ie. speed=0
     # emergency argument is provided for future use if need to track emergency vs standard stop
-    def stop(self, _emergency=False):
+    def stop(self, emergency=False):
         # Just standard stop for now 
         # Future: consider whether the web UI should say
         # Emergency stop pressed etc.
-        self.speed = 0
+        self._speed = 0
+        if emergency:
+            self.e_stop = True
 
 
     def set_status (self, value, acquired_by=""):
@@ -76,6 +111,9 @@ class Loco:
 
     def acquired (self, session, speeddir, functions):
         self.session = session
+        # note that acquired is called based on CBUS so it's speeddir (cbus value)
+        # not speed_dir (which is kept as separate value)
+        # The setting will perform the conversion
         self.set_speeddir (speeddir)    # converts to direction and speed
         self.set_functions (*functions)
         self.status = "on"
@@ -229,11 +267,9 @@ class Loco:
             return True
         return False
     
-    # normalize speed value (subtract 1)
+    # normalize speed value 
     def speed_value (self):
-        if self.speed > 1:
-            return self.speed -1
-        return 0
+        return self._speed
     
     # Same as release but also set loco_id to 0 to indicate none requested
     def reset (self):
@@ -250,30 +286,36 @@ class Loco:
         self.status = "on"
         self.session = session
         
-    # get Dir/Speed combined value
-    def get_speeddir (self):
-        # uses local variable for calculating return value
-        speed = self.speed
-        if self.speed > 127:
-            speed = 127
-        # Removed this instead use get_message
-        # If emergency stop then send 1 as speed
-        #if self.status == "stop":
-        #    speed = 1
-        return (self.direction * 0x80) + speed
+    def get_speeddir(self) -> int:
+        """
+        Converts self.speed (display speed) and self.direction 
+        into the combined CBUS speeddir byte.
+        """
+        if getattr(self, 'e_stop', False):
+            cbus_speed = 1
+        elif self.speed == 0:
+            cbus_speed = 0
+        else:
+            cbus_speed = min(self.speed + 1, 127)
+
+        # Combine with direction bit (assuming bit 7: 0x80 for forward)
+        dir_bit = 0x80 if self.direction else 0x00
+        return dir_bit | cbus_speed
     
-    # Takes combined speed & dir and updates direction / speed
-    # This is often used based on external values, so add 1
-    def set_speeddir (self, speed_dir):
-        self.direction = speed_dir >> 7
-        self.speed = speed_dir & 0x7F
-        # Don't add 1 as that increases current request value by 1 as well
-        # Compared with CANCAB this will usually display a value 1 higher
-        # than the display on the CANCAB
-        # This however uses the actual value from the CANBUS
-        # 1 is typically not displayed as that is used for loco stop
-        #if self.speed > 1:
-        #    self.speed += 1
+    def set_speeddir(self, speeddir: int) -> None:
+        """
+        Unpacks an incoming CBUS speeddir byte (from PLOC or DSPD)
+        into self.speed (display speed) and self.direction.
+        """
+        self.direction = bool(speeddir & 0x80)
+        raw_speed = speeddir & 0x7F
+
+        if raw_speed <= 1:
+            self.speed = 0
+            self.e_stop = (raw_speed == 1)
+        else:
+            self.speed = raw_speed - 1
+            self.e_stop = False
 
     # Gets a status message about the loco
     def get_message (self):
@@ -286,14 +328,12 @@ class Loco:
         self.status = "stop"
       
     # Sets speed only - keep current direction
-    # 0 = stop, 1 = increase to 2 (1 is emergency stop - so don't allow here)
-    # all other values used as is (maximum 127 - but allow 128)
+    # 0 = stop, 1 = vslow, 126 = amx speed
     def set_speed (self, speed_value):
-        if speed_value > 128 or speed_value < 0:
+        if speed_value < 0:
             return
-        # Add one to skip emergency stop
-        if speed_value > 0 and speed_value < 127:
-            speed_value += 1
+        if speed_value > 126:
+            speed_value = 126
         self.speed = speed_value
         
     # Direction is 1 for forward, 0 for reverse
