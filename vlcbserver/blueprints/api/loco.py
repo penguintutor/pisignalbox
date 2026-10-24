@@ -211,7 +211,7 @@ def image():
 
 
 ################################################
-# Unmanaged Locos 
+# Unmanaged Locos - no loco_ref / name - just loco_id
 # uses client
 # return json format
 # ##############################################
@@ -360,7 +360,8 @@ def get_loco_status(loco_ref):
         "session_id": session_id,
         "direction": loco.get_direction(),
         "speed": loco.get_speed(),
-        "message": loco.get_message()
+        "message": loco.get_message(),
+        "e_stop": loco.e_stop
     })
 
 

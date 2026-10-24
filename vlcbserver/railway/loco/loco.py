@@ -326,6 +326,7 @@ class Loco:
     # emergency stop
     def set_stop (self):
         self.status = "stop"
+        self.e_stop = True
       
     # Sets speed only - keep current direction
     # 0 = stop, 1 = vslow, 126 = amx speed
@@ -435,7 +436,10 @@ class Loco:
             'loco_id': self.loco_id,
             'loco_ref': self.loco_ref,
             'session': self.session,
-            'speeddir': self.get_speeddir(),
+            #'speeddir': self.get_speeddir(),
+            'speed': self.speed,
+            'direction': self.direction,
+            'e_stop': self.e_stop,
             'function_bytes': self.get_function_bytes()
         }
     

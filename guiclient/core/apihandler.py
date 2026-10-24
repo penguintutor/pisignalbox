@@ -67,59 +67,65 @@ class ApiHandler(QObject):
         which doesn't have direct access to the mainwindow class to call 
         it's own commands 
         """
-        if event.get_action() == "api":
-            # loco_id is common, although many use session_id and some don't need either
-            loco_id = event.get_loco_id()
-            command = event.get_command()
-            send_delay = event.get_send_delay()
-            if command == "acquire":
-                # Replaced with new loco api
-                # self.start_request(self.api.vlcb.allocate_loco(loco_id))
-                data_dict = {
-                    "request_type": "loco",
-                    "cmd": "acquire",
-                    "loco_id": loco_id
-                }
-                # May want to delay resend - if so then send_delay used
-                if send_delay == 0:
-                    self.start_api_request(data_dict)
-                else:
-                    QTimer.singleShot(send_delay, partial(self.start_api_request, data_dict))
-            # Steal or share normally handled by server - but could add here
-    # comma is added automatically
-    # set to "" if already formatt
-            elif command == "share":
-                self.start_request(self.vlcb.share_loco(loco_id))
-            elif command == "steal":
-                self.start_request(self.vlcb.steal_loco(loco_id))
-            elif command == "function":
-                # Instead of needing to allocate the loco have the LocoEvent include current and new
-                # Then can just send current / new as appropriate
-                current = event.get_arg("currentvalue")
-                new = event.get_arg("newvalue")
-                session = event.get_arg("session")
-                # current and new are byte1_2 as a tuple
-                request_new =  self.vlcb.loco_set_dfun(session, *new)
-                request_current = self.vlcb.loco_set_dfun(session, *current)
-                func_type = event.get_arg("type")
-                if func_type == "trigger":
-                    # delay left to default (4 secs)
-                    self.start_request_onoff (request_new, request_current)
-                # if not just change to newvalue
-                else:
-                    self.start_request(request_new)
-            elif command == "speed_dir":
-                self.start_request(self.vlcb.loco_speed_dir(
-                    event.get_session_id(),
-                    event.get_arg("speed"),
-                    event.get_arg("direction")
-                    ))
-            # Same as speed_dir but combined speed and direction
-            elif command == "speeddir":
-                self.start_request(self.vlcb.loco_speed_dir(
-                    event.get_arg("session"),
-                    event.get_arg("speeddir")
-                    ))
+        match event.get_action():
+            case "api":
+                # loco_id is common, although many use session_id and some don't need either
+                loco_id = event.get_loco_id()
+                command = event.get_command()
+                send_delay = event.get_send_delay()
+                match command:
+                    case "acquire":
+                        # Replaced with new loco api
+                        data_dict = {
+                            "request_type": "loco",
+                            "cmd": "acquire",
+                            "loco_id": loco_id
+                        }
+                        # May want to delay resend - if so then send_delay used
+                        if send_delay == 0:
+                            self.start_api_request(data_dict)
+                        else:
+                            QTimer.singleShot(send_delay, partial(self.start_api_request, data_dict))
+                # Steal or share normally handled by server - but could add here
+
+            #################################### 
+            # Using old api - create vlcb request
+            # Convert to above in future
+            #################################### 
+
+                    case "share":
+                        self.start_request(self.vlcb.share_loco(loco_id))
+                    case "steal":
+                        self.start_request(self.vlcb.steal_loco(loco_id))
+                    case "function":
+                        # Instead of needing to allocate the loco have the LocoEvent include current and new
+                        # Then can just send current / new as appropriate
+                        current = event.get_arg("currentvalue")
+                        new = event.get_arg("newvalue")
+                        session = event.get_arg("session")
+                        # current and new are byte1_2 as a tuple
+                        request_new =  self.vlcb.loco_set_dfun(session, *new)
+                        request_current = self.vlcb.loco_set_dfun(session, *current)
+                        func_type = event.get_arg("type")
+                        if func_type == "trigger":
+                            # delay left to default (4 secs)
+                            self.start_request_onoff (request_new, request_current)
+                        # if not just change to newvalue
+                        else:
+                            self.start_request(request_new)
+                    case "speed_dir":
+                        self.start_request(self.vlcb.loco_speed_dir(
+                            event.get_session_id(),
+                            event.get_arg("speed"),
+                            event.get_arg("direction")
+                            ))
+                    # Same as speed_dir but combined speed and direction
+                    case "speeddir":
+                        print ("Deprecated - client should be unware of speeddir value in future")
+                        self.start_request(self.vlcb.loco_speed_dir(
+                            event.get_arg("session"),
+                            event.get_arg("speeddir")
+                            ))
         
     # Gets request off the queue
     # Returns false if no requests, otherwise returns request string

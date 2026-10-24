@@ -10,7 +10,7 @@ from pathlib import Path
 from core import DATA_DIR, RESOURCES_DIR
 from core import event_bus
 from trackview import track_view_manager
-from loco import loco_manager
+from loco import loco_manager, LocoThrottleDial
 from core import Settings
 from console.consolewindow import ConsoleWindowUI
 from layout import Layout
@@ -105,6 +105,7 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
         # Loader used to load the ui files
         loader = QUiLoader()
         loader.registerCustomWidget(TrackViewDisplay)
+        loader.registerCustomWidget(LocoThrottleDial)
         
         # This will hold the QPixmap for the loco image
         self.loco_image = None
