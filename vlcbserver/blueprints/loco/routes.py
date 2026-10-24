@@ -70,7 +70,7 @@ def get_loco_context():
 def list_locos():
     """Initial full page load."""
     context = get_loco_context()
-    return render_template('/loco/locos.html', **context)
+    return render_template('loco/locos.html', **context)
 
 
 @loco_blueprint.route('/refreshlocos')
@@ -83,5 +83,5 @@ def refresh_locos():
     if client_hash and client_hash == context['state_hash']:
         return '', 204  # No changes -> HTMX leaves DOM completely untouched
 
-    return render_template('/loco/locos_display.html', **context)
+    return render_template('loco/locos_display.html', **context)
 

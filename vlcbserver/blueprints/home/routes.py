@@ -1,7 +1,7 @@
 import time
 import re
 import secrets
-from flask import current_app, flash, request, session, redirect, render_template, url_for, jsonify
+from flask import current_app, flash, request, session, redirect, render_template, url_for, jsonify, send_from_directory
 from flask_login import LoginManager, UserMixin, login_user, current_user, logout_user
 from vlcbserver.core.utils import login_required
 from urllib.parse import urlparse
@@ -39,6 +39,14 @@ from . import home_blueprint
 def home():
     return render_template('home/index.html', user=current_user)
 
+# Favicon is stored in static/favicon
+@home_blueprint.route('/favicon.ico')
+def favicon():
+    return send_from_directory(
+        os.path.join(current_app.root_path, 'static', 'favicon'),
+        'favicon.ico',
+        mimetype='image/x-icon'
+    )
 
 
 @home_blueprint.route("/logout", methods=['GET', 'POST'])

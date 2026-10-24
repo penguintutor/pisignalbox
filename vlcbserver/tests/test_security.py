@@ -17,6 +17,7 @@ def test_all_routes_are_secure(app):
         'auth.reset_request',
         'auth.reset_token',
         'home.home', 
+        'home.favicon',
         'static'  # Flask's default static file handler
     ]
 
