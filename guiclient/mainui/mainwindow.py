@@ -237,7 +237,9 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
         self.update_loco_table ()
         # Activated is based on user interaction (changing by code doesn't trigger)
         self.ui.locoComboBox.activated.connect(self.loco_change)
-        self.ui.locoDial.valueChanged.connect(self.loco_change_speed)
+        #self.ui.locoDial.valueChanged.connect(self.loco_change_speed)
+        # Change to rate limited speed controller dial
+        self.ui.locoDial.speedChanged.connect(self.loco_change_speed)
         
         # With direction radio buttons just look for clicks (so can update without triggering)
         self.ui.locoForwardRadio.clicked.connect(self.loco_forward)

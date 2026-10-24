@@ -7,6 +7,7 @@ from .locolist import LocoList
 from .locoentry import LocoEntry
 from .controlloco import ControlLoco
 from .functionentry import FunctionEntry
+from .locothrottledial import LocoThrottleDial
 
 # Exclude GUI widgets / dialogs from import
 #from .locodialog import LocoDialog
