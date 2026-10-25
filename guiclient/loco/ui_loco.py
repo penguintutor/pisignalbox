@@ -215,7 +215,16 @@ class UILocoMixin:
     def loco_change_speed (self, new_speed):
         # If returns false then loco not active so ignore
         if (self.control_loco.change_speed(new_speed)):
-            self.api.start_request(self.api.vlcb.loco_speeddir(self.control_loco.get_session(), self.control_loco.get_speeddir()))
+            #self.api.start_request(self.api.vlcb.loco_speeddir(self.control_loco.get_session(), self.control_loco.get_speeddir()))
+            # Replaces above request with new API request
+            data_dict = {
+                    "request_type": "loco",
+                    "cmd": "set_speed",
+                    "loco_id": self.control_loco.get_id(),
+                    "speed": new_speed,
+                    "direction": self.control_loco.loco.direction
+                }
+            self.api.start_api_request(data_dict)
             self.ui.locoStatusLabel.setText ("Ready")
             self.update_lcd()
         else:

@@ -67,6 +67,7 @@ class ApiHandler(QObject):
         which doesn't have direct access to the mainwindow class to call 
         it's own commands 
         """
+        # New API events "api" for loco needs corresponding entry in vlcbclient send_loco
         match event.get_action():
             case "api":
                 # loco_id is common, although many use session_id and some don't need either
@@ -87,6 +88,16 @@ class ApiHandler(QObject):
                         else:
                             QTimer.singleShot(send_delay, partial(self.start_api_request, data_dict))
                 # Steal or share normally handled by server - but could add here
+                    # Uses separate speed and direction
+                    case "set_speed":
+                        data_dict = {
+                            "request_type": "loco",
+                            "cmd": "set_speed",
+                            "loco_id": loco_id,     # uses loco_id let server find session_id
+                            "speed": event.get_arg("speed"),
+                            "direction": event.get_arg("direction")
+                        }
+                        self.start_api_request(data_dict)
 
             #################################### 
             # Using old api - create vlcb request

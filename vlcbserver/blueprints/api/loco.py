@@ -213,7 +213,7 @@ def image():
 ################################################
 # Unmanaged Locos - no loco_ref / name - just loco_id
 # uses client
-# return json format
+# return json format - txt response to be deprecated
 # ##############################################
 
 
@@ -224,14 +224,17 @@ def client_acquire():
     data = request.get_json(silent=True) or {}
     # Check JSON first, then fall back to request.values (covers GET)
     loco_id_str = data.get("loco_id") or request.values.get("loco_id")
+    #print (f"Api loco Client acquire request {loco_id_str}")
     try:
         loco_id = int(loco_id_str)
     except Exception:
         return "Error - Invalid loco_id", 400
     # format defaults to json 
     ret_format = data.get("format") or request.values.get("format", "json")
+    #print (f"Api loco client_acquire Client ID {loco_id} ")
 
     if not loco_id:
+        #print (f"Api loco client_acquire Loco ID not found {loco_id}")
         if ret_format == "json":
             return jsonify({"error": "Missing loco ID"}), 400
         else:
@@ -240,11 +243,13 @@ def client_acquire():
     # Does the loco object exist? If not it is created when we send later
     loco = loco_manager.get_loco_basic(loco_id)
     if loco:
+        #print (f"Api loco client_acquire found loco {loco_id}")
         # If already acquired then no action required
         if loco.is_acquired():
+            #print (f"Api loco client_acquire Loco ID is acquired {loco_id}")
             if ret_format=="json":
                 loco_status = loco.get_status_dict()
-                loco_status["status"] = "loco aqcuired"
+                loco_status["status"] = "loco acquired"
                 return jsonify(loco_status)    
             else: 
                 return "Loco acquired"
@@ -253,6 +258,7 @@ def client_acquire():
     
     # Create an acquire request
     vlcb_cmd = vlcb.allocate_loco(loco_id)
+    #print (f"Api loco client_acquire sending {vlcb_cmd}")
     send_data(
         {
             'vlcb': vlcb_cmd,
@@ -266,6 +272,22 @@ def client_acquire():
         return jsonify({"status": "Acquiring", "loco_id": loco_id})
     else:
         return "Acquiring loco"
+
+
+@api_loco_bp.route('/client/speed_dir', methods=['GET', 'POST'])
+def client_speed_dir():
+    # Try JSON body first (for POST fetch requests)
+    data = request.get_json(silent=True) or {}
+    # Check JSON first, then fall back to request.values (covers GET)
+    loco_id = data.get("loco_id") or request.values.get("loco_id")
+    speed_str = data.get("speed") or request.values.get("speed")
+    # Convert to int and Sanitize the speed value
+    speed = speed_int(speed_str)
+    direction = data.get("direction") or request.values.get("direction")
+
+    #print (f"Api loco client_speed_dir  {loco_id} speed str {speed_str}, speed int {speed}, direction {direction}")
+
+    return basic_set_speed_dir(loco_id, speed, direction)
 
 
 
@@ -302,20 +324,70 @@ def set_speed_dir(loco_ref, speed, direction):
     # Does not guarentee the loco received it
     return jsonify({"status": "success"})
 
+def basic_set_speed_dir(loco_id, speed, direction):
+
+    # Checks loco_ref is valid and gets the active session
+    session_dict = basic_loco_to_session(loco_id)
+    # If there is no valid session then return with error message
+    # If session is < 1 then it's invalid - so return json data and error code
+    if "session_id" not in session_dict or session_dict["session_id"] < 1:
+        return jsonify(session_dict.get("message_dict")), session_dict.get("http_code")
+    session_id = session_dict["session_id"] 
+
+    speeddir = to_speeddir(speed, direction)
+
+    vlcb_cmd = vlcb.loco_speeddir(session_id, speeddir)
+    send_data(
+        {
+            'vlcb': vlcb_cmd,
+            'dev_type': "loco",
+            'action': "speeddir",
+            'loco_id': loco_id,
+            'speeddir': speeddir
+        }
+    )
+    # Return success just means successfully sent to the controller
+    # Does not guarentee the loco received it
+    return jsonify({"status": "success"})
+
 
 # Converts speed and direction to byte for speeddir command
 # speed should be int, direction is string eg. "forward" / "reverse"
 # Note this takes the normalised speed input and converts to the raw byte 
 # used by CBUS (which has skipped the emergency stop)
 def to_speeddir (speed, dir):
+
+    # default to forward
+    direction = 1
     
     # Dir is a string - so convert to a number
-    if dir == "forward":
-        direction = 1
-    elif dir == "reverse":
-        direction = 0
+    if isinstance (dir, str):
+        match dir:
+            case "forward":
+                direction = 1
+            case "reverse":
+                direction = 0
+            case "1":
+                direction = 1
+            case "0":
+                direction = 0
+            case _: 
+                print (f"api loco - direction value not valid - stopping {dir}")
+                direction = 1
+                speed = 0
+    elif isinstance (dir, int):
+        match dir:
+            case 1:
+                direction = 1
+            case 0:
+                direction = 0
+            case _:  
+                print (f"api loco - direction value not valid - stopping {dir}")
+                direction = 1
+                speed = 0      
     # default to stop
     else:
+        print (f"api loco - direction value not valid - stopping {dir}")
         direction = 1
         speed = 0
 
@@ -390,6 +462,55 @@ def loco_ref_to_session (loco_ref):
             "message_dict": {
                 "status": "invalid_loco_ref",
                 "error": "Invalid loco reference"
+                },
+            "http_code": 400
+            }
+
+    # Make sure we have a session - and that's needed for the command
+    # Note uses a 200 as this is still a valid request but likely
+    # that the session ended before the command was issued
+    session = loco.get_session()
+    if session == 0:
+        return {
+            "message_dict": {
+                "status": "session_cancelled",
+                "message": "Session cancelled"
+                },
+            "http_code": 200
+            }
+
+    # Third value is ignored If session > 0 then this is valid
+    return {
+        "session_id": session,
+        "loco": loco
+        }
+
+
+def basic_loco_to_session (loco_id):
+    """ Takes a loco_id and returns a dict with
+    * session_id # always > 1
+    * loco
+
+    or if an error 
+    * message_dict
+    * http_code
+    """
+    if not loco_id:
+        return {
+            "message_dict": {
+                "status": "missing_loco_id",
+                "error": "Missing loco id"
+                },
+            "http_code": 400
+            }
+
+    # Get the loco object
+    loco = loco_manager.get_loco_basic(loco_id)
+    if not loco:
+        return {
+            "message_dict": {
+                "status": "invalid_loco_id",
+                "error": "Invalid loco ID"
                 },
             "http_code": 400
             }

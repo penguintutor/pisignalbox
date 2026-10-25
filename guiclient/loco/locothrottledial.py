@@ -87,11 +87,10 @@ class LocoThrottleDial(QDial):
             self.speedChanged.emit(val)
             return
 
-        if not self._tx_timer.isActive():
-            if val != self._last_sent_val:
-                self._last_sent_val = val
-                self.speedChanged.emit(val)
-                self._tx_timer.start()
+        if not self._tx_timer.isActive() and val != self._last_sent_val:
+            self._last_sent_val = val
+            self.speedChanged.emit(val)
+            self._tx_timer.start()
 
     def _emit_pending_speed(self):
         current = self.value()

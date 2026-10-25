@@ -81,6 +81,7 @@ class VLCBClient():
     # optional speeddir etc....
 
     def send_loco (self, data_dict):
+        request_string = None
         # check that it is a loco command 
         if "request_type" not in data_dict or data_dict["request_type"]!= "loco":
             logger.debug("Invalid request")
@@ -95,10 +96,16 @@ class VLCBClient():
                 loco_id = data_dict.get("loco_id")
                 if loco_id > 0: 
                     request_string = f"{api_string}/acquire?loco_id={loco_id}"
+            case "set_speed":
+                loco_id = data_dict.get("loco_id", 0)
+                speed = data_dict.get("speed", 0)
+                direction = data_dict.get("direction", 1)
+                if loco_id > 0:
+                    request_string = f"{api_string}/speed_dir?loco_id={loco_id}&speed={speed}&direction={direction}"
 
 
         # if request_string not set then nothing to send
-        if request_string == "":
+        if not request_string:
             logger.debug(f"Unknown loco command {data_dict['cmd']}")
             return False
 
@@ -129,7 +136,8 @@ class VLCBClient():
             logger.warning(f"Error sending via http, other error {e}")
             # None indicates not connected
             return None
-        # unjson the response
+        
+        # conver response to dict
         try:
             response_dict = json.loads(response)
         except Exception as e:

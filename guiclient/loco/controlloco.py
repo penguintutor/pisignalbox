@@ -280,13 +280,13 @@ class ControlLoco:
         
         
     def forward (self):
-        self.loco.set_direction (1)
+        self.loco.direction = 1
         if self.loco.is_active():
             return True
         return False
         
     def reverse (self):
-        self.loco.set_direction (0)
+        self.loco.direction = 0
         if self.loco.is_active():
             return True
         return False

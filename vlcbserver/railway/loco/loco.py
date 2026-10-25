@@ -336,13 +336,14 @@ class Loco:
         if speed_value > 126:
             speed_value = 126
         self.speed = speed_value
-        
-    # Direction is 1 for forward, 0 for reverse
-    # Could add support for other variable types
-    def set_direction (self, direction):
-        if isinstance(direction, int) and (direction ==  0 or direction == 1):
-            self.direction = direction
-        # Otherwise just ignore
+
+    # If required then use getters / setters from guiloco loco.py
+    # # Direction is 1 for forward, 0 for reverse
+    # # Could add support for other variable types
+    # def set_direction (self, direction):
+    #     if isinstance(direction, int) and (direction ==  0 or direction == 1):
+    #         self.direction = direction
+    #     # Otherwise just ignore
         
     # This sets the value of the functions from a PLOC message
     # Only stores values for F0 to F12

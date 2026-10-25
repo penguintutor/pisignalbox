@@ -75,47 +75,55 @@ class LocoManager(QObject):
 
     def event_trigger (self, event):
         #print (f"ControlLoco received event {event.event_type} data {event.data}")
-        if event.event_type == "PLOC":
-            loco_id = event.data.get('Loco_id', "")
-            for loco in self.locos.get_all_locos():
-                if loco_id == loco.loco_id:
-                    loco.acquired(
-                        event.data.get('Session'),
-                        event.data.get('Speeddir'),
-                        (event.data.get('Fn1'), event.data.get('Fn2'), event.data.get('Fn3'))
-                    )
+        # if event.event_type == "PLOC":
+        #     loco_id = event.data.get('Loco_id', "")
+        #     for loco in self.locos.get_all_locos():
+        #         if loco_id == loco.loco_id:
+        #             loco.acquired(
+        #                 event.data.get('Session'),
+        #                 event.data.get('Speed'),
+        #                 event.data.get('Direction'),
+        #                 (event.data.get('Fn1'), event.data.get('Fn2'), event.data.get('Fn3'))
+        #             )
         # New format
-        elif event.event_type == "acquired":
-            loco_id = event.data.get("loco_id")
-            for loco in self.locos.get_all_locos():
-                if loco_id == loco.loco_id:
-                    fn_bytes = event.data.get('function_bytes')
-                    loco.acquired(
-                        event.data.get('session'),
-                        event.data.get('speeddir'),
-                        (fn_bytes[0], fn_bytes[1], fn_bytes[2])
-                    )
-        elif event.event_type == "acquiring":
-            loco_id = event.data.get("loco_id")
-            for loco in self.locos.get_all_locos():
-                if loco_id == loco.loco_id:
-                    # Check how many times attempted
-                    if loco.acquiring() < ACQUIRE_ATTEMPTS:
-                        # Attempt again in 0.5 secs
-                        #data_dict = {
-                        #    "request_type": "loco",
-                        #    "cmd": "acquire",
-                        #    "loco_id": loco_id
-                        #}
-                        # Uses partial (instead of lambda) to avoid data_dict change whilst waiting
-                        #QTimer.singleShot(500, partial(self.api.start_api_request, data_dict))
-                        event_bus.publish(LocoEvent('api', {
-                            'command': 'acquire',
-                            'loco_id': loco_id,
-                            'send_delay': 500       # delay send by 500mS
-                            }))
-                    else:
-                        loco.cancel_acquire()
+        match event.event_type:
+            case"acquired":
+                #print (f"Gui loco manager acquired {event.data}")
+                loco_id = event.data.get("loco_id")
+                for loco in self.locos.get_all_locos():
+                    if loco_id == loco.loco_id:
+                        fn_bytes = event.data.get('function_bytes')
+                        loco.acquired(
+                            event.data.get('session'),
+                            event.data.get('speed'),
+                            event.data.get('direction'),
+                            (fn_bytes[0], fn_bytes[1], fn_bytes[2])
+                        )
+                # Update GUI to display ready
+                event_bus.publish(AppEvent({"action":"uitext", 'label': "locoStatusLabel", 'value': "Ready"}))
+                event_bus.publish(AppEvent({"action":"lcd"}))
+            case "acquiring":
+                print (f"Gui loco manager acquiring {event.data}")
+                loco_id = event.data.get("loco_id")
+                for loco in self.locos.get_all_locos():
+                    if loco_id == loco.loco_id:
+                        # Check how many times attempted
+                        if loco.acquiring() < ACQUIRE_ATTEMPTS:
+                            # Attempt again in 0.5 secs
+                            #data_dict = {
+                            #    "request_type": "loco",
+                            #    "cmd": "acquire",
+                            #    "loco_id": loco_id
+                            #}
+                            # Uses partial (instead of lambda) to avoid data_dict change whilst waiting
+                            #QTimer.singleShot(500, partial(self.api.start_api_request, data_dict))
+                            event_bus.publish(LocoEvent('api', {
+                                'command': 'acquire',
+                                'loco_id': loco_id,
+                                'send_delay': 500       # delay send by 500mS
+                                }))
+                        else:
+                            loco.cancel_acquire()
 
 
         ### Error handling disabled as now in new API

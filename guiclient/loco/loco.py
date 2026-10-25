@@ -26,7 +26,7 @@ class Loco:
         # Future - look to remove this unique dependency, perhaps use filename instead
         self.loco_data = {}
         self.session = session # If session == 0 then no session allocated (don't support none DCC)
-        self.direction = direction # Values 1 = forward, 0 = reverse
+        self._direction = direction # Values 1 = forward, 0 = reverse
         self.speed = speed # Allow 0 to 128 but maximum sent is 127. Speed 1 = emergency stop (not used - instead status = stop)
         # Track all functions. Only F0 to F12 are found from PLOC - rest assume start off
         self.function_status = [0] * 29
@@ -68,14 +68,15 @@ class Loco:
     def get_session (self):
         return self.session
 
-    def acquired (self, session, speeddir, functions):
+    def acquired (self, session, speed, direction, functions):
         self.session = session
-        self.set_speeddir (speeddir)    # converts to direction and speed
+        self.speed = speed
+        self.direction = direction
         self.set_functions (*functions)
         self.status = "on"
         # reset acquire attempts
-        self.acquire_attempts
-        #print (f"Loco {self.loco_id} acquired")
+        self.acquire_attempts = 0
+        print (f"Loco {self.loco_id} acquired")
 
     def is_acquired(self):
         """Is the loco in an active session
@@ -270,10 +271,27 @@ class Loco:
         self.speed = speed_value
         
     # Direction is 1 for forward, 0 for reverse
-    # Could add support for other variable types
-    def set_direction (self, direction):
+    # Added support for other variable types
+
+    @property
+    def direction(self):
+        return self._direction
+
+    @direction.setter
+    def direction (self, direction):
         if isinstance(direction, int) and (direction ==  0 or direction == 1):
-            self.direction = direction
+            self._direction = direction
+        # Also allow string "forward", reverse - convert to 1 or 0
+        if isinstance(direction, str):
+            if direction == "forward":
+                self._direction=1
+            elif direction == "reverse":
+                self._direction=0
+        if isinstance(direction, bool):
+            if direction == True:
+                self._direction = 1
+            else: 
+                self._direction = 0
         # Otherwise just ignore
         
     # This sets the value of the functions from a PLOC message
