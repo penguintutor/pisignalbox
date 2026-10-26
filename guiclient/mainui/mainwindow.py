@@ -6,6 +6,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QAbstractItemView, QMen
 from PySide6.QtGui import QPixmap, QImage, QPalette, QColor, QFont, QResizeEvent
 from PySide6.QtUiTools import QUiLoader
 import logging
+import json
 from pathlib import Path
 from core import DATA_DIR, RESOURCES_DIR
 from core import event_bus
@@ -51,9 +52,13 @@ app_title = "Pi SignalBox"
 # Read rate is the normal rate for polling 
 # Wait connect is used if status is not connected (eg. network problems)
 # Long wait is if an error is received (eg. invalid api_key)
-read_rate = 200
-wait_connect = 1000
-long_wait = 5000
+read_rate = 200                 # Used for api polling
+wait_connect = 1000             # If no response
+long_wait = 5000                # If an error occurred
+
+# How often to check for update to locos etc. 
+# Updates throttle position if changed by another device
+status_update_rate = 200
 
 logger = logging.getLogger(__name__)
 
@@ -65,12 +70,7 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
     reset_loco_signal = Signal()
     steal_loco_signal = Signal() # Attempt to steal loco
     share_loco_signal = Signal() # Attempt to share loco
-
-    # Keep alive now handled by API server
-    # Keep alive timer must always be started and stopped on the GUI thread
-    # this will start or stop as appropriate based on loco state
-    # update_kalive_signal = Signal()
-    
+   
     # If locos updated then refresh selection list
     updated_locos_signal = Signal()
     
@@ -138,6 +138,7 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
         self.default_font = app.font()
         
         # Create a timer to periodically check for updates
+        # This will download all the CBUS updates
         self.timer = QTimer(self)
         # starts with read_rate (eg. 200ms) timer, but adjusted in
         # handle_polling based on connection status
@@ -145,12 +146,16 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
         self.timer.timeout.connect(self.handle_polling)
         self.timer.start()
 
-        # Keep alive now moved to the server
-        # Keep alive timer - used for DCC keep alive
-        # Create timer, but don't start until acquire locomotive
-        #self.kalive_timer = QTimer(self)
-        #self.kalive_timer.setInterval(4000)
-        #self.kalive_timer.timeout.connect(self.keep_alive)
+        # Status - realtime updates when status changes
+        # Additional poll to server 
+        # 1. Any updates for loco on controller (or via automation)
+        # 2. Any devices we are tracking have changed status (eg. in layout)
+        # 2. is not yet implemented
+        # Starts with status_update_rate (eg. 1s) but adjust based on connection status
+        self.status_update_timer = QTimer(self)
+        self.status_update_timer.setInterval(status_update_rate)
+        self.status_update_timer.timeout.connect(self.status_update)
+        self.status_update_timer.start()
         
         # Load the Assets prior to setting up the GUI
         
@@ -440,36 +445,39 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
         # Otherwise event is most likely for automation
         if 'loco_index' in app_event.data and app_event.data['loco_index'] != 0:
             return
-        if app_event.action == "uitext":
-            if app_event.data['label'] == "locoStatusLabel":
-                self.ui.locoStatusLabel.setText (app_event.data['value'])
-        elif app_event.action == "lcd":
-            self.update_lcd()
-        # keep alive moved to the server
-        #elif app_event.action == "keepalive":
-        #    self.update_kalive_signal.emit()
-        # If locotaken then launch steal_dialog
-        elif app_event.action == "locotaken":
-            # Only action if it is the controlloco that is taken
-            # Todo - note that this means won't get warning if from 
-            # locos tab instead of Controller
-            loco_id = app_event.get_loco_id()
-            if loco_id == None:
-                return
-            print (f"Loco taken {loco_id}")
-            # use try in case we don't have a loco yet
-            # eg. if start automation without selecting loco first
-            try:
-                if loco_id == self.control_loco.get_id():
-                    # Set status message - then launch dialog
-                    self.ui.locoStatusLabel.setText ('Warning - address taken')
-                    self.steal_dialog_signal.emit(loco_id)
-            except Exception as e:
-                print (f"Acquire fail for a non existing loco {loco_id} - {e}")
-                return
-        elif app_event.action == "resetloco":
-            # Only reset gui parts - already reset in controlloco
-            self.reset_loco_gui()
+        match app_event.action:
+            # Generic loco_update (called when received update from API)
+            # Update appropriate UI items
+            case "loco_update":
+                self.update_lcd()
+                # Todo - also update controller position
+                # Future highlight whether forward or reverse selected
+            case "uitext":
+                if app_event.data['label'] == "locoStatusLabel":
+                    self.ui.locoStatusLabel.setText (app_event.data['value'])
+            case "lcd":
+                self.update_lcd()
+            case "resetloco":
+                # Only reset gui parts - already reset in controlloco
+                self.reset_loco_gui()
+            # If locotaken then launch steal_dialog
+            # Default is now to automatically steal, but available here if required in future
+            case "locotaken":
+                # Only action if it is the controlloco that is taken
+                loco_id = app_event.get_loco_id()
+                if loco_id == None:
+                    return
+                print (f"Loco taken {loco_id}")
+                # use try in case we don't have a loco yet
+                # eg. if start automation without selecting loco first
+                try:
+                    if loco_id == self.control_loco.get_id():
+                        # Set status message - then launch dialog
+                        self.ui.locoStatusLabel.setText ('Warning - address taken')
+                        self.steal_dialog_signal.emit(loco_id)
+                except Exception as e:
+                    print (f"Acquire fail for a non existing loco {loco_id} - {e}")
+                    return
             
     
     # Show console always calls show
@@ -573,20 +581,7 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
             # This will print the EXACT reason your app is crashing to the terminal
             print(f"CRASH AVERTED! Error in import_file: {e}")
             #traceback.print_exc()
-
-    # Adds a variable to the AppVar class AND to the device_model
-    # If variable already exists then returns false
-    # event is whether to broadcast
-    ### moved to the global_app_vars
-    # def add_variable (self, variable_name, value="", event=True):
-    #     # Check if variable exists
-    #     if global_app_vars.is_variable(variable_name):
-    #         return False
-    #     global_app_vars.set_variable(variable_name, value, event)
-    #     #device_model.add_variable(variable_name)
-    #     device_manager.add_variable(variable_name)
-    #     return True
-    
+   
     # Override reiszeEvent
     def resizeEvent(self, event: QResizeEvent):
         #print ("Resize event called")
@@ -643,5 +638,47 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
                 self.timer.setInterval(read_rate)
                 
         # Now trigger the actual poll
+        # This polls using the old API - get all data from CBUS
+        # Likely this will be kept for console (or option to enable / disable)
         self.api.poll_server()
+
+    def status_update(self):
+        """ Calls status update for locos and devices
+
+        This is called from status_update_timer which triggers this
+        on a timer. This then issues to the separate methods for updating locos
+        and other devices which add status update requests onto the send
+        queue
+
+        This is called regularly eg. 1 per second - based on status_update_rate
+        - if updates not needed as regularly then those can be skipped on some runs
+
+        """
+        # Todo: Currently just locos implemented
+        self.status_update_locos()
+
+
+    def status_update_locos(self):
+        """ Poll using the new API for loco speed change etc.
+        This is control_loc which is the one being used by the controller
+        First check we have a valid loco_id
+
+        This is called from status_update - but is not set as private
+        in case there is desire to request specific update in future
+        Note that it will only request updates for devices that are considered
+        to be active.
+        """
+        # Currently just check the control loco
+        # Todo - add this for automate in future in case 
+        # they need update
+        if self.control_loco.is_active():
+            loco_id = self.control_loco.get_id()
+            if loco_id > 0:
+                data_dict = {
+                            "request_type": "loco",
+                            "cmd": "get_status",
+                            "loco_id": loco_id     # uses loco_id let server find session_id
+                        }
+                self.api.start_api_request(data_dict)
+        
 

@@ -356,10 +356,6 @@ class LocoManager ():
 
         loco_id = int(loco_id_val)
 
-        # print (f"flask loco manager get loco basic - request {loco_id}")
-        # print (f"flask loco manager get loco basic - Locos {self._locos_basic}")
-        # print (f"flask loco manager get loco basic - loco_id {type(loco_id)}")
-        # print (f"flask loco manager returning {self._locos_basic.get(loco_id, None)}")
         return self._locos_basic.get(loco_id, None)
 
     # check if a loco_id is acquired as basic

@@ -76,7 +76,7 @@ class Loco:
         self.status = "on"
         # reset acquire attempts
         self.acquire_attempts = 0
-        print (f"Loco {self.loco_id} acquired")
+        #print (f"Loco {self.loco_id} acquired")
 
     def is_acquired(self):
         """Is the loco in an active session
@@ -215,11 +215,9 @@ class Loco:
             return True
         return False
     
-    # normalize speed value (subtract 1)
+    # speed is now normalised so return speed
     def speed_value (self):
-        if self.speed > 1:
-            return self.speed -1
-        return 0
+        return self.speed
     
     # Same as release but also set loco_id to 0 to indicate none requested
     def reset (self):

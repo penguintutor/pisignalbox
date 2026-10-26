@@ -103,20 +103,13 @@ class LocoManager(QObject):
                 event_bus.publish(AppEvent({"action":"uitext", 'label': "locoStatusLabel", 'value': "Ready"}))
                 event_bus.publish(AppEvent({"action":"lcd"}))
             case "acquiring":
-                print (f"Gui loco manager acquiring {event.data}")
+                #print (f"Gui loco manager acquiring {event.data}")
                 loco_id = event.data.get("loco_id")
                 for loco in self.locos.get_all_locos():
                     if loco_id == loco.loco_id:
                         # Check how many times attempted
                         if loco.acquiring() < ACQUIRE_ATTEMPTS:
                             # Attempt again in 0.5 secs
-                            #data_dict = {
-                            #    "request_type": "loco",
-                            #    "cmd": "acquire",
-                            #    "loco_id": loco_id
-                            #}
-                            # Uses partial (instead of lambda) to avoid data_dict change whilst waiting
-                            #QTimer.singleShot(500, partial(self.api.start_api_request, data_dict))
                             event_bus.publish(LocoEvent('api', {
                                 'command': 'acquire',
                                 'loco_id': loco_id,
@@ -124,6 +117,23 @@ class LocoManager(QObject):
                                 }))
                         else:
                             loco.cancel_acquire()
+            case "update":
+                loco_id = event.data.get("loco_id")
+                # Update all locos which match the loco_id
+                # Can have other locos, even some are not active
+                # changing speed etc. will not change them to active,
+                # will just reflect the current speed
+                for loco in self.locos.get_all_locos():
+                    if loco_id == loco.loco_id:
+                        speed = event.data.get("speed", None)
+                        if speed:
+                            loco.speed = speed
+                        direction = event.data.get("direction", None)
+                        if direction:
+                            loco.direction = direction
+                        # Could add message or e_stop if required in future
+                        event_bus.publish(AppEvent({"action":"loco_update", "loco_id":loco_id}))
+
 
 
         ### Error handling disabled as now in new API

@@ -102,6 +102,10 @@ class VLCBClient():
                 direction = data_dict.get("direction", 1)
                 if loco_id > 0:
                     request_string = f"{api_string}/speed_dir?loco_id={loco_id}&speed={speed}&direction={direction}"
+            case "get_status":
+                loco_id = data_dict.get("loco_id", 0)
+                if loco_id > 0:
+                    request_string = f"{api_string}/status?loco_id={loco_id}"
 
 
         # if request_string not set then nothing to send
@@ -137,24 +141,43 @@ class VLCBClient():
             # None indicates not connected
             return None
         
-        # conver response to dict
+        # convert response to dict
         try:
             response_dict = json.loads(response)
         except Exception as e:
             logger.warning(f"Send loco returned none JSON format {e}")
             return None
-        #print (f"VLCB Client - Response {response}")
+
+        # Now have response as a dict - pass it on to 
+        # handler to update the loco
+        self._handle_loco_updates(loco_id, response_dict)
+
+
+    def _handle_loco_updates (self, loco_id, response_dict):
+        # Check the response and mostly create an event which
+        # locomanager will pick up and process
         match response_dict["status"]:
             case "loco acquired":
                 event_bus.publish(LocoEvent('acquired', response_dict))
                 logger.debug(f"Loco acquired for {loco_id}")
                 return True
-            case "Acquiring":
+            case "acquiring":
                 logger.debug(f"Acquiring received for {loco_id}")
                 event_bus.publish(LocoEvent('acquiring', response_dict))
                 return True
+            case "loco update":
+                # check he loco_id matches this loco_id
+                if response_dict.get("loco_id") != loco_id:
+                    logger.warning(f"Incorrect loco_id received from server {response_dict}")
+                    return 
+                # pass on to loco_manager to perform update
+                # Not all parameters in dict will be used by 
+                # loco_manager but all passed
+                event_bus.publish(LocoEvent('update', response_dict))
+                return True
+                
 
-        logger.debug(f"Message not working {response}")
+        logger.debug(f"Unknown response from loco api request {response_dict}")
         return False
     
     # Read after last packet 

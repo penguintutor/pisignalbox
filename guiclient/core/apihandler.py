@@ -179,7 +179,7 @@ class ApiHandler(QObject):
     # thread_getupdate() receives it then it knows it should use the new api
     def start_api_request (self, data_dict: dict):
         if "priority" in data_dict and data_dict["priority"] == True:
-            self.send_queu.insert(0, data_dict)
+            self.send_queue.insert(0, data_dict)
         # only add to the list if <= 10 items already
         if len(self.send_queue) > 10:
             return False
@@ -215,6 +215,8 @@ class ApiHandler(QObject):
     def thread_getupdate(self):
         #Only allow one thread at a time
         self.update_in_progress = True
+
+        ### Part 1 send requests
                       
         # see if there is a specific request
         request = self.get_request()
@@ -224,6 +226,8 @@ class ApiHandler(QObject):
             if isinstance(request, dict):
                 match request.get("request_type"):
                     case "loco":
+                        # Send request via send_loco in vlcbclient
+                        # that will handle updates to locos
                         response = self.server.send_loco(request)
                     case _:
                         # default - if request_type not recognised
@@ -239,6 +243,8 @@ class ApiHandler(QObject):
                 return
             else:
                 self.status = "Connected"
+
+        #### Part 2 read responses
             
         # Get updates since last_packet
         response = self.server.read (self.last_packet)
@@ -310,7 +316,7 @@ class ApiHandler(QObject):
         worker = Worker(self.thread_getupdate)
         self.threadpool.start(worker)
 
-    
+   
     def handle_incoming_data (self, response):
         
         logger.debug(f"Incoming data {response}")

@@ -269,7 +269,7 @@ def client_acquire():
     )
 
     if ret_format == "json":
-        return jsonify({"status": "Acquiring", "loco_id": loco_id})
+        return jsonify({"status": "acquiring", "loco_id": loco_id})
     else:
         return "Acquiring loco"
 
@@ -290,6 +290,15 @@ def client_speed_dir():
     return basic_set_speed_dir(loco_id, speed, direction)
 
 
+@api_loco_bp.route('/client/status', methods=['GET', 'POST'])
+def client_status():
+    # Try JSON body first (for POST fetch requests)
+    data = request.get_json(silent=True) or {}
+    # Check JSON first, then fall back to request.values (covers GET)
+    loco_id = data.get("loco_id") or request.values.get("loco_id")
+    # Gets loco status such as session id & speed
+
+    return get_loco_status_basic(loco_id)
 
 
 ################################################
@@ -426,7 +435,7 @@ def get_loco_status(loco_ref):
     loco = session_dict["loco"]
 
     return jsonify ({
-        "status": "valid",
+        "status": "loco update",
         "loco_ref": loco_ref,
         "loco_id": loco.get_id(),
         "session_id": session_id,
@@ -436,6 +445,28 @@ def get_loco_status(loco_ref):
         "e_stop": loco.e_stop
     })
 
+
+def get_loco_status_basic(loco_id):
+    # Checks loco_ref is valid and gets the active session
+    session_dict = basic_loco_to_session(loco_id)
+    # If there is no valid session then return with error message
+    # If session is < 1 then it's invalid - so return json data and error code
+    if "session_id" not in session_dict or session_dict["session_id"] < 1:
+        return jsonify(session_dict.get("message_dict")), session_dict.get("http_code")
+
+    # No need to use .get as above would have failed if not valid
+    session_id = session_dict["session_id"]
+    loco = session_dict["loco"]
+
+    return jsonify ({
+        "status": "loco update",
+        "loco_id": loco.get_id(),
+        "session_id": session_id,
+        "direction": loco.get_direction(),
+        "speed": loco.get_speed(),
+        "message": loco.get_message(),
+        "e_stop": loco.e_stop
+    })
 
 def loco_ref_to_session (loco_ref):
     """ Takes a loco_ref and returns a dict with

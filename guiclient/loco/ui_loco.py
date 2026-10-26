@@ -49,7 +49,7 @@ class UILocoMixin:
         # Release old loco
         # session = self.control_loco.get_session()
         # If not session then nothing to release
-        ## Do not release uless requested
+        ## Do not release unless requested
         #if session != None:
         #    self.api.start_request(self.api.vlcb.release_loco(session))
         #    self.control_loco.release()
