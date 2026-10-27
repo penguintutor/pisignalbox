@@ -60,7 +60,7 @@ def flaskThread(app, debug, config):
     if not debug:
         log = logging.getLogger('werkzeug')
         log.setLevel(logging.ERROR)
-    app.run(host=host, port=tcp_port, use_reloader=False)
+    app.run(host=host, port=tcp_port, debug=debug, use_reloader=False, threaded=True)
     
 # Run the main thread for reading and writing to usb.
 def mainThread(debug, config):
@@ -113,6 +113,9 @@ def gunicorn_app():
 
     # Start ONLY the hardware thread. 
     # Notice we hardcode debug=False since it's production.
+    
+    # Because Gunicorn runs with --workers 1 (and no --preload), 
+    # this thread shares memory directly with all 32 Gunicorn request threads.
     mt = threading.Thread(target=mainThread, args=(False, config), daemon=True)
     mt.start()
 

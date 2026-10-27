@@ -30,7 +30,7 @@ Type=simple
 User=$CURRENT_USER
 WorkingDirectory=$INSTALL_DIR
 Environment="PATH=$HOME/venv/pisignalbox/bin"
-ExecStart=$HOME/venv/pisignalbox/bin/gunicorn --workers 1 --threads 4 --bind 0.0.0.0:5000 "wgi:app"
+ExecStart=$HOME/venv/pisignalbox/bin/gunicorn --workers 1 --threads 32 --timeout 0 --bind 0.0.0.0:5000 wsgi:app
 Restart=on-failure
 RestartSec=5
 
