@@ -5,9 +5,13 @@
 # Note due to url restrictions : and ; need to be encoded
 
 import urllib.request, urllib.parse
+from PySide6.QtCore import QObject, QUrl, QUrlQuery, QByteArray, Signal, Slot, QTimer, Qt
+from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
+from PySide6.QtCore import QByteArray
 from .eventbus import event_bus
 from events import LocoEvent, GuiEvent, AppEvent, DeviceEvent
 import json
+import uuid
 import logging
 
 logger = logging.getLogger(__name__)
@@ -25,194 +29,294 @@ logger = logging.getLogger(__name__)
 # logger.addHandler(console_handler)
 
 
-class VLCBClient():
-    def __init__ (self, url, api_key=None):
+class VLCBClient(QObject):
+
+    # Internal signals for cross-thread bouncing
+    _internal_send_loco = Signal(dict)
+    _internal_send_msg = Signal(str)
+    _internal_read = Signal(object) # uses object to allow None or int
+
+    # Message back to api handler when 
+    # a read response occurs
+    vlcb_read_response = Signal(str)
+
+
+    def __init__ (self, url, api_key=None, parent=None):
+        super().__init__(parent)
         self.url = url
         self.headers = {}
         if api_key:
             self.headers["X-API-Key"] = api_key
 
-    # Todo return and handle different messages
-    # Eg. notify if an error so the API knows (to throttle)
-    # and to notify the user
-    def send (self, message):
-        message = urllib.parse.quote(message)
-        # Note that this adds the api prefix to act as an api
-        request_string = f"{self.url}api/vlcb?send={message}&format=txt"
-        logger.debug(f"Send request {request_string}")
-        req = urllib.request.Request(request_string, headers=self.headers)
-        try:
-            request_url = urllib.request.urlopen(req)
-            response = request_url.read()
-        except urllib.error.HTTPError as e:
-            # Catches server errors eg. 404 not found, 401 unathorized, 500 internal server error
-            logger.warning(f"Error sending via http {request_string}: {e.code}, {e.reason}")
-            # Todo - create user friendly messages
-            # probably want to stop the app requests for something that needs an update
-            # eg. 401 - not authorised
-            print (f"HTTP Error {e.code} {e.read().decode('utf-8')}")
-            # None indicates not connected
-            return None
-        except urllib.error.URLError as e:
-            logger.warning(f"Error sending via http, due to network connection error {e.reason}")
-            # None indicates not connected
-            return None
-        except TimeoutError as e:
-            logger.warning(f"Error sending via http, due to timeout {e}")
-            # None indicates not connected
-            return None
-        except Exception as e:
-            logger.warning(f"Error sending via http, other error {e}")
-            # None indicates not connected
-            return None
-        if response[0:7] == "Success":
-            logger.debug(f"Send response received {response}")
-            return True
-        logger.debug(f"Message not working {response}")
-        return False
+        # Generate a random ID every time the app launches
+        self.client_id = str(uuid.uuid4())
 
-    # Uses new "unamnaged loco api"
-    # Takes a dict with "request_type" == "loco"
+        self.nam = QNetworkAccessManager(self)
+        self.sse_reply = None
+        self.buffer = ""
 
-    # Typial data_dict keys 
-    # "request_type" = loco
-    # "cmd" (eg. acquire)
-    # loco_id / session_id
-    # optional speeddir etc....
+        # Auto-reconnect timer for the SSE stream
+        self.reconnect_timer = QTimer(self)
+        self.reconnect_timer.setSingleShot(True)
+        self.reconnect_timer.setInterval(3000)
+        self.reconnect_timer.timeout.connect(self.start_listening)
 
-    def send_loco (self, data_dict):
-        request_string = None
-        # check that it is a loco command 
-        if "request_type" not in data_dict or data_dict["request_type"]!= "loco":
+        # Wire the signals to the execution slots using QueuedConnection
+        self._internal_send_loco.connect(self._execute_send_loco, Qt.ConnectionType.QueuedConnection)
+        self._internal_send_msg.connect(self._execute_send_msg, Qt.ConnectionType.QueuedConnection)
+        self._internal_read.connect(self._execute_read, Qt.ConnectionType.QueuedConnection)
+
+    @Slot()
+    def _on_disconnected(self):
+        logger.warning("SSE Stream disconnected. Reconnecting in 3 seconds...")
+        self.reconnect_timer.start()
+
+
+    ################################################
+    # Public API (Safe to call from ANY thread)
+    ################################################
+
+    def send_loco(self, data_dict):
+        """Called by your event_bus or background threads."""
+        self._internal_send_loco.emit(data_dict)
+
+    def send(self, message: str):
+        """Called by your event_bus or background threads."""
+        self._internal_send_msg.emit(message)
+
+    def read(self, last_packet):
+        """Called by your background timer or event bus."""
+        self._internal_read.emit(last_packet)
+
+    ################################################
+    # Internal Slots (Forced to run on the Main GUI Thread)
+    ################################################
+
+    @Slot(dict)
+    def _execute_send_loco(self, data_dict):
+        """The actual network code, safely running on the main thread."""
+        if data_dict.get("request_type") != "loco":
             logger.debug("Invalid request")
-            # Returns False - if return None then interpretted as disconnected
-            return False
+            return
         
-        # Note that this adds the api prefix to act as an api
+        cmd = data_dict.get("cmd")
+        loco_id = data_dict.get("loco_id", 0)
+        
+        if loco_id <= 0:
+            logger.debug("Invalid loco_id")
+            return
+
         api_string = f"{self.url}api/loco/client"
+        url = QUrl()
+        
+        # Build the JSON payload dictionary
+        payload = {"loco_id": loco_id}
+        
+        # Prevent SSE echoes using client_id
+        if hasattr(self, "client_id"):
+            payload["source_id"] = self.client_id
 
-        match data_dict.get("cmd"):
+        # Map commands to endpoints and populate the payload
+        match cmd:
             case "acquire":
-                loco_id = data_dict.get("loco_id")
-                if loco_id > 0: 
-                    request_string = f"{api_string}/acquire?loco_id={loco_id}"
+                url.setUrl(f"{api_string}/acquire")
             case "set_speed":
-                loco_id = data_dict.get("loco_id", 0)
-                speed = data_dict.get("speed", 0)
-                direction = data_dict.get("direction", 1)
-                if loco_id > 0:
-                    request_string = f"{api_string}/speed_dir?loco_id={loco_id}&speed={speed}&direction={direction}"
+                url.setUrl(f"{api_string}/speed_dir")
+                payload["speed"] = data_dict.get("speed", 0)
+                payload["direction"] = data_dict.get("direction", 1)
             case "get_status":
-                loco_id = data_dict.get("loco_id", 0)
-                if loco_id > 0:
-                    request_string = f"{api_string}/status?loco_id={loco_id}"
+                url.setUrl(f"{api_string}/status")
+            case _:
+                logger.debug(f"Unknown loco command {cmd}")
+                return
 
+        logger.debug(f"Send async POST request to {url.toString()} with {payload}")
 
-        # if request_string not set then nothing to send
-        if not request_string:
-            logger.debug(f"Unknown loco command {data_dict['cmd']}")
-            return False
+        json_data = json.dumps(payload).encode("utf-8")
 
+        req = QNetworkRequest(url)
+        req.setHeader(QNetworkRequest.KnownHeaders.ContentTypeHeader, "application/json")
         
-        logger.debug(f"Send request {request_string}")
-        req = urllib.request.Request(request_string, headers=self.headers)
-        try:
-            request_url = urllib.request.urlopen(req)
-            response = request_url.read()
-        except urllib.error.HTTPError as e:
-            # Catches server errors eg. 404 not found, 401 unathorized, 500 internal server error
-            logger.warning(f"Error sending via http {request_string}: {e.code}, {e.reason}")
-            # Todo - create user friendly messages
-            # probably want to stop the app requests for something that needs an update
-            # eg. 401 - not authorised
-            print (f"HTTP Error {e.code} {e.read().decode('utf-8')}")
-            # None indicates not connected
-            return None
-        except urllib.error.URLError as e:
-            logger.warning(f"Error sending via http, due to network connection error {e.reason}")
-            # None indicates not connected
-            return None
-        except TimeoutError as e:
-            logger.warning(f"Error sending via http, due to timeout {e}")
-            # None indicates not connected
-            return None
-        except Exception as e:
-            logger.warning(f"Error sending via http, other error {e}")
-            # None indicates not connected
-            return None
+        if hasattr(self, "headers"):
+            for key, value in self.headers.items():
+                req.setRawHeader(key.encode("utf-8"), value.encode("utf-8"))
+
+        reply = self.nam.post(req, QByteArray(json_data))
+        #reply.finished.connect(lambda: self._handle_loco_reply(reply, loco_id))
+        reply.finished.connect(lambda r=reply, l_id=loco_id: self._handle_loco_reply(r, l_id))
+
+
+    @Slot(str)
+    def _execute_send_msg(self, message: str):
+        """The generic send method, safely running on the main thread."""
+        url = QUrl(f"{self.url}api/vlcb")
         
-        # convert response to dict
+        query = QUrlQuery()
+        query.addQueryItem("send", message)
+        query.addQueryItem("format", "txt")
+        query.addQueryItem("client_id", self.client_id)
+        
+        form_data = query.toString(QUrl.ComponentFormattingOption.FullyEncoded).encode("utf-8")
+
+        req = QNetworkRequest(url)
+        req.setHeader(QNetworkRequest.KnownHeaders.ContentTypeHeader, "application/x-www-form-urlencoded")
+
+        # Adds any headers - including X-API-Key
+        for key, value in self.headers.items():
+            req.setRawHeader(key.encode("utf-8"), value.encode("utf-8"))
+
+        reply = self.nam.post(req, QByteArray(form_data))
+        #reply.finished.connect(lambda: self._handle_send_response(reply))
+        reply.finished.connect(lambda r=reply: self._handle_send_response(r))
+
+
+    def _handle_loco_reply(self, reply: QNetworkReply, loco_id: int):
+        """Processes the background network response once the server replies."""
         try:
-            response_dict = json.loads(response)
-        except Exception as e:
-            logger.warning(f"Send loco returned none JSON format {e}")
-            return None
+            if reply.error() != QNetworkReply.NetworkError.NoError:
+                logger.warning(f"Network error on loco POST command: {reply.errorString()}")
+                return
 
-        # Now have response as a dict - pass it on to 
-        # handler to update the loco
-        self._handle_loco_updates(loco_id, response_dict)
+            response_bytes = reply.readAll().data()
+            try:
+                response_dict = json.loads(response_bytes.decode("utf-8"))
+            except Exception as e:
+                logger.warning(f"Send loco returned non-JSON format: {e}")
+                return
+
+            # Pass to your existing update handler
+            self._handle_loco_updates(loco_id, response_dict)
+            
+        finally:
+            reply.deleteLater()
 
 
-    def _handle_loco_updates (self, loco_id, response_dict):
-        # Check the response and mostly create an event which
-        # locomanager will pick up and process
-        match response_dict["status"]:
+    def _handle_loco_updates(self, loco_id, response_dict):
+        # Use .get() safely in case "status" is missing from a malformed response
+        status = response_dict.get("status")
+
+        match status:
             case "loco acquired":
-                event_bus.publish(LocoEvent('acquired', response_dict))
                 logger.debug(f"Loco acquired for {loco_id}")
-                return True
+                event_bus.publish(LocoEvent('acquired', response_dict))
+                
             case "acquiring":
                 logger.debug(f"Acquiring received for {loco_id}")
                 event_bus.publish(LocoEvent('acquiring', response_dict))
-                return True
+                
             case "loco update":
-                # check he loco_id matches this loco_id
                 if response_dict.get("loco_id") != loco_id:
                     logger.warning(f"Incorrect loco_id received from server {response_dict}")
                     return 
-                # pass on to loco_manager to perform update
-                # Not all parameters in dict will be used by 
-                # loco_manager but all passed
-                event_bus.publish(LocoEvent('update', response_dict))
-                return True
                 
-
-        logger.debug(f"Unknown response from loco api request {response_dict}")
-        return False
+                # Pass on to loco_manager to perform update
+                event_bus.publish(LocoEvent('update', response_dict))
+                
+            case _:
+                logger.debug(f"Unknown response from loco api request {response_dict}")
     
-    # Read after last packet 
-    def read (self, last_packet):
-        # if lastpacket does not have a value then read from 0 (have no data)
-        if last_packet == None:
+    @Slot(object)
+    def _execute_read(self, last_packet):
+        """Executes the GET request safely on the main thread."""
+        if last_packet is None:
             last_packet = -5
         else:
-            last_packet += 1	# Read next packet
-        request_string = f"{self.url}api/vlcb?read={last_packet}&format=txt"
+            last_packet += 1
+
+        request_string = f"{self.url}api/vlcb/?read={last_packet}&format=txt"
         logger.debug(f"Reading {request_string}")
-        # Create a Request object
-        req = urllib.request.Request(request_string, headers=self.headers)
+
+        req = QNetworkRequest(QUrl(request_string))
+
+        for key, value in self.headers.items():
+            req.setRawHeader(key.encode("utf-8"), value.encode("utf-8"))
+
+        reply = self.nam.get(req)
+        reply.finished.connect(self._handle_read_reply)
+
+
+    @Slot()
+    def _handle_read_reply(self):
+        """Processes the console data when the server finally replies."""
+        reply = self.sender()
+        if not reply:
+            return
+            
         try:
-            request_url = urllib.request.urlopen(req)
-            response = request_url.read().decode('utf-8')
-        except urllib.error.HTTPError as e:
-            # Todo: handle errors here as well
-            # Catches server errors eg. 404 not found, 401 unathorized, 500 internal server error
-            logger.warning(f"Error reading via http {request_string}: {e.code}, {e.reason}")
-            # None indicates not connected
-            return None
-        except urllib.error.URLError as e:
-            logger.warning(f"Error reading via http, due to network connection error {e.reason}")
-            # None indicates not connected
-            return None
-        except TimeoutError as e:
-            logger.warning(f"Error reading via http, due to timeout {e}")
-            # None indicates not connected
-            return None
-        except Exception as e:
-            logger.warning(f"Error reading via http, other error {e}")
-            # None indicates not connected
-            return None
-        logger.debug(f"Read response received {response}")
-        return response
+            if reply.error() != QNetworkReply.NetworkError.NoError:
+                logger.warning(f"Error reading via http: {reply.errorString()}")
+                return
+                
+            response = reply.readAll().data().decode("utf-8")
+            
+            if response:
+                logger.debug(f"Read response received, emitting to UI.")
+                # Push the data to the UI instead of returning it!
+                self.vlcb_read_response.emit(response)
+                
+        finally:
+            reply.deleteLater()       
+
+    def _handle_send_response(self, reply: QNetworkReply):
+        try:
+            if reply.error() != QNetworkReply.NetworkError.NoError:
+                logger.warning(f"Network error on generic POST: {reply.errorString()}")
+                return
+            
+            response = reply.readAll().data().decode("utf-8")
+            logger.debug(f"Send response received: {response}")
+            #print (f"VLCBClient received {response}")
+        finally:
+            reply.deleteLater() 
+
+    def start_listening(self):
+        """Connects to the Flask SSE stream."""
+        req = QNetworkRequest(QUrl(f"{self.url}/api/stream"))
+        req.setRawHeader(b"Accept", b"text/event-stream")
+
+        for key, value in self.headers.items():
+            req.setRawHeader(key.encode("utf-8"), value.encode("utf-8"))
         
-        
+        self.sse_reply = self.nam.get(req)
+        self.sse_reply.readyRead.connect(self._on_sse_data)
+        self.sse_reply.finished.connect(self._on_disconnected)
+
+    @Slot()
+    def _on_sse_data(self):
+        chunk = self.sse_reply.readAll().data().decode("utf-8", errors="replace")
+        self.buffer += chunk
+
+        while "\n\n" in self.buffer:
+            frame, self.buffer = self.buffer.split("\n\n", 1)
+            self._route_event(frame)
+
+    def _route_event(self, frame: str):
+        """Parses incoming SSE events and pushes them to the event bus."""
+        event_type = "message"
+        data_lines = []
+
+        for line in frame.splitlines():
+            if line.startswith("event:"):
+                event_type = line[6:].strip()
+            elif line.startswith("data:"):
+                data_lines.append(line[5:].strip())
+
+        if not data_lines:
+            return
+
+        try:
+            payload = json.loads("\n".join(data_lines))
+            
+            # Map the SSE event to your internal Event Bus
+            if event_type == "loco_speed":
+                loco_id = int(payload.get("loco_id", 0))
+                payload["status"] = "loco update" # Make it look like a REST response
+                self._handle_loco_updates(loco_id, payload)
+                
+            elif event_type == "turnout_state":
+                # Example for future turnout events
+                # event_bus.publish(TurnoutEvent('update', payload))
+                pass
+
+        except ValueError:
+            logger.warning("Failed to parse SSE JSON payload")

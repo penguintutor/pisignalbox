@@ -47,7 +47,7 @@ def check_api_operator_access():
 # ==========================================
 
 
-@api_vlcb_bp.route("/", methods=['GET', 'POST'])
+@api_vlcb_bp.route("/", methods=['GET', 'POST'], strict_slashes=False)
 @login_required
 def vlcb_request():
     return escape(process_vlcb_logic())

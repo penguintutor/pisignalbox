@@ -56,6 +56,9 @@ class ApiHandler(QObject):
         
         # VLCB and node creation
         self.vlcb = VLCB(self.pc_can_id)
+
+        # Connect the signal for read responses
+        self.server.vlcb_read_response.connect(self.update_from_read)
         
     # Receives event from event_bus and issues start_request
     def vlcb_event (self, event):
@@ -245,9 +248,14 @@ class ApiHandler(QObject):
                 self.status = "Connected"
 
         #### Part 2 read responses
-            
         # Get updates since last_packet
-        response = self.server.read (self.last_packet)
+        self.server.read(self.last_packet)
+        # Response will trigger update_from_read
+            
+
+    def update_from_read(self, response):
+        # Get updates since last_packet
+        #response = self.server.read (self.last_packet)
         # If response None then error getting update - skip for now and
         # try again next time we poll
         if response == None:
@@ -257,7 +265,7 @@ class ApiHandler(QObject):
         else:
             self.status = "Connected"
 
-        return self._handle_response(response)
+        self._handle_response(response)
 
     def _handle_response(self, response):
         """ Called by thread_getupdate handles the response recieved"""

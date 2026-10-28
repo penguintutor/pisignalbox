@@ -57,6 +57,8 @@ def load_server_config():
     return config
 
 def is_server_running(url):
+    return True
+    # Todo - need a better way of checking if running
     try:
         urllib.request.urlopen(url, timeout=1)
         return True

@@ -7,12 +7,15 @@ from flask import Blueprint, request, jsonify
 from flask_wtf.csrf import validate_csrf, CSRFError
 from .vlcb import api_vlcb_bp
 from .loco import api_loco_bp
+from .stream import api_stream_bp
 
 # The API Blueprint (For the client app or other clients)
 api_blueprint = Blueprint('api', __name__, url_prefix='/api')
 
 api_blueprint.register_blueprint(api_vlcb_bp, url_prefix='/vlcb')
 api_blueprint.register_blueprint(api_loco_bp, url_prefix='/loco')
+api_blueprint.register_blueprint(api_stream_bp, url_prefix='/stream')
+
 
 """ The before request will apply to the sub blueprints """
 @api_blueprint.before_request

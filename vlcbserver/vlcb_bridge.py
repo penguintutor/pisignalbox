@@ -7,6 +7,7 @@ import logging
 from vlcbserver.extensions import vlcb
 from vlcbserver.railway.loco.locomanager import loco_manager
 from pyvlcb import VLCB, VLCBOpcode
+from vlcbserver.sse_broadcaster import announcer
 
 # Do we keep a local state of locos devices etc.
 # If just using GUI then this is not required and will improve
@@ -162,3 +163,23 @@ def _update_local_state(item):
 
     # Uncomment for the raw data received from USB - very noisy!
     #print (f"vlcb_bridge: VLCB Entry {vlcb_entry}, op_code {ret_opcode}")
+
+
+
+
+##### Broadcast via SSE Broadcaster to all listening devices
+# This just broadcasts the state - update details separately
+# loco_ref is optional, particularly if client only - used by htmx
+def broadcast_loco (loco_id, new_speed, new_direction, loco_ref="", message="", e_stop=False, source_id="cbus"):
+    """Call whenever the loco state changes to broadcast to any
+    listeners"""
+    
+    announcer.announce("loco_speed", {
+        "loco_id": loco_id,
+        "loco_ref": loco_ref,
+        "speed": new_speed,
+        "direction": new_direction,
+        "message": message,
+        "e_stop": e_stop,
+        "source_id": source_id
+    })

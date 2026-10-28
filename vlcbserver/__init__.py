@@ -158,7 +158,13 @@ def create_app(config):
     # Exempt the API blueprint from CSRF API calls can POST to it
     # without needing a web session token
     # Only allowed where api key is used where csrf protection not required
+    from vlcbserver.blueprints.api.vlcb import api_vlcb_bp
+    from vlcbserver.blueprints.api.loco import api_loco_bp
+    from vlcbserver.blueprints.api.stream import api_stream_bp
     csrf.exempt(api_blueprint) # NOSONAR
+    csrf.exempt(api_vlcb_bp) # NOSONAR
+    csrf.exempt(api_loco_bp) # NOSONAR
+    csrf.exempt(api_stream_bp) # NOSONAR
 
     return app
     

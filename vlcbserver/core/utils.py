@@ -42,15 +42,22 @@ def login_required(func):
 
 def process_vlcb_logic():
     # If there is a send argument then it's a send
-    this_arg = request.args.get('send', default='none', type=str)
-    if this_arg != "none":
+    #this_arg = request.args.get('send', default='none', type=str)
+    
+    data = request.get_json(silent=True) or {}
+    # Check JSON first, then fall back to request.values (covers GET)
+    this_arg = data.get("send") or request.values.get("send")
+
+    #print (f"Utils processing {this_arg}")
+
+    if this_arg != None:
         valid = _validate_vlcb_request(this_arg)
         if valid:
             send_data(this_arg)
         else:
             # Print this as we want to know when developing if we are getting 
             # invalid requests - or if our regex is too strict
-            print(f"routes vlcb_request - this is invalid request {this_arg}")
+            print(f"utils vlcb_request - this is invalid request {this_arg}")
         # Return null data regardless of whether success or not
         # we've only added to the queue so don't know
         # Client can watch to see if it's been sent from the api read
@@ -61,7 +68,8 @@ def process_vlcb_logic():
         entries = get_data(this_arg)
         if not entries:
             return ""
-        return "\n".join(str(e) for e in entries)
+        return_string = "\n".join(str(e) for e in entries)
+        return return_string
 
 def _validate_vlcb_request (request_string):
     """ Simple check if the request is in a recognised format

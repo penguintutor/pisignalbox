@@ -1,11 +1,13 @@
-from flask import Blueprint, send_from_directory, jsonify, request, current_app
+from flask import Blueprint, send_from_directory, jsonify, request, current_app, stream_with_context, Response
 from flask_login import LoginManager, UserMixin, login_user, login_required, current_user, logout_user
 from pathlib import Path
+import queue
 from vlcbserver.settings import get_data_dirs
 from vlcbserver.extensions import vlcb
 from vlcbserver.vlcb_bridge import send_data
 from vlcbserver.railway.loco import locomanager
 from vlcbserver.railway.loco.locomanager import loco_manager
+from vlcbserver.sse_broadcaster import announcer
 
 
 # No url_prefix, it is applied when registering (see __init__.py)
@@ -209,7 +211,6 @@ def image():
 
 
 
-
 ################################################
 # Unmanaged Locos - no loco_ref / name - just loco_id
 # uses client
@@ -299,6 +300,8 @@ def client_status():
     # Gets loco status such as session id & speed
 
     return get_loco_status_basic(loco_id)
+
+
 
 
 ################################################
