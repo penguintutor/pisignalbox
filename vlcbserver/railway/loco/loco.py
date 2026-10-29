@@ -4,6 +4,7 @@
 # Holds a loco and it's session
 import json
 import logging
+from vlcbserver.sse_broadcaster import SSEAnnouncer, announcer
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +60,11 @@ class Loco:
         """
         self._speed = max(0, min(int(val), 126))
         self.e_stop = False
+        announcer.announce("loco_speed", {
+            "loco_id" : self.loco_id,
+            "speed": self._speed,
+            "direction": self.direction
+        })
 
     def emergency_stop(self) -> None:
         """Triggers an emergency stop regardless of the underlying controller."""

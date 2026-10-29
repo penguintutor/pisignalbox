@@ -34,7 +34,7 @@ def load_user_from_request(request):
         # Don't print due to possible false requests
         return None
 
-    # Now convert to hashed key which is used to check against dtabase
+    # Now convert to hashed key which is used to check against database
     hashed_key = User.api_to_hash(api_key)
 
     # get database user based on API key

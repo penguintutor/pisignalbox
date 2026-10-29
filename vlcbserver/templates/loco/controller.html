@@ -122,11 +122,14 @@
   </div>
 </div>
 
+
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     
+    // Configure the CSRF refresh endpoint URL from Flask
+    ApiClient.setRefreshUrl('{{ url_for("api.get_csrf_token") }}');
+
     // Elements
-    const csrfToken = document.getElementById('csrf_token').value;
     const locoSelect = document.getElementById('locoSelect');
     const defaultOption = locoSelect.options[0];
     const acquireStatus = document.getElementById('acquireStatus');
@@ -215,32 +218,17 @@ document.addEventListener("DOMContentLoaded", function() {
         locoSelect.value = "";
     }
 
-    // Helper: Standard API fetch wrapper
+    // Helper: Controller-specific wrapper around shared ApiClient
     async function callAPI(endpoint, data) {
-        try {
-            const url = endpoint; 
-            const response = await fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
-                },
-                body: JSON.stringify(data)
-            });
-            const result = await response.json();
+        const result = await ApiClient.post(endpoint, data);
 
-            // Centrally handle expired/cancelled locomotive sessions
-            if (result.status === 'session_cancelled') {
-                resetController();
-                acquireStatus.innerText = result.message || "Session cancelled.";
-                return result;
-            }
-
-            return result;
-        } catch (error) {
-            console.error("API Error:", error);
-            return { error: true, message: "Network error" };
+        // Centrally handle expired/cancelled locomotive sessions
+        if (result.status === 'session_cancelled') {
+            resetController();
+            acquireStatus.innerText = result.message || "Session cancelled.";
         }
+
+        return result;
     }
 
     // Periodic status check for shared control / external updates
@@ -441,6 +429,7 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 
 });
+
 </script>
 
 {% endblock %}

@@ -146,16 +146,17 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
         self.timer.timeout.connect(self.handle_polling)
         self.timer.start()
 
+        # Replacing this with the Broadcaster
         # Status - realtime updates when status changes
         # Additional poll to server 
         # 1. Any updates for loco on controller (or via automation)
         # 2. Any devices we are tracking have changed status (eg. in layout)
         # 2. is not yet implemented
         # Starts with status_update_rate (eg. 1s) but adjust based on connection status
-        self.status_update_timer = QTimer(self)
-        self.status_update_timer.setInterval(status_update_rate)
-        self.status_update_timer.timeout.connect(self.status_update)
-        self.status_update_timer.start()
+        # self.status_update_timer = QTimer(self)
+        # self.status_update_timer.setInterval(status_update_rate)
+        # self.status_update_timer.timeout.connect(self.status_update)
+        # self.status_update_timer.start()
         
         # Load the Assets prior to setting up the GUI
         
@@ -642,43 +643,46 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
         # Likely this will be kept for console (or option to enable / disable)
         self.api.poll_server()
 
-    def status_update(self):
-        """ Calls status update for locos and devices
 
-        This is called from status_update_timer which triggers this
-        on a timer. This then issues to the separate methods for updating locos
-        and other devices which add status update requests onto the send
-        queue
+    ### This polls the server - replacing with broadcaster
 
-        This is called regularly eg. 1 per second - based on status_update_rate
-        - if updates not needed as regularly then those can be skipped on some runs
+    # def status_update(self):
+    #     """ Calls status update for locos and devices
 
-        """
-        # Todo: Currently just locos implemented
-        self.status_update_locos()
+    #     This is called from status_update_timer which triggers this
+    #     on a timer. This then issues to the separate methods for updating locos
+    #     and other devices which add status update requests onto the send
+    #     queue
+
+    #     This is called regularly eg. 1 per second - based on status_update_rate
+    #     - if updates not needed as regularly then those can be skipped on some runs
+
+    #     """
+    #     # Todo: Currently just locos implemented
+    #     self.status_update_locos()
 
 
-    def status_update_locos(self):
-        """ Poll using the new API for loco speed change etc.
-        This is control_loc which is the one being used by the controller
-        First check we have a valid loco_id
+    # def status_update_locos(self):
+    #     """ Poll using the new API for loco speed change etc.
+    #     This is control_loc which is the one being used by the controller
+    #     First check we have a valid loco_id
 
-        This is called from status_update - but is not set as private
-        in case there is desire to request specific update in future
-        Note that it will only request updates for devices that are considered
-        to be active.
-        """
-        # Currently just check the control loco
-        # Todo - add this for automate in future in case 
-        # they need update
-        if self.control_loco.is_active():
-            loco_id = self.control_loco.get_id()
-            if loco_id > 0:
-                data_dict = {
-                            "request_type": "loco",
-                            "cmd": "get_status",
-                            "loco_id": loco_id     # uses loco_id let server find session_id
-                        }
-                self.api.start_api_request(data_dict)
+    #     This is called from status_update - but is not set as private
+    #     in case there is desire to request specific update in future
+    #     Note that it will only request updates for devices that are considered
+    #     to be active.
+    #     """
+    #     # Currently just check the control loco
+    #     # Todo - add this for automate in future in case 
+    #     # they need update
+    #     if self.control_loco.is_active():
+    #         loco_id = self.control_loco.get_id()
+    #         if loco_id > 0:
+    #             data_dict = {
+    #                         "request_type": "loco",
+    #                         "cmd": "get_status",
+    #                         "loco_id": loco_id     # uses loco_id let server find session_id
+    #                     }
+    #             self.api.start_api_request(data_dict)
         
 

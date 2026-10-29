@@ -11,7 +11,7 @@ from vlcbserver.sse_broadcaster import SSEAnnouncer, announcer
 
 api_stream_bp = Blueprint('stream', __name__)
 
-@api_stream_bp.route("/stream", methods=['GET'])
+@api_stream_bp.route("/", methods=['GET'], strict_slashes=False)
 def sse_stream():
     def event_generator():
         client_queue = announcer.listen()

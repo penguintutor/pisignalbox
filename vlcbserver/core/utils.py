@@ -40,32 +40,27 @@ def login_required(func):
     return decorated_view
 
 
-def process_vlcb_logic():
-    # If there is a send argument then it's a send
-    #this_arg = request.args.get('send', default='none', type=str)
-    
-    data = request.get_json(silent=True) or {}
-    # Check JSON first, then fall back to request.values (covers GET)
-    this_arg = data.get("send") or request.values.get("send")
+def process_vlcb_logic(req_type, arg_value):
+    # Argument is from the send parameter on the GET / POST call
 
-    #print (f"Utils processing {this_arg}")
+    #print (f"Req type {req_type}, value {arg_value}")
 
-    if this_arg != None:
-        valid = _validate_vlcb_request(this_arg)
+    if req_type == "send":
+        valid = _validate_vlcb_request(arg_value)
         if valid:
-            send_data(this_arg)
+            send_data(arg_value)
         else:
             # Print this as we want to know when developing if we are getting 
             # invalid requests - or if our regex is too strict
-            print(f"utils vlcb_request - this is invalid request {this_arg}")
+            print(f"utils vlcb_request - this is invalid request {arg_value}")
         # Return null data regardless of whether success or not
         # we've only added to the queue so don't know
         # Client can watch to see if it's been sent from the api read
         return "0,0,0"
         
     else:
-        this_arg = request.args.get('read', default=0, type=int)        
-        entries = get_data(this_arg)
+             
+        entries = get_data(arg_value)
         if not entries:
             return ""
         return_string = "\n".join(str(e) for e in entries)

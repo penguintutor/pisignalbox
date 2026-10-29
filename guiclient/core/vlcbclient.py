@@ -7,7 +7,6 @@
 import urllib.request, urllib.parse
 from PySide6.QtCore import QObject, QUrl, QUrlQuery, QByteArray, Signal, Slot, QTimer, Qt
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
-from PySide6.QtCore import QByteArray
 from .eventbus import event_bus
 from events import LocoEvent, GuiEvent, AppEvent, DeviceEvent
 import json
@@ -15,18 +14,6 @@ import uuid
 import logging
 
 logger = logging.getLogger(__name__)
-
-### Set logging to console during testing
-### Uncomment the following text to allow debugging to the terminal
-### This will show all URL requests etc.
-# #Create a handler that outputs to the console (terminal)
-# console_handler = logging.StreamHandler()
-# console_handler.setLevel(logging.DEBUG)
-# # Create a formatter to make the output readable
-# formatter = logging.Formatter('%(levelname)s in %(name)s: %(message)s')
-# console_handler.setFormatter(formatter)
-# # Attach the handler to your logger
-# logger.addHandler(console_handler)
 
 
 class VLCBClient(QObject):
@@ -41,7 +28,7 @@ class VLCBClient(QObject):
     vlcb_read_response = Signal(str)
 
 
-    def __init__ (self, url, api_key=None, parent=None):
+    def __init__(self, url, api_key=None, parent=None):
         super().__init__(parent)
         self.url = url
         self.headers = {}
@@ -55,6 +42,10 @@ class VLCBClient(QObject):
         self.sse_reply = None
         self.buffer = ""
 
+        # CSRF refresh state and queued retry callbacks
+        self._is_refreshing_csrf = False
+        self._pending_csrf_retries = []
+
         # Auto-reconnect timer for the SSE stream
         self.reconnect_timer = QTimer(self)
         self.reconnect_timer.setSingleShot(True)
@@ -66,10 +57,91 @@ class VLCBClient(QObject):
         self._internal_send_msg.connect(self._execute_send_msg, Qt.ConnectionType.QueuedConnection)
         self._internal_read.connect(self._execute_read, Qt.ConnectionType.QueuedConnection)
 
+        # If no API key is configured, fetch an initial CSRF token and session cookie
+        if not api_key:
+            QTimer.singleShot(0, self._refresh_csrf_token)
+
     @Slot()
     def _on_disconnected(self):
         logger.warning("SSE Stream disconnected. Reconnecting in 3 seconds...")
         self.reconnect_timer.start()
+
+
+    ################################################
+    # CSRF Token Management
+    ################################################
+
+    def _refresh_csrf_token(self):
+        """Fetches a fresh CSRF token from the server and replays queued requests."""
+        if self._is_refreshing_csrf:
+            return
+
+        self._is_refreshing_csrf = True
+        csrf_url = QUrl(f"{self.url}api/csrf-token")
+        logger.debug(f"Fetching fresh CSRF token from {csrf_url.toString()}")
+
+        req = QNetworkRequest(csrf_url)
+        req.setRawHeader(b"Accept", b"application/json")
+
+        for key, value in self.headers.items():
+            req.setRawHeader(key.encode("utf-8"), value.encode("utf-8"))
+
+        reply = self.nam.get(req)
+        reply.finished.connect(lambda r=reply: self._handle_csrf_reply(r))
+
+    def _handle_csrf_reply(self, reply: QNetworkReply):
+        """Stores the new CSRF token and triggers any requests waiting on it."""
+        self._is_refreshing_csrf = False
+        try:
+            if reply.error() != QNetworkReply.NetworkError.NoError:
+                logger.warning(f"Failed to fetch CSRF token: {reply.errorString()}")
+                self._pending_csrf_retries.clear()
+                return
+
+            response_bytes = reply.readAll().data()
+            data = json.loads(response_bytes.decode("utf-8"))
+            new_token = data.get("csrf_token")
+
+            if new_token:
+                self.headers["X-CSRFToken"] = new_token
+                logger.debug("CSRF token updated successfully.")
+
+                # Replay all queued requests with the new token
+                pending = self._pending_csrf_retries[:]
+                self._pending_csrf_retries.clear()
+                for retry_callback in pending:
+                    retry_callback()
+            else:
+                logger.warning("CSRF endpoint did not return a csrf_token.")
+                self._pending_csrf_retries.clear()
+
+        except Exception as e:
+            logger.warning(f"Error parsing CSRF token response: {e}")
+            self._pending_csrf_retries.clear()
+        finally:
+            reply.deleteLater()
+
+    def _check_csrf_error(self, reply: QNetworkReply, retry_callback) -> bool:
+        """
+        Checks if a failed reply was caused by a missing or expired CSRF token.
+        If so, queues the retry_callback, initiates a token refresh, and returns True.
+        """
+        if retry_callback is None:
+            return False
+
+        status_code = reply.attribute(QNetworkRequest.Attribute.HttpStatusCodeAttribute)
+        if status_code in (400, 401):
+            try:
+                raw_bytes = reply.readAll().data()
+                err_data = json.loads(raw_bytes.decode("utf-8"))
+                if err_data.get("code") in ("CSRF_EXPIRED", "CSRF_MISSING"):
+                    logger.info(f"CSRF token {err_data.get('code')}. Refreshing and retrying request...")
+                    self._pending_csrf_retries.append(retry_callback)
+                    self._refresh_csrf_token()
+                    return True
+            except Exception:
+                pass
+        return False
 
 
     ################################################
@@ -88,12 +160,17 @@ class VLCBClient(QObject):
         """Called by your background timer or event bus."""
         self._internal_read.emit(last_packet)
 
+
     ################################################
     # Internal Slots (Forced to run on the Main GUI Thread)
     ################################################
 
     @Slot(dict)
     def _execute_send_loco(self, data_dict):
+        """Slot wrapper that calls _do_send_loco with retry enabled."""
+        self._do_send_loco(data_dict, is_retry=False)
+
+    def _do_send_loco(self, data_dict: dict, is_retry: bool = False):
         """The actual network code, safely running on the main thread."""
         if data_dict.get("request_type") != "loco":
             logger.debug("Invalid request")
@@ -142,12 +219,18 @@ class VLCBClient(QObject):
                 req.setRawHeader(key.encode("utf-8"), value.encode("utf-8"))
 
         reply = self.nam.post(req, QByteArray(json_data))
-        #reply.finished.connect(lambda: self._handle_loco_reply(reply, loco_id))
-        reply.finished.connect(lambda r=reply, l_id=loco_id: self._handle_loco_reply(r, l_id))
+        retry_cb = (lambda d=data_dict: self._do_send_loco(d, is_retry=True)) if not is_retry else None
+        reply.finished.connect(
+            lambda r=reply, l_id=loco_id, cb=retry_cb: self._handle_loco_reply(r, l_id, cb)
+        )
 
 
     @Slot(str)
     def _execute_send_msg(self, message: str):
+        """Slot wrapper that calls _do_send_msg with retry enabled."""
+        self._do_send_msg(message, is_retry=False)
+
+    def _do_send_msg(self, message: str, is_retry: bool = False):
         """The generic send method, safely running on the main thread."""
         url = QUrl(f"{self.url}api/vlcb")
         
@@ -161,19 +244,21 @@ class VLCBClient(QObject):
         req = QNetworkRequest(url)
         req.setHeader(QNetworkRequest.KnownHeaders.ContentTypeHeader, "application/x-www-form-urlencoded")
 
-        # Adds any headers - including X-API-Key
+        # Adds any headers - including X-API-Key or X-CSRFToken
         for key, value in self.headers.items():
             req.setRawHeader(key.encode("utf-8"), value.encode("utf-8"))
 
         reply = self.nam.post(req, QByteArray(form_data))
-        #reply.finished.connect(lambda: self._handle_send_response(reply))
-        reply.finished.connect(lambda r=reply: self._handle_send_response(r))
+        retry_cb = (lambda m=message: self._do_send_msg(m, is_retry=True)) if not is_retry else None
+        reply.finished.connect(lambda r=reply, cb=retry_cb: self._handle_send_response(r, cb))
 
 
-    def _handle_loco_reply(self, reply: QNetworkReply, loco_id: int):
+    def _handle_loco_reply(self, reply: QNetworkReply, loco_id: int, retry_callback=None):
         """Processes the background network response once the server replies."""
         try:
             if reply.error() != QNetworkReply.NetworkError.NoError:
+                if self._check_csrf_error(reply, retry_callback):
+                    return
                 logger.warning(f"Network error on loco POST command: {reply.errorString()}")
                 return
 
@@ -250,22 +335,23 @@ class VLCBClient(QObject):
             response = reply.readAll().data().decode("utf-8")
             
             if response:
-                logger.debug(f"Read response received, emitting to UI.")
+                logger.debug("Read response received, emitting to UI.")
                 # Push the data to the UI instead of returning it!
                 self.vlcb_read_response.emit(response)
                 
         finally:
             reply.deleteLater()       
 
-    def _handle_send_response(self, reply: QNetworkReply):
+    def _handle_send_response(self, reply: QNetworkReply, retry_callback=None):
         try:
             if reply.error() != QNetworkReply.NetworkError.NoError:
+                if self._check_csrf_error(reply, retry_callback):
+                    return
                 logger.warning(f"Network error on generic POST: {reply.errorString()}")
                 return
             
             response = reply.readAll().data().decode("utf-8")
             logger.debug(f"Send response received: {response}")
-            #print (f"VLCBClient received {response}")
         finally:
             reply.deleteLater() 
 

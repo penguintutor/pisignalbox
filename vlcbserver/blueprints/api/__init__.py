@@ -4,7 +4,8 @@ There is a separate blueprint for api requests (ie. client)
 or web requests
 """
 from flask import Blueprint, request, jsonify
-from flask_wtf.csrf import validate_csrf, CSRFError
+from flask_wtf.csrf import validate_csrf, CSRFError, generate_csrf
+from wtforms.validators import ValidationError
 from .vlcb import api_vlcb_bp
 from .loco import api_loco_bp
 from .stream import api_stream_bp
@@ -16,6 +17,10 @@ api_blueprint.register_blueprint(api_vlcb_bp, url_prefix='/vlcb')
 api_blueprint.register_blueprint(api_loco_bp, url_prefix='/loco')
 api_blueprint.register_blueprint(api_stream_bp, url_prefix='/stream')
 
+@api_blueprint.route('/csrf-token', methods=['GET'])
+def get_csrf_token():
+    """Issue a fresh CSRF token for active web sessions."""
+    return jsonify({"csrf_token": generate_csrf()})
 
 """ The before request will apply to the sub blueprints """
 @api_blueprint.before_request
@@ -36,5 +41,9 @@ def enforce_csrf_for_sessions():
     
     try:
         validate_csrf(csrf_token)
-    except CSRFError:
-        return jsonify({"error": "CSRF token invalid or expired"}), 400
+    except ValidationError as e:
+        msg = str(e)
+        if "expired" in msg.lower():
+            # 401 or 403 signals an authentication/token issue to the client
+            return jsonify({"error": msg, "code": "CSRF_EXPIRED"}), 401
+        return jsonify({"error": msg, "code": "CSRF_INVALID"}), 400
