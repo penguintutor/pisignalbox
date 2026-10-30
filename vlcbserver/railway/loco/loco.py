@@ -60,6 +60,7 @@ class Loco:
         """
         self._speed = max(0, min(int(val), 126))
         self.e_stop = False
+        #print (f"railway/loco announce speed {self.loco_id} = {self._speed}")
         announcer.announce("loco_speed", {
             "loco_id" : self.loco_id,
             "speed": self._speed,
