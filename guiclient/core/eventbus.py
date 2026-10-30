@@ -1,6 +1,14 @@
-# Event Driven architecture - EDA
-# Bus to handle events
-# Also handles event forwarding signals based on registered event associations
+""" Event Driven architecture - EDA
+ Bus to handle events
+ Also handles event forwarding signals based on registered event associations
+
+ Main use is: 
+ * publish - this will apply rules such as automation actions and then broadcast to other nodes
+    Typically used for event_bus status updates 
+ * broadcast - just send to other nodes, don't apply automation events
+    Typically used for log events that need to be sent to the console, but already published
+
+"""
 
 from PySide6.QtCore import Qt, QTimer, QObject, Signal, Slot
 import json

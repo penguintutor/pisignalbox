@@ -360,7 +360,7 @@ def basic_set_speed_dir(loco_id, speed, direction):
     )
     # Return success just means successfully sent to the controller
     # Does not guarentee the loco received it
-    return jsonify({"status": "success"})
+    return jsonify({"status": "speed change success"})
 
 
 # Converts speed and direction to byte for speeddir command

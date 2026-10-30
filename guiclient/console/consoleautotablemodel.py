@@ -1,4 +1,4 @@
-# Table model used by the console for VLCB log entries
+# Table model used by the console for Automation log entries
 
 from PySide6.QtCore import Qt, QAbstractTableModel, QModelIndex
 

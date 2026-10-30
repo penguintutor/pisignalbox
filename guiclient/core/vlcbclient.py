@@ -8,7 +8,7 @@ import urllib.request, urllib.parse
 from PySide6.QtCore import QObject, QUrl, QUrlQuery, QByteArray, Signal, Slot, QTimer, Qt
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
 from .eventbus import event_bus
-from events import LocoEvent, GuiEvent, AppEvent, DeviceEvent
+from events import LocoEvent, GuiEvent, AppEvent, DeviceEvent, LogEvent
 import json
 import uuid
 import logging
@@ -146,18 +146,20 @@ class VLCBClient(QObject):
 
     ################################################
     # Public API (Safe to call from ANY thread)
+    # Also broadcast a log event
     ################################################
 
     def send_loco(self, data_dict):
-        """Called by your event_bus or background threads."""
+        """ Send loco event using new API """
+        event_bus.broadcast(LogEvent( self._logentry_send_loco (data_dict) ))
         self._internal_send_loco.emit(data_dict)
 
     def send(self, message: str):
-        """Called by your event_bus or background threads."""
+        """ Send VLCB request using old API """
         self._internal_send_msg.emit(message)
 
     def read(self, last_packet):
-        """Called by your background timer or event bus."""
+        """ Read VLCB requests using old API (polling)"""
         self._internal_read.emit(last_packet)
 
 
@@ -269,7 +271,7 @@ class VLCBClient(QObject):
                 logger.warning(f"Send loco returned non-JSON format: {e}")
                 return
 
-            # Pass to your existing update handler
+            # Pass to existing update handler
             self._handle_loco_updates(loco_id, response_dict)
             
         finally:
@@ -277,12 +279,18 @@ class VLCBClient(QObject):
 
 
     def _handle_loco_updates(self, loco_id, response_dict):
+        """ Handles loco status changes - can be direct response to send_loco 
+        requests, or could be via stream (pushed from server) """
         # Use .get() safely in case "status" is missing from a malformed response
         status = response_dict.get("status")
+
+        # Broadcast to only send event for logging 
+        event_bus.broadcast(LogEvent(self._logentry_recv_loco(response_dict)))
 
         match status:
             case "loco acquired":
                 logger.debug(f"Loco acquired for {loco_id}")
+                # Publish event to update status and apply rules
                 event_bus.publish(LocoEvent('acquired', response_dict))
                 
             case "acquiring":
@@ -293,10 +301,9 @@ class VLCBClient(QObject):
                 if response_dict.get("loco_id") != loco_id:
                     logger.warning(f"Incorrect loco_id received from server {response_dict}")
                     return 
-                
+               
                 # Pass on to loco_manager to perform update
                 event_bus.publish(LocoEvent('update', response_dict))
-                
             case _:
                 logger.debug(f"Unknown response from loco api request {response_dict}")
     
@@ -392,17 +399,107 @@ class VLCBClient(QObject):
 
         try:
             payload = json.loads("\n".join(data_lines))
+            # Add stream to payload to identify that it came from SSE event
+            payload['stream'] = True
             
-            # Map the SSE event to your internal Event Bus
-            if event_type == "loco_speed":
-                loco_id = int(payload.get("loco_id", 0))
-                payload["status"] = "loco update" # Make it look like a REST response
-                self._handle_loco_updates(loco_id, payload)
+            # Map the SSE event to internal Event Bus
+            match event_type:
+                case "loco_speed":
+                    loco_id = int(payload.get("loco_id", 0))
+                    payload["status"] = "loco update" # Make it look like a REST response
+                    self._handle_loco_updates(loco_id, payload)
                 
-            elif event_type == "turnout_state":
-                # Example for future turnout events
-                # event_bus.publish(TurnoutEvent('update', payload))
-                pass
+
 
         except ValueError:
             logger.warning("Failed to parse SSE JSON payload")
+
+
+
+    ################################################
+    # Helper functions eg. format for logging
+    ################################################
+
+    def _logentry_send_loco (self, data_dict):
+        """ Format settings and description based on command type """
+        cmd = data_dict.get('cmd', "")
+        loco_id = data_dict.get('loco_id', "")
+        # defaults in case not matched
+        command = cmd       # May change string to user friendly
+        settings = ""
+        description = f"Unknown Loco command {command}"
+        match cmd: 
+            case "acquire":
+                command = "Acquire"
+                description = f"Acquire request for loco {loco_id}"
+                # If using share etc. then could add to settings here, but that is 
+                # currently handled by server
+            case "set_speed":
+                command = "Set Speed"
+                # convert direction to word
+                if data_dict.get("direction", 1) == 0:
+                    direction = "Reverse"
+                else:
+                    direction = "Forward"
+                settings = f"{direction} Speed: {data_dict.get("speed", 0)} "
+                description = f"Setting loco speed for loco {loco_id}"
+            case "get_status":
+                command = "Status"
+                description = f"Status update request for loco {loco_id}"
+
+        log_dict = {'source': "Api",
+                    'level': 5,     #Info
+                    'api_direction': "o",
+                    'api_type': 'Loco',
+                    'api_command': command,
+                    'api_device': loco_id,
+                    'api_settings': settings,
+                    'api_description': description}
+        return log_dict
+
+    def _logentry_recv_loco (self, data_dict):
+        """ Used when receiving using either the new API or stream """
+        # Is it inbound or stream - stream has that as a key
+        if data_dict.get('stream'):
+            io_dir = 's'
+        else:
+            io_dir = 'i'
+        # Response does not have a command - instead a status value
+        # we use that to create a face "command" reflecting the type of status update
+        status = data_dict.get('status')
+        loco_id = data_dict.get('loco_id', "")
+        # defaults in case not matched
+        command = status       # May change string to user friendly
+        settings = ""
+        description = f"Unknown Loco response {command}"
+        match status: 
+            case "loco acquired":
+                command = "Acquired"
+                description = f"Acquire successful for loco {loco_id}"
+            case "acquiring":
+                command = "Acquiring"
+                description = f"Attempting acquire for loco {loco_id}"
+            case "loco update":
+                command = "Loco Update"
+                # Typically a direction / speed change
+                # convert direction to word
+                if data_dict.get("direction", 1) == 0:
+                    direction = "Reverse"
+                else:
+                    direction = "Forward"
+                settings = f"{direction} Speed: {data_dict.get("speed", 0)} "
+                description = f"Status update for loco {loco_id}"
+            case "speed change success":
+                command = "Speed changed"
+            case _:
+                print (f"Unknown incoming - empty log entry {data_dict}")
+
+        log_dict = {'source': "Api",
+                    'level': 5,     #Info
+                    'api_direction': io_dir,
+                    'api_type': 'Loco',
+                    'api_command': command,
+                    'api_device': loco_id,
+                    'api_settings': settings,
+                    'api_description': description}
+        return log_dict

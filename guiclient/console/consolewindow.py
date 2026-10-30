@@ -9,9 +9,12 @@ from .consolevlcbtablemodel import ConsoleVLCBTableModel
 from .consolevlcbfilterproxymodel import ConsoleVLCBFilterProxyModel
 from .consoleautotablemodel import ConsoleAutoTableModel
 from .consoleautofilterproxymodel import ConsoleAutoFilterProxyModel
+from .consoleapitablemodel import ConsoleApiTableModel
+from .consoleapifilterproxymodel import ConsoleApiFilterProxyModel
 import queue
 import console.console_ui_vlcb as ui_vlcb
 import console.console_ui_automation as ui_auto
+import console.console_ui_api as ui_api
 from device import device_manager
 
 loader = QUiLoader()
@@ -32,6 +35,7 @@ class ConsoleWindowUI(QMainWindow):
         # the UI will then update and remove them
         self.new_entries = []
         self.new_auto_entries = []
+        self.new_api_entries = []
         
         # Monitor event bus for app updates
         event_bus.app_event_signal.connect (self.app_update)
@@ -49,21 +53,28 @@ class ConsoleWindowUI(QMainWindow):
         self.vlcb_proxy_model = ConsoleVLCBFilterProxyModel()
         self.auto_log_model = ConsoleAutoTableModel()
         self.auto_proxy_model = ConsoleAutoFilterProxyModel()
+        self.api_log_model = ConsoleApiTableModel()
+        self.api_proxy_model = ConsoleApiFilterProxyModel()
 
         # Chain Models
         self.vlcb_proxy_model.setSourceModel(self.vlcb_log_model)
         self.ui.vlcbTableView.setModel(self.vlcb_proxy_model)
         self.auto_proxy_model.setSourceModel(self.auto_log_model)
         self.ui.autoTableView.setModel(self.auto_proxy_model)
+        self.api_proxy_model.setSourceModel(self.api_log_model)
+        self.ui.apiTableView.setModel(self.api_proxy_model)
 
         # Connect auto-scroll signal to rowsInserted on vlcb_proxy_model
         self.vlcb_proxy_model.rowsInserted.connect(self.vlcb_scroll_if_enabled)
         self.auto_proxy_model.rowsInserted.connect(self.auto_scroll_if_enabled)
+        self.api_proxy_model.rowsInserted.connect(self.api_scroll_if_enabled)
 
         # Connect checkboxes to models
         self.ui.noopCheckBox.toggled.connect(self.vlcb_proxy_model.set_show_keep_alive)
         self.ui.scrollCheckBox.toggled.connect(self.vlcb_jump_to_bottom_on_check)
         self.ui.autoScrollCheckBox.toggled.connect(self.auto_jump_to_bottom_on_check)
+        self.ui.apiScrollCheckBox.toggled.connect(self.auto_jump_to_bottom_on_check)
+        self.ui.allMsgCheckBox.toggled.connect(self.api_proxy_model.set_show_all)
         
         # Set column width for first column to ensure data fits
         #self.ui.consoleTable.setColumnWidth(0, 150)
@@ -83,6 +94,7 @@ class ConsoleWindowUI(QMainWindow):
 
         ui_vlcb.setup_ui(self)
         ui_auto.setup_ui(self)
+        ui_api.setup_ui(self)
         
         # Run command changed to setup command combobox
         self.command_changed()
@@ -98,9 +110,13 @@ class ConsoleWindowUI(QMainWindow):
             self.activateWindow()
         
     def log_update (self, log_event):
-        if log_event.get_log_source() == "Automation":
-            ui_auto.add_log(self, log_event)
-            ui_auto.update_log(self)
+        match log_event.get_log_source():
+            case "Automation":
+                ui_auto.add_log(self, log_event)
+                ui_auto.update_log(self)
+            case "Api":
+                ui_api.add_log(self, log_event)
+                ui_api.update_log(self)
         #Future other logs could be handled if desired
             
     # Uses main window to send the contents of commandEdit
@@ -149,6 +165,22 @@ class ConsoleWindowUI(QMainWindow):
         if checked:
             self.ui.autoTableView.scrollToBottom()
         ui_auto.scroll_checkbox(self)
+
+    # Used by API view
+    def api_scroll_if_enabled(self, parent, first, last):
+        """
+        Triggered automatically whenever new rows are added to the model.
+        parent, first, and last are arguments automatically sent by the rowsInserted signal.
+        """
+        if self.ui.apiScrollCheckBox.isChecked():
+            # scrollToBottom() natively handles moving the scrollbar to the very end
+            self.ui.apiTableView.scrollToBottom()
+
+    def api_jump_to_bottom_on_check(self, checked):
+        """Instantly scrolls to bottom the moment the user checks the box."""
+        if checked:
+            self.ui.apiTableView.scrollToBottom()
+        ui_api.scroll_checkbox(self)
 
     # Connectors to the ui files
     def command_changed(self):

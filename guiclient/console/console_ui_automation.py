@@ -1,4 +1,4 @@
-# UI for the console window - vlcb tab
+# UI for the console window - automation tab
 from PySide6.QtWidgets import QMainWindow, QTextBrowser, QTableWidget, QTableWidgetItem
 from datetime import datetime
 from pyvlcb import VLCB

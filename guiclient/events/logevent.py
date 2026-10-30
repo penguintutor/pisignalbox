@@ -63,3 +63,11 @@ class LogEvent (Event):
     # Optional methods for safe return of optional values
     def get_description(self):
         return self.data.get('description', "")
+
+    def get_value(self, key):
+        """ Returns value associated with the provided key
+        generic alternative to specifing each type of data that 
+        can be added to a log entry 
+        
+        Defaults to empty string if key not found """
+        return self.data.get(key, "")
