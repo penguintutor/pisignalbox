@@ -1,16 +1,25 @@
 # UI for the console window - api tab
-from PySide6.QtWidgets import QMainWindow, QTextBrowser, QTableWidget, QTableWidgetItem
+from PySide6.QtWidgets import QMainWindow, QTextBrowser, QTableWidget, QTableWidgetItem, QHeaderView
 from datetime import datetime
 from pyvlcb import VLCB
 from pyvlcb import VLCBOpcode
 from events import LogEvent
 
 
-def setup_ui (self):
-    # Set column width for first column to ensure data fits
-    #self.ui.automationTable.setColumnWidth(0, 170)
-    #self.ui.automationTable.setColumnWidth(2, 200)
-    pass
+def setup_ui(self):
+    header = self.ui.apiTableView.horizontalHeader()
+
+    # Disable 'stretchLastSection' so column 6 doesn't hog all the extra space
+    header.setStretchLastSection(False)
+
+    # Set fixed/initial widths for the other columns
+    self.ui.apiTableView.setColumnWidth(0, 170)
+    self.ui.apiTableView.setColumnWidth(1, 100)
+    self.ui.apiTableView.setColumnWidth(3, 170)
+
+    # Tell both columns 5 and 6 to dynamically share any remaining space
+    header.setSectionResizeMode(5, QHeaderView.ResizeMode.Stretch)
+    header.setSectionResizeMode(6, QHeaderView.ResizeMode.Stretch)
 
 # log_event is a LogEvent object
 # Method should only be passed objects that are type = Api

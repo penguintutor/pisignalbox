@@ -61,8 +61,13 @@ class VLCBClient(QObject):
         if not api_key:
             QTimer.singleShot(0, self._refresh_csrf_token)
 
+        # Start listening for the stream
+        # 0ms delay to ensure the init has finished before starting
+        QTimer.singleShot(0, self.start_listening)
+
     @Slot()
     def _on_disconnected(self):
+        event_bus.broadcast(LogEvent( self._logentry_stream_status ("disconnect") ))
         logger.warning("SSE Stream disconnected. Reconnecting in 3 seconds...")
         self.reconnect_timer.start()
 
@@ -364,6 +369,8 @@ class VLCBClient(QObject):
 
     def start_listening(self):
         """Connects to the Flask SSE stream."""
+        #print ("VLCB Client - setting up stream")
+        event_bus.broadcast(LogEvent( self._logentry_stream_status ("start") ))
         req = QNetworkRequest(QUrl(f"{self.url}/api/stream"))
         req.setRawHeader(b"Accept", b"text/event-stream")
 
@@ -385,10 +392,19 @@ class VLCBClient(QObject):
 
     def _route_event(self, frame: str):
         """Parses incoming SSE events and pushes them to the event bus."""
+
+        #print (f"API Handler Message received {frame}")
+
         event_type = "message"
         data_lines = []
 
         for line in frame.splitlines():
+            if line.startswith("received : keepalive"):
+                # Stream keepalive are ignored
+                # Unlike CBUS keepalives which can be useful for debugging CBUS / loco issues
+                # There is little benefit to seeing the API keep alives
+                return
+
             if line.startswith("event:"):
                 event_type = line[6:].strip()
             elif line.startswith("data:"):
@@ -502,4 +518,22 @@ class VLCBClient(QObject):
                     'api_device': loco_id,
                     'api_settings': settings,
                     'api_description': description}
+        return log_dict
+
+    def _logentry_stream_status (self, status):
+        if status == "start":
+            command = "Start stream"
+            description = "Starting API stream"
+        elif status == "disconnect":
+            command = "Stream disconnect"
+            description = "API stream disconnected"
+        
+        log_dict = {'source': "Api",
+            'level': 4,     #Debug
+            'api_direction': "#",
+            'api_type': 'Api',
+            'api_command': command,
+            'api_device': "",
+            'api_settings': "",
+            'api_description': description}
         return log_dict

@@ -196,7 +196,7 @@ class Loco:
         # Check valid - should not get this as func_num should be based on the loaded functions
         if (
             "functions" not in self.loco_data
-            or (len(self.loco_data["functions"]) < func_num)
+            or (len(self.loco_data["functions"]) <= func_num)
         ):
             return [self.function_status[func_num], "trigger"]
         this_function = self.loco_data["functions"][func_num]
