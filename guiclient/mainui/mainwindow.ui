@@ -130,7 +130,7 @@
                </size>
               </property>
               <property name="maximum">
-               <number>128</number>
+               <number>126</number>
               </property>
               <property name="tracking">
                <bool>false</bool>
