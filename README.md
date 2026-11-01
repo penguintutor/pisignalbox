@@ -152,7 +152,18 @@ When multiple devices try and control the same loco (eg. Web App, GUI App and AP
 
 # Updates
 
-## Upgrade September 2026 / upgrades
+## Upgrade October 2026
+
+Progress is being made on moving to an improved API.
+This has changed both the web app / api and the client. 
+The web app / api must be upgraded at the sametime or prior to the GUI client being upgraded.
+
+The result is that locos can now be shared across devices and will sync through the API.
+
+Changes also include an improved setup process. 
+
+
+## Upgrade September 2026 
 
 Another major refactoring has moved the file structure. If you
 are upgrading from an older version move the files in your data folder to guiclient/data/
