@@ -5,7 +5,7 @@ from PySide6.QtCore import Qt, QSortFilterProxyModel
 class ConsoleApiFilterProxyModel(QSortFilterProxyModel):
     def __init__(self):
         super().__init__()
-        self.show_all = True  # Checkbox state
+        self.show_all = False  # Checkbox state - default is false
 
     def set_show_all(self, show: bool):
         """Updates the filter state and triggers a re-evaluation."""
@@ -20,11 +20,14 @@ class ConsoleApiFilterProxyModel(QSortFilterProxyModel):
         if self.show_all:
             return True
 
-        # Todo Filter here appropriate message
-        # that are not included in show all
-        # index = self.sourceModel().index(source_row, 4, source_parent)
-        #op_code_str = self.sourceModel().data(index, Qt.ItemDataRole.DisplayRole)
+        # Filter responses unless show all
+        # check type VLCB and command read
+        index_type = self.sourceModel().index(source_row, 2, source_parent)
+        type_val = self.sourceModel().data(index_type, Qt.ItemDataRole.DisplayRole)
+        index_command = self.sourceModel().index(source_row, 3, source_parent)
+        command_val = self.sourceModel().data(index_command, Qt.ItemDataRole.DisplayRole)
 
-        # If it is a DKEEP message, return False (hide it). Otherwise True (show it).
-        #return op_code_str != "23 - DKEEP"
+        if type_val == "VLCB" and command_val == "read":
+            return False
+        # Otherwise show
         return True

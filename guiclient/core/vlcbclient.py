@@ -9,6 +9,7 @@ from PySide6.QtCore import QObject, QUrl, QUrlQuery, QByteArray, Signal, Slot, Q
 from PySide6.QtNetwork import QNetworkAccessManager, QNetworkRequest, QNetworkReply
 from .eventbus import event_bus
 from events import LocoEvent, GuiEvent, AppEvent, DeviceEvent, LogEvent
+import re
 import json
 import uuid
 import logging
@@ -161,10 +162,13 @@ class VLCBClient(QObject):
 
     def send(self, message: str):
         """ Send VLCB request using old API """
+        # log raw requests - convert to dict
+        event_bus.broadcast(LogEvent( self._logentry_send_vlcb (message) ))
         self._internal_send_msg.emit(message)
 
     def read(self, last_packet):
         """ Read VLCB requests using old API (polling)"""
+        # Do not log all polling - too noisy to be useful
         self._internal_read.emit(last_packet)
 
 
@@ -334,7 +338,7 @@ class VLCBClient(QObject):
 
     @Slot()
     def _handle_read_reply(self):
-        """Processes the console data when the server finally replies."""
+        """Processes the console data when the server replies."""
         reply = self.sender()
         if not reply:
             return
@@ -347,8 +351,16 @@ class VLCBClient(QObject):
             response = reply.readAll().data().decode("utf-8")
             
             if response:
-                logger.debug("Read response received, emitting to UI.")
-                # Push the data to the UI instead of returning it!
+                # Split into details of the response is vlcb read
+                # If not match then this will be ignored
+                details = re.split(r'[,\n]', response, maxsplit=4)
+                # details splits so we can find number of packets (4th)
+                # If no packets receive then don't broadcast
+                if len(details) >= 5 and details[4] != "0":
+                    event_bus.broadcast(LogEvent( self._logentry_recv_vlcb (response) ))
+                    logger.debug("Read response received, emitting to UI.")
+                    # Push the data to the UI instead of returning it!
+                # All responses are sent via this
                 self.vlcb_read_response.emit(response)
                 
         finally:
@@ -436,6 +448,41 @@ class VLCBClient(QObject):
     # Helper functions eg. format for logging
     ################################################
 
+    def _logentry_send_vlcb (self, message):
+        """ old api create basic dict """
+        # Does not try and interpret at the moment 
+        # can view in VLCB console for full details
+        log_dict = {'source': "Api",
+            'level': 5,     #Info
+            'api_direction': "o",
+            'api_type': 'VLCB',
+            'api_command': message,
+            'api_device': "-",
+            'api_settings': "-",
+            'api_description': "Raw VLCB command"}
+        return log_dict
+
+    def _logentry_recv_vlcb (self, response):
+        """ old api create basic dict """
+        # Sends full response if required for future but 
+        # only use to determine the number of data packets
+        # Does not try and interpret at the moment 
+        # just reports the number of lines received
+        details = re.split(r'[,\n]', response, maxsplit=4)
+        # Only want the 4th entry = number lines read
+        #(_packet_num, _timestamp, direction, data) = response.split(',', 4)
+
+        log_dict = {'source': "Api",
+            'level': 5,     #Info
+            'api_direction': "i",
+            'api_type': 'VLCB',
+            'api_command': "read",
+            'api_device': "-",
+            'api_settings': f"{details[3]} packets",
+            'api_description': "Raw VLCB data received"}
+        return log_dict
+
+
     def _logentry_send_loco (self, data_dict):
         """ Format settings and description based on command type """
         cmd = data_dict.get('cmd', "")
@@ -464,13 +511,13 @@ class VLCBClient(QObject):
                 description = f"Status update request for loco {loco_id}"
 
         log_dict = {'source': "Api",
-                    'level': 5,     #Info
-                    'api_direction': "o",
-                    'api_type': 'Loco',
-                    'api_command': command,
-                    'api_device': loco_id,
-                    'api_settings': settings,
-                    'api_description': description}
+            'level': 5,     #Info
+            'api_direction': "o",
+            'api_type': 'Loco',
+            'api_command': command,
+            'api_device': loco_id,
+            'api_settings': settings,
+            'api_description': description}
         return log_dict
 
     def _logentry_recv_loco (self, data_dict):

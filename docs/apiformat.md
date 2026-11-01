@@ -1,19 +1,57 @@
-# API format for PyVLCB (not yet implemented - initial thoughts only)
+# API format for PiSignalBox
 
-## Connect to API
 
-Used for authentication with API
-First try and connect - if valid token then allow and confirm
-if not then require login
+## New API - full client server
 
-/connect
-/login POST username, password
-handled locally within api
+The new style API provides a full client server, where the server now manges the devices directly on the model railway. The API provides a way for the GUI client to send requests to the server which then provides a response which may be just a status or provide details of the railway.
 
+There are other ways to communicate with the server including the CBUS interface, web interface and other clients. Certain signals (eg. loco speed change) are then fed back to connected clients so that they can update their local value. These updates are received and trigger appropriate events.
+
+Commands are requested through the API Handler start_api_request(), which takes a dict with the parameters to be sent to the server.
+
+### Loco API
+
+This is the first API to be implemented on the server. 
+
+All loco api requests must include "request_type": "loco" within the API. 
+
+They then take a cmd
+_ acquire
+_ set_speed (also includes direction)
+_ function
+
+then parameters related to the command, eg. loco_id, speed, direction etc.
+
+An example dictionary is shown below:
+
+data_dict = {
+        "request_type": "loco",
+        "cmd": "set_speed",
+        "loco_id": self.control_loco.get_id(),
+        "speed": new_speed,
+        "direction": self.control_loco.loco.direction
+    }
+
+
+### Loco Updates (stream)
+
+Loco updates from the stream include the following
+
+_ loco_speed
+
+
+## Authentication
+
+Authentication is handled within the application by use of an api_key. This needs to be stored both in the gui client settings and the server. The values are identical as a unique key.
+
+This can be setup through the setup process.
 
 ## Raw Commands
-These are the only ones currently implemented
 Note for simplicity these are provided in a strict order and format
+
+This is the old API format. This may be retired in future in future of the new API model. This is basic read of raw cbus/vlcb packets that are sent and received.
+
+To send then generate the raw vlcb request and pass to the api. 
 
 /vlcb?read=<id of first data packet>&format=txt&[&end=<id last packet to retrieve]
 /vlcb?send=<string of send request>&format=txt
@@ -42,20 +80,6 @@ msg_count,date,data_string
 
 
 
-
-
-
-## Server commands
-
-Issue command to the server, includes quit or future connect to different USB port etc.
-
-/server?cmd=quit
-server,quit
-
-/server?cmd=status
-server,status
-
-
 ## Raw commands
 
 /vlcb?data=<raw data>
@@ -72,18 +96,5 @@ Numbering starts with 0, so 0 will try and return all entries, but limited inter
 response includes total number of log entries
 Passing a negative number will count that far back from end of log
 
-## Query
-
-These query the local nodes database within vlcbautomate 
-
-/query,type=nodes
-query,nodes
-returns list of nodes
-
-/query,type=events,node=<nodeid>
-query,events,<nodeid>
-returns list of events associated with a node
-
-Raw data format msg_num,timestamp,message
 
 

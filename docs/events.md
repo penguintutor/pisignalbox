@@ -37,4 +37,11 @@ Typically these are triggered from the ApiHandler (updated from VLCB) or from De
 Typically triggered in response to a click or interaction with a TreeViewNode, or other Gui request from the user. 
 
 # LocoEvent
+Occurs in response to loco requests and updates received from the API stream.
 
+# LogEvents
+Used to add to the console log. These are added directly to the appropriate loc model. 
+Includes:
+_ automation (show on automation tab)
+_ vlcb_log_model (raw logs on VLCB console)
+_ api (communication with the server)
