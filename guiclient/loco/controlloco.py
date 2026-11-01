@@ -26,7 +26,7 @@ class ControlLoco:
 
         
     def event_trigger (self, event):
-        #print (f"ControlLoco received event {event.event_type} data {event.data}")
+        print (f"ControlLoco received event {event.event_type} data {event.data}")
         if event.event_type == "PLOC":
             data = event.data
             self.set_session (data['Session'])

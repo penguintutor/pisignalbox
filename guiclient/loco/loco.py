@@ -248,6 +248,7 @@ class Loco:
     # Takes combined speed & dir and updates direction / speed
     # This is often used based on external values, so add 1
     def set_speeddir (self, speed_dir):
+        print (f"Loco using set_speeddir {speed_dir}")
         self.direction = speed_dir >> 7
         self.speed = speed_dir & 0x7F
         if self.speed > 1:
@@ -258,14 +259,11 @@ class Loco:
         self.status = "stop"
       
     # Sets speed only - keep current direction
-    # 0 = stop, 1 = increase to 2 (1 is emergency stop - so don't allow here)
     # all other values used as is (maximum 127 - but allow 128)
     def set_speed (self, speed_value):
         if speed_value > 128 or speed_value < 0:
             return
-        # Add one to skip emergency stop
-        if speed_value > 0 and speed_value < 127:
-            speed_value += 1
+        # Use normalised speed no need to add 1
         self.speed = speed_value
         
     # Direction is 1 for forward, 0 for reverse

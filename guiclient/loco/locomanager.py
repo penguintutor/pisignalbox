@@ -126,7 +126,7 @@ class LocoManager(QObject):
                 for loco in self.locos.get_all_locos():
                     if loco_id == loco.loco_id:
                         speed = event.data.get("speed", None)
-                        if speed:
+                        if speed != None:
                             loco.speed = speed
                         direction = event.data.get("direction", None)
                         if direction:

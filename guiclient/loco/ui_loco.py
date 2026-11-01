@@ -215,7 +215,6 @@ class UILocoMixin:
     def loco_change_speed (self, new_speed):
         # If returns false then loco not active so ignore
         if (self.control_loco.change_speed(new_speed)):
-            #self.api.start_request(self.api.vlcb.loco_speeddir(self.control_loco.get_session(), self.control_loco.get_speeddir()))
             # Replaces above request with new API request
             data_dict = {
                     "request_type": "loco",
@@ -266,6 +265,17 @@ class UILocoMixin:
         steal_dialog.open()
         # Ignore the result of the dialog as it will emit own signals
 
+
+    def update_controller_pos (self):
+        active = self.control_loco.is_active()
+        # Only change if active
+        if active:
+            # get current speed from loco
+            speed = self.control_loco.speed_value()
+            #print (f"UI Loco setting throttle {speed}")
+            self.ui.locoDial.setValue(speed)
+        # Update lcd even if not active as that sets --
+        self.update_lcd()
 
         
     # Update the LCD display based on the speed

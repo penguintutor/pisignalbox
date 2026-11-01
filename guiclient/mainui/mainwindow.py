@@ -450,8 +450,8 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
             # Generic loco_update (called when received update from API)
             # Update appropriate UI items
             case "loco_update":
-                self.update_lcd()
-                # Todo - also update controller position
+                # Controller also updates lcd
+                self.update_controller_pos()
                 # Future highlight whether forward or reverse selected
             case "uitext":
                 if app_event.data['label'] == "locoStatusLabel":
