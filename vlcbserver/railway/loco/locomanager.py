@@ -130,7 +130,7 @@ class LocoManager ():
         session_id. Takes a single value for speed and dir 
         which is the format used by DSDP command 
         
-        This is called by vlcb_bridge whenever a DSPD package
+        This is called by vlcb_bridge whenever a DSPD packet
         is seen on the track"""
         for loco_ref in self._on_track.values():
             if self._locos[loco_ref].get_session() == session_id:
@@ -138,6 +138,20 @@ class LocoManager ():
         for loco_ref in self._on_track_basic.values():
             if self._locos_basic[loco_ref].get_session() == session_id:
                 self._locos_basic[loco_ref].set_speeddir(speeddir)
+
+    # Takes as single func_index and value
+    def update_session_function (self, session_id, func_index, value):
+            """ Updates the functions for any trains with matching
+            session_id. Takes a single index and value 
+            
+            This is called by outgoing packages whenever a DFUN
+            is sent """
+            for loco_ref in self._on_track.values():
+                if self._locos[loco_ref].get_session() == session_id:
+                    self._locos[loco_ref].set_function(func_index, value)
+            for loco_ref in self._on_track_basic.values():
+                if self._locos_basic[loco_ref].get_session() == session_id:
+                    self._locos_basic[loco_ref].set_function(func_index, value)
 
     # _type is optional - not yet implemented but could be used
     # for different status messages
@@ -442,6 +456,23 @@ class LocoManager ():
                 "shared": loco_id in self._on_track        # Shared if web has same id on track
             })
         return api_locos
+
+
+    # Get the current functions from a loco_id
+    def get_functions_basic (self, loco_id):
+        # checks it's on track
+        if loco_id in self._on_track_basic and loco_id in self._locos_basic:
+            loco = self._locos_basic[loco_id]
+            """ thread safe return of list of ints
+             note that if a different value is updated in the meantime by a different client
+             then the latest copy will win, but it would be impossible to perform lock threading
+             until the CBUS packet has been sent without adding significant delay
+             worst case is that one controller overwrites another controller. """
+            return loco.function_status.copy()  
+        return None
+
+
+
 
 
 # Module level singleton

@@ -143,3 +143,15 @@ def log_http_request(response):
 #@app.app_errorhandler(403)
 def forbidden_error():
     return render_template('errors/403.html', message="You do not have permission to view this page."), 403
+
+
+def to_binary(val):
+    # Convert the value to a lowercase string and strip any whitespace
+    val_str = str(val).strip().lower()
+    
+    if val_str in ('true', '1'):
+        return 1
+    elif val_str in ('false', '0'):
+        return 0
+    else:
+        raise ValueError(f"Cannot convert '{val}' to 1 or 0")

@@ -67,6 +67,15 @@ class Loco:
             "direction": self.direction
         })
 
+    def set_function (self, function_num, value):
+        """ Update function for single F value"""
+        self.function_status[function_num] = value
+        announcer.announce("function", {
+            "loco_id" : self.loco_id,
+            "index": function_num,
+            "value": value
+        })
+
     def emergency_stop(self) -> None:
         """Triggers an emergency stop regardless of the underlying controller."""
         self._speed = 0
@@ -214,7 +223,7 @@ class Loco:
         self.function_status = [0] * num_functions
     
     def get_functions (self):
-        """ Returns functions by title"""
+        """ Returns functions by title - used for menus """
         f_titles = []
         if "functions" not in self.loco_data.keys():
             # If no functions defined then provide some default

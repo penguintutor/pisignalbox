@@ -103,14 +103,19 @@ def _process_inbound_data(in_data):
     # See vlcb_bridge for updating loco_manager etc.
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     for this_input in in_data[1:]:
-        # Incoming packets are passe to vlcb_bridge
+        # Incoming packets are passed to vlcb_bridge
         # which handles checking if it's a status update
         # and updating internal status 
         add_sensor_update(f"{timestamp},i,{this_input}")
         logging.debug(f"Received {this_input}")
 
 def _update_loco_status(command_dict):
-    """ Update loco status - on an outbound request to usb """
+    """ Update loco status - on an outbound request to usb 
+    typically don't need to send any to announcer as those are sent via
+    loco - or in the case of acquire are from a client pull (ie all clients need to 
+    request an acquire regardless of if it's already acquired by another controller
+    on the same system)
+    """
     if "action" in command_dict:
         match command_dict["action"]:
             case "acquire":
@@ -130,6 +135,12 @@ def _update_loco_status(command_dict):
             # If another loco stolen the session
             case "session_cancel":
                 loco_manager.session_cancel(command_dict.get("session_id"))
+            case "speeddir":
+                loco_manager.update_session_speeddir(command_dict.get('session_id'), command_dict.get('speeddir'))
+            # dfun is set function using dfun
+            # uses session so consistant with how incoming are updated
+            case "dfun":
+                loco_manager.update_session_function(command_dict.get('session_id'), command_dict.get('func_index'), command_dict.get('value'))
             
 
 

@@ -163,6 +163,8 @@ class UILocoMixin:
         self.api.start_request_repeat (request, num_send, delay)
 
     # Sends on followed by off (typically 4 seconds later)
+    # This should instead be changed to use button press for the on and release 
+    # for the off
     def loco_func_trigger (self, func_index, delay = 4):
         #print (f"Func trigger api {func_index}")
         # Turn on
