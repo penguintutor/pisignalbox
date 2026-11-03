@@ -145,18 +145,6 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
         self.timer.setInterval(read_rate)
         self.timer.timeout.connect(self.handle_polling)
         self.timer.start()
-
-        # Replacing this with the Broadcaster
-        # Status - realtime updates when status changes
-        # Additional poll to server 
-        # 1. Any updates for loco on controller (or via automation)
-        # 2. Any devices we are tracking have changed status (eg. in layout)
-        # 2. is not yet implemented
-        # Starts with status_update_rate (eg. 1s) but adjust based on connection status
-        # self.status_update_timer = QTimer(self)
-        # self.status_update_timer.setInterval(status_update_rate)
-        # self.status_update_timer.timeout.connect(self.status_update)
-        # self.status_update_timer.start()
         
         # Load the Assets prior to setting up the GUI
         
@@ -258,7 +246,13 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
         
         self.ui.locoFuncTab.tabBarClicked.connect(self.loco_change_functions)
         self.ui.locoFuncCombo.activated.connect(self.loco_function_selected)
-        self.ui.locoFuncButton.clicked.connect(self.loco_function_pressed)
+        # locoFuncButton - depending upon type (trigger vs latch)
+        # clicked is used if it's a latch (ie. toggle)
+        # pressed and released is used as part of trigger 
+        # to be held based on how long the user holds the button down
+        self.ui.locoFuncButton.clicked.connect(self.loco_function_clicked)
+        self.ui.locoFuncButton.pressed.connect(self.loco_function_pressed)
+        self.ui.locoFuncButton.released.connect(self.loco_function_released)
         
         # Used to generate codes for loco etc.
         self.control_loco = ControlLoco()

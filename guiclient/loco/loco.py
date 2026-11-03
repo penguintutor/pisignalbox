@@ -290,6 +290,13 @@ class Loco:
                 self._direction = 0
         # Otherwise just ignore
         
+    # Sets the function for a single value
+    def set_function (self, func_index, value):
+        # Check in range 
+        if len(self.function_status) > func_index:
+            self.function_status[func_index] = value
+        # otherwise ignore
+
     # This sets the value of the functions from a PLOC message
     # Only stores values for F0 to F12
     # fn1 = <Dat5> is the function byte F0 to F4 - bit 5 = dir lighting (F0), bit 6 = direction, bit 7 = res, bit 8 = 0

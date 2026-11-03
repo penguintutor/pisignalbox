@@ -198,6 +198,7 @@ class VLCBClient(QObject):
         url = QUrl()
         
         # Build the JSON payload dictionary
+        # Always set loco_id even if 0 (rare case to not have loco_id eg. emergency stop)
         payload = {"loco_id": loco_id}
         
         # Prevent SSE echoes using client_id
@@ -212,6 +213,10 @@ class VLCBClient(QObject):
                 url.setUrl(f"{api_string}/speed_dir")
                 payload["speed"] = data_dict.get("speed", 0)
                 payload["direction"] = data_dict.get("direction", 1)
+            case "function":
+                url.setUrl(f"{api_string}/function")
+                payload["function_index"] = data_dict.get("function_index", 0)
+                payload["function_value"] = data_dict.get("function_value", 0)
             case "get_status":
                 url.setUrl(f"{api_string}/status")
             case _:
@@ -301,18 +306,26 @@ class VLCBClient(QObject):
                 logger.debug(f"Loco acquired for {loco_id}")
                 # Publish event to update status and apply rules
                 event_bus.publish(LocoEvent('acquired', response_dict))
-                
             case "acquiring":
                 logger.debug(f"Acquiring received for {loco_id}")
                 event_bus.publish(LocoEvent('acquiring', response_dict))
-                
+            # Response from get_loco_status
             case "loco update":
                 if response_dict.get("loco_id") != loco_id:
                     logger.warning(f"Incorrect loco_id received from server {response_dict}")
                     return 
-               
                 # Pass on to loco_manager to perform update
                 event_bus.publish(LocoEvent('update', response_dict))
+            # These are acknowledgments - don't update any values at this stage
+            # as already updated internally, or wait for different response from stream
+            case "speed change success" | "function send success":
+                if "message" in response_dict:
+                    logger.info (response_dict['message'])
+            # Generic errors from the client - if a error needs to be handled then
+            # it needs to provide a specific response matched before this
+            case "error":
+                if "message" in response_dict:
+                    logger.warning (response_dict['message'])
             case _:
                 logger.debug(f"Unknown response from loco api request {response_dict}")
     
@@ -554,6 +567,8 @@ class VLCBClient(QObject):
                 description = f"Status update for loco {loco_id}"
             case "speed change success":
                 command = "Speed changed"
+            case "function send success":
+                command = "Function issued"
             case _:
                 print (f"Unknown incoming - empty log entry {data_dict}")
 

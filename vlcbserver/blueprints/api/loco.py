@@ -312,7 +312,8 @@ def client_function():    # Takes loco_id as though basic API, but also update a
     # func index = index (from 0) - eg. F0 = 0,
     # func value is required 
     func_index = data.get("function_index") or request.values.get("function_index", None)
-    func_value = data.get("function_value") or request.values.get("function_value", None)
+    # value default to 0 = off
+    func_value = data.get("function_value") or request.values.get("function_value", 0)
 
     # Basic initial check
     if func_index < 0 or func_index > 28:
@@ -326,9 +327,6 @@ def client_function():    # Takes loco_id as though basic API, but also update a
     # Update the loco with the function value
     return basic_set_function (loco_id, func_index, func_binary)
 
-    # Return success just means successfully sent to the controller
-    # Does not guarentee the loco received it
-    return jsonify({"status": "function_received"})
 
 
 ################################################
@@ -388,7 +386,7 @@ def basic_set_speed_dir(loco_id, speed, direction):
     )
     # Return success just means successfully sent to the controller
     # Does not guarentee the loco received it
-    return jsonify({"status": "speed change success"})
+    return jsonify({"status": "speed change success", "message": "Speed change requested"})
 
 
 # Converts speed and direction to byte for speeddir command
@@ -597,7 +595,14 @@ def basic_loco_to_session (loco_id):
         }
 
 def basic_set_function(loco_id, func_index, value):
-
+    """ Sets a function signal. Sets the value to the controller
+    and the controller then performs any resends 
+    (eg. periodic resend if loco loses signal)
+    
+    If it's a trigger rather than latch then this needs 
+    to be called twice. Once to set and again to unset. 
+    That is handled by the client based on how long the
+    button is pressed. """
     # Checks loco_ref is valid and gets the active session
     session_dict = basic_loco_to_session(loco_id)
     # If there is no valid session then return with error message
@@ -632,7 +637,7 @@ def basic_set_function(loco_id, func_index, value):
     )
     # Return success just means successfully sent to the controller
     # Does not guarentee the loco received it
-    return jsonify({"status": "function send success"})
+    return jsonify({"status": "function send success", "message": "Function change sent"})
 
 # # Returns bytes required for DFUN command
 # # DFUN sends a block of status at a time, based on which group

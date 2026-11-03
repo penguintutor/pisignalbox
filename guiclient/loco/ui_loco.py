@@ -119,7 +119,28 @@ class UILocoMixin:
         status_text = self.control_loco.function_selected(func_index)
         self.ui.locoFuncButton.setText (status_text)
         
-    # Button has been pressed
+    # Button has been clicked (ie. latch toggle operation)
+    def loco_function_clicked (self):
+        # Check that button is valid (ie. not "-")
+        button_text = self.ui.locoFuncButton.text()
+        if button_text == "" or button_text == "-" or button_text == " - ":
+            return
+        # get current index, need both tab and position in tab
+        tab = self.ui.locoFuncTab.currentIndex()
+        combo = self.ui.locoFuncCombo.currentIndex()
+        #print (f"Tab {tab}, Combo {combo}")
+        func_index = combo + (10 * tab)
+        #self.control_loco.function_pressed(func_index)
+        status = self.control_loco.get_function_status(func_index)
+        # If it's not a latch then ignore 
+        if status == None or status[1] != "latch":
+            return
+        self.loco_func_change (func_index, 1-status[0])
+        # Update button
+        # perhaps separate functions to what is required
+        self.loco_function_selected()
+
+    # Button is pushed down - if trigger then send set signal
     def loco_function_pressed (self):
         # Check that button is valid (ie. not "-")
         button_text = self.ui.locoFuncButton.text()
@@ -132,51 +153,44 @@ class UILocoMixin:
         func_index = combo + (10 * tab)
         #self.control_loco.function_pressed(func_index)
         status = self.control_loco.get_function_status(func_index)
-        # If no status then ignore
-        if status == None:
+        # If it's not a trigger then ignore 
+        if status == None or status[1] != "trigger":
             return
         # If trigger then button should be activate:
-        if status[1] == "trigger":
-            self.loco_func_trigger (func_index)
-            # no need to update button as still says activate
-        else:
-            # if <= F12 then send multiple times (NRMA standard)
-            if func_index <= 12:
-                self.loco_func_change (func_index, 1-status[0], 3)
-            # otherwise send once
-            else:
-                #self.func_change (func_index, 1-status[0])
-                self.loco_func_change (func_index, 1-status[0])
-            # Update button
-            # perhaps separate functions to what is required
-            self.loco_function_selected()
-            
+        self.loco_func_change (func_index, 1)
 
-    # change value (if need to send multiple then set num_send to number of times
-    # Sent every 2 seconds (or change delay) - delay in seconds
-    def loco_func_change (self, func_index, value, num_send = 1, delay = 2):
-        byte1_2 = self.control_loco.set_function_dfun (func_index, value)
-        # If None then cancel
-        if byte1_2 == None:
+    # Button is relased down - if trigger then send unset signal
+    def loco_function_released (self):
+        # Check that button is valid (ie. not "-")
+        button_text = self.ui.locoFuncButton.text()
+        if button_text == "" or button_text == "-" or button_text == " - ":
             return
-        request = self.api.vlcb.loco_set_dfun(self.control_loco.get_session(), *byte1_2)
-        self.api.start_request_repeat (request, num_send, delay)
+        # get current index, need both tab and position in tab
+        tab = self.ui.locoFuncTab.currentIndex()
+        combo = self.ui.locoFuncCombo.currentIndex()
+        #print (f"Tab {tab}, Combo {combo}")
+        func_index = combo + (10 * tab)
+        #self.control_loco.function_pressed(func_index)
+        status = self.control_loco.get_function_status(func_index)
+        # If it's not a trigger then ignore 
+        if status == None or status[1] != "trigger":
+            return
+        # If trigger then button should be activate:
+        self.loco_func_change (func_index, 0)
 
-    # Sends on followed by off (typically 4 seconds later)
-    # This should instead be changed to use button press for the on and release 
-    # for the off
-    def loco_func_trigger (self, func_index, delay = 4):
-        #print (f"Func trigger api {func_index}")
-        # Turn on
-        byte1_2 = self.control_loco.set_function_dfun (func_index, 1)
-        if byte1_2 == None:
-            return
-        request_on = self.api.vlcb.loco_set_dfun(self.control_loco.get_session(), *byte1_2)
-        # Turn off (update value immediately - even though not sent yet, but delay request using single shot timer
-        byte1_2 = self.control_loco.set_function_dfun (func_index, 0)
-        request_off = self.api.vlcb.loco_set_dfun(self.control_loco.get_session(), *byte1_2)
-        
-        self.api.start_request_onoff (request_on, request_off, delay)
+    # change value - only send once, the controller handles any resends
+    def loco_func_change (self, func_index, value):
+        # Update our local reference
+        self.control_loco.set_function (func_index, value)
+        data_dict = {
+            "request_type": "loco",
+            "cmd": "function",
+            "loco_id": self.control_loco.get_id(),
+            "function_index": func_index,
+            "function_value": value
+        }
+        self.api.start_api_request(data_dict)
+
 
     # Update the functions list
     # If index is not provided then use current
@@ -211,6 +225,7 @@ class UILocoMixin:
             
         # Update function selected features
         self.loco_function_selected ()
+        
         
         
     # This is used based on the dial
@@ -296,28 +311,6 @@ class UILocoMixin:
         elif self.control_loco.get_direction() == 0:
             self.ui.locoReverseRadio.setChecked(True)
 
-    # keep alive moved to the server
-    # Signal to indicate kalive needs to be checked
-    # start / stop as appropriate
-    #def update_kalive (self):
-    #    if loco_manager.locos_active() > 0:
-    #        if not self.kalive_timer.isActive():
-    #            self.kalive_timer.start()
-    #    elif self.kalive_timer.isActive():
-    #        self.kalive_timer.stop()
-
-    # Keep alive moved to the server
-    # Keep alive - called every 4 secs
-    # Add a keep alive to the send queue
-    # def keep_alive (self):
-    #     # Check we have a session to send a keep alive (ie. not in process of trying
-    #     # to acquire a new loco
-    #     # Check all locos 
-    #     for loco in loco_manager.get_all_locos():
-    #         if loco.is_active():
-    #             #print (f"Loco {loco.loco_id} is active")
-    #             self.api.start_request(self.api.vlcb.keep_alive(loco.get_session()))
-            
     def steal_loco_check (self):
         steal_dialog = QDialog(self)
         steal_dialog.exec_()
@@ -355,7 +348,6 @@ class UILocoMixin:
         
     # Emergency stop all
     def loco_stop_all (self):
-        #self.control_loco.stop_all()
         self.api.start_request(self.api.vlcb.loco_stop_all())
         self.ui.locoStatusLabel.setText ("Stop All!")
         self.update_lcd()
@@ -405,7 +397,6 @@ class UILocoMixin:
         """
         print(f"Acquiring locomotive: {loco.get_display_name()}")
         # Acquire loco
-        # self.api.start_request(self.api.vlcb.allocate_loco(loco.loco_id))
         # Using new api format
         data_dict = {
             "request_type": "loco",

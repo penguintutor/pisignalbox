@@ -158,6 +158,11 @@ class ControlLoco:
         if self.loco == None:
             return None
         self.loco.set_speeddir(speeddir)
+
+    def set_function (self, func_index, value):
+        if self.loco == None:
+            return None
+        self.loco.set_function(func_index, value)
         
     def get_speeddir (self):
         return self.loco.get_speeddir()

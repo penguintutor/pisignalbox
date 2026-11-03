@@ -90,7 +90,7 @@ class ApiHandler(QObject):
                             self.start_api_request(data_dict)
                         else:
                             QTimer.singleShot(send_delay, partial(self.start_api_request, data_dict))
-                # Steal or share normally handled by server - but could add here
+                    # Steal or share normally handled by server - but could add here
                     # Uses separate speed and direction
                     case "set_speed":
                         data_dict = {
@@ -111,22 +111,22 @@ class ApiHandler(QObject):
                         self.start_request(self.vlcb.share_loco(loco_id))
                     case "steal":
                         self.start_request(self.vlcb.steal_loco(loco_id))
-                    case "function":
-                        # Instead of needing to allocate the loco have the LocoEvent include current and new
-                        # Then can just send current / new as appropriate
-                        current = event.get_arg("currentvalue")
-                        new = event.get_arg("newvalue")
-                        session = event.get_arg("session")
-                        # current and new are byte1_2 as a tuple
-                        request_new =  self.vlcb.loco_set_dfun(session, *new)
-                        request_current = self.vlcb.loco_set_dfun(session, *current)
-                        func_type = event.get_arg("type")
-                        if func_type == "trigger":
-                            # delay left to default (4 secs)
-                            self.start_request_onoff (request_new, request_current)
-                        # if not just change to newvalue
-                        else:
-                            self.start_request(request_new)
+                    # case "function":
+                    #     # Instead of needing to allocate the loco have the LocoEvent include current and new
+                    #     # Then can just send current / new as appropriate
+                    #     current = event.get_arg("currentvalue")
+                    #     new = event.get_arg("newvalue")
+                    #     session = event.get_arg("session")
+                    #     # current and new are byte1_2 as a tuple
+                    #     request_new =  self.vlcb.loco_set_dfun(session, *new)
+                    #     request_current = self.vlcb.loco_set_dfun(session, *current)
+                    #     func_type = event.get_arg("type")
+                    #     if func_type == "trigger":
+                    #         # delay left to default (4 secs)
+                    #         self.start_request_onoff (request_new, request_current)
+                    #     # if not just change to newvalue
+                    #     else:
+                    #         self.start_request(request_new)
                     case "speed_dir":
                         self.start_request(self.vlcb.loco_speed_dir(
                             event.get_session_id(),
@@ -190,16 +190,6 @@ class ApiHandler(QObject):
         return True
 
         
-    # Use for sending multiple requests (needed for some messages)
-    # Sent every 2 seconds (or change delay) - delay in seconds
-    # Send num_send times
-    def start_request_repeat (self, request, num_send = 1, delay = 2):
-        self.start_request(request)
-        num_send -= 1
-        if num_send > 0:
-            QTimer.singleShot(delay * 1000, lambda: self.start_request_repeat(request, num_send, delay))
-
-
     # Used for trigger commands where on is sent folloewd by off
     # Sends on followed by off (typically 4 seconds later)
     def start_request_onoff (self, request_on, request_off, delay = 4):

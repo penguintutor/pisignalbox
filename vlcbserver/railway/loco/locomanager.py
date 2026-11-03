@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 ####################################################
 # Shares data between mainThread (USB handlder)
 # and flaskThread (web app)
-# mainThread can read/write, flaskThread = read-only
+# mainThread can read/write, flaskThread = mostly read-only
 ####################################################
 
 
