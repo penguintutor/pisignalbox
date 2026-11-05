@@ -6,7 +6,7 @@ from vlcbserver.vlcb_bridge import command_queue, add_sensor_update, cleanup_sen
 from vlcbserver.railway.loco.locomanager import loco_manager
 from vlcbserver.extensions import vlcb
 
-KALIVE_INTERVAL = 4.0   # seconds
+KALIVE_INTERVAL = 3.0   # seconds
 
         
 def run_connected_loop(usb, config):
@@ -17,7 +17,9 @@ def run_connected_loop(usb, config):
         # First part of loop - clear out any excessive entries
         cleanup_sensor_data(config.get("max_entries"))
 
-        # Check if 4 seconds have elapsed since last keep-alive
+        # Check if 3 seconds have elapsed since last keep-alive
+        # Must be sent every 4 seconds, but 3 seconds means we 
+        # handle that before it expires
         now = time.monotonic()
         if now - last_kalive >= KALIVE_INTERVAL:
             # keep alive sends directly to usb

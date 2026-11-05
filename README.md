@@ -11,7 +11,7 @@ For more details about VLCB / CBUS see: [PenguinTutor MERG page](https://www.pen
 
 ## Install
 
-The GUI requires PySide6.
+The App requires Python>=3.10 and PySide6 (for the GUI client).
 
 To install on Raspberry Pi OS Trixie (or later)
 
@@ -146,11 +146,21 @@ To run the tests change to the tests directory and run
 
 All requests are sent to a message queue, so there may be a short delay in them being actioned. This should not be noticeable unless there are a lot of updates in progress.
 
-For loco control the dial shows the desired speed, the LCD display shows the value provided in the last update
+For loco control the LCD display is updated as the request is sent to the Loco. 
 
-When multiple devices try and control the same loco (eg. Web App, GUI App and API) then they will all share control of the Loco.
+When multiple devices try and control the same loco (eg. Web App, GUI App and API) then they will all share control of the Loco. This does mean that one controller can override updates made from a different controller. 
+
+This is not a full implementation of the VLCB messages. As this is developed support for additional codes is added. If you have a device that uses an op-code which is not yet implemented please add this as a feature request so that it can be prioritised.
 
 # Updates
+
+## Development November 2026
+
+The prequisite has now increased for [PyVLCB](https://penguintutor.com/projects/pyvlcb) library for layout control communication to v0.3.0. 
+
+When installing the latest version of PyVLCB will be installed automatically via the requirements file. If updating to the latest development version of PiSignalbox run the following command first (with venv activated):
+    pip install --upgrade --no-cache-dir pyvlcb
+
 
 ## Upgrade October 2026
 
