@@ -448,8 +448,16 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
                 self.update_controller_pos()
                 # Future highlight whether forward or reverse selected
             case "loco_function":
-                # Update the functions menu
-                self.loco_change_functions()
+                # Future: consider updating just the current value, but only if
+                # It's a latch and not a trigger
+                # event includex "index" within the dict if required for checking
+                # which function changed.
+                #self.loco_change_functions()
+                # The only time this would be required is where the current displayed
+                # value is incorrect - in which case it may be better to issue a more
+                # specific update
+                # Do not update if trigger
+                pass
             case "uitext":
                 if app_event.data['label'] == "locoStatusLabel":
                     self.ui.locoStatusLabel.setText (app_event.data['value'])

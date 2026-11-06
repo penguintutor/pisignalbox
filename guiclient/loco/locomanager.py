@@ -145,7 +145,8 @@ class LocoManager(QObject):
                         value = event.data.get("value", None)
                         if index != None and value != None:
                             loco.set_function(index, value)
-                        event_bus.publish(AppEvent({"action":"loco_function", "loco_id":loco_id}))
+                        # For function update we state which function we have updated (if it's the one on display and is not toggle then doesn't change)
+                        event_bus.publish(AppEvent({"action":"loco_function", "loco_id":loco_id, "index":index}))
 
 
 

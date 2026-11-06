@@ -135,6 +135,7 @@ class UILocoMixin:
         # If it's not a latch then ignore 
         if status == None or status[1] != "latch":
             return
+        #print ("function latch clicked")
         self.loco_func_change (func_index, 1-status[0])
         # Update button
         # perhaps separate functions to what is required
@@ -156,6 +157,7 @@ class UILocoMixin:
         # If it's not a trigger then ignore 
         if status == None or status[1] != "trigger":
             return
+        #print ("function trigger pressed")
         # If trigger then button should be activate:
         self.loco_func_change (func_index, 1)
 
@@ -175,6 +177,7 @@ class UILocoMixin:
         # If it's not a trigger then ignore 
         if status == None or status[1] != "trigger":
             return
+        #print ("function trigger released")
         # If trigger then button should be activate:
         self.loco_func_change (func_index, 0)
 
