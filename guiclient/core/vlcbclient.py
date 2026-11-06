@@ -577,10 +577,18 @@ class VLCBClient(QObject):
                     direction = "Forward"
                 settings = f"{direction} Speed: {data_dict.get("speed", 0)} "
                 description = f"Status update for loco {loco_id}"
+            case "function update":
+                command = "Function changed"
+                index = data_dict.get("index", "N/A")
+                value = data_dict.get("value", "N/A")
+                settings = f"Function F{index} = {value}"
+                description = f"Function update for loco {loco_id}"
             case "speed change success":
                 command = "Speed changed"
+                description = "Speed request issued"
             case "function send success":
                 command = "Function issued"
+                description = "Function request issued"
             case _:
                 print (f"Unknown incoming - empty log entry {data_dict}")
 

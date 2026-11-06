@@ -143,6 +143,8 @@ The update will also publish an AppEvent which can be used by the UI to update s
 
 **It may be neccessary to update the MainWindow app_event method if the update issued needs to update the UI"
 
+**Possibly also need to update vlcbclient _logentry_recv_loco - to provide user friendly info for console"
+
 
 # Server Side API handling (new API)
 If from web app then uses /api/command and typically uses loco_ref to refer to the specific loco
