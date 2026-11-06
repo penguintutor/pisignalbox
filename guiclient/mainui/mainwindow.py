@@ -447,6 +447,9 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
                 # Controller also updates lcd
                 self.update_controller_pos()
                 # Future highlight whether forward or reverse selected
+            case "loco_function":
+                # Update the functions menu
+                self.loco_change_functions()
             case "uitext":
                 if app_event.data['label'] == "locoStatusLabel":
                     self.ui.locoStatusLabel.setText (app_event.data['value'])

@@ -194,7 +194,7 @@ class UILocoMixin:
 
     # Update the functions list
     # If index is not provided then use current
-    # otherrwise set to the index tab
+    # otherwise set to the index tab
     def loco_change_functions (self, index=None):
         functions = self.control_loco.get_functions()
         if index != None and index >=0 and index <=2:

@@ -6,7 +6,7 @@ import queue
 import logging
 from vlcbserver.extensions import vlcb
 from vlcbserver.railway.loco.locomanager import loco_manager
-from pyvlcb import VLCB, VLCBOpcode
+from pyvlcb import VLCB, VLCBOpcode, dfun_to_functions
 from vlcbserver.sse_broadcaster import announcer
 
 # Do we keep a local state of locos devices etc.
@@ -153,9 +153,17 @@ def _update_local_state(item):
             # Update any locos matching session with the speeddir seen on CBUS
             data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
             loco_manager.update_session_speeddir(data_entry.get("Session"), data_entry.get('SpeedDir'))
-        #case 'DFUN':
-        #### Todo
-        # Handle dfun - using the new dfun_to_functions
+        case 'DFUN':
+            # DFUN simple function updates (only 1 block of functions )
+            data_entry = VLCBOpcode.parse_data(vlcb_entry.data)
+            functions = dfun_to_functions (data_entry.get("Fn1"), data_entry.get("Fn2"))
+            #print (f"Functions {functions}")
+            session = data_entry.get("Session")
+            for func_index, func_value in functions.items():
+                loco_manager.update_session_function(session, func_index, func_value)
+
+
+
 
     # Check to see if there was a response from a handler
     # If so then that needs to be sent back to the queue

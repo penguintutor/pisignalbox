@@ -137,6 +137,12 @@ In the case of loco commands then these are passed to _handle_loco_updates the s
 
 The _handle_loco_updates looks as the response status, which uses standard wording, like "loco acquired" or "speed change success". After receiving these the appropriate event is published.
 
+**In the case of locos these events are sent to loco_manager event_trigger where the update should be handled.**
+
+The update will also publish an AppEvent which can be used by the UI to update settings. In the case of a loco this is picked up by MainWindow app_event.
+
+**It may be neccessary to update the MainWindow app_event method if the update issued needs to update the UI"
+
 
 # Server Side API handling (new API)
 If from web app then uses /api/command and typically uses loco_ref to refer to the specific loco
@@ -179,7 +185,7 @@ Note if a DCC ID is associated with multiple locos that are all "on track" then 
 
 On the server then mainthread has a loop run_connected_loop, which is responsible for sending and receiving from USB and the CANUSB4 (or appropriate hardware device). 
 
-First andy keepalives are sent so that the locos remain managed by the server.
+First and keepalives are sent so that the locos remain managed by the server.
 
 Then any queued send requests are sent to the USB port. If the command is from the new API with dev_type then it's passed on to the internal handler to update the local status - such as _update_loco_status. 
 
@@ -187,7 +193,7 @@ _update_loco_status needs to know about the different types of value and how to 
 
 The objects are responsible for sending direct to the stream using announce to pass the update to the client gui etc.
 
-**Any new loco API commands need to be added to _update_loco_status().**
+**Any new loco API commands need to be added to MainThread _update_loco_status().**
 
 Incoming data is then polled from the USB using MainThread _process_inbound_data
 
@@ -196,6 +202,8 @@ This passes the packets on to vlcb_bridge add_sensor_udpate(). _update_local_sta
 **vlcb_bridge _update_local_state needs to parse any USB input packets, update the appropriate entry which then announces to the stream.**
 
 This is one area where the USB data needs to be parsed even after moving to the new API model. 
+
+That will be announced to the GUI (and can be sent to web app etc. )
 
 
 

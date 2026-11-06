@@ -619,7 +619,6 @@ def basic_set_function(loco_id, func_index, value):
     # Note this is a copy - update actual value in loco through
     # main thread
     all_functions[func_index] = value
-    #bytes = get_function_dfun_bytes(func_index, all_functions)
 
     #vlcb_cmd = vlcb.loco_set_dfun (session_id, *bytes)
     # using loco_set_function - already handles the byte generation

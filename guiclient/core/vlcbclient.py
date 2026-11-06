@@ -316,6 +316,14 @@ class VLCBClient(QObject):
                     return 
                 # Pass on to loco_manager to perform update
                 event_bus.publish(LocoEvent('update', response_dict))
+            # Update from a function update (eg. dfun)
+            case "function update":
+                if response_dict.get("loco_id") != loco_id:
+                    logger.warning(f"Incorrect loco_id received from server {response_dict}")
+                    return 
+                # Pass on to loco_manager to perform update
+                event_bus.publish(LocoEvent('function', response_dict))
+            #### Multiple acknowledgements
             # These are acknowledgments - don't update any values at this stage
             # as already updated internally, or wait for different response from stream
             case "speed change success" | "function send success":
@@ -448,6 +456,10 @@ class VLCBClient(QObject):
                 case "loco_speed":
                     loco_id = int(payload.get("loco_id", 0))
                     payload["status"] = "loco update" # Make it look like a REST response
+                    self._handle_loco_updates(loco_id, payload)
+                case "function":
+                    loco_id = int(payload.get("loco_id", 0))
+                    payload["status"] = "function update" # Make it look like a REST response
                     self._handle_loco_updates(loco_id, payload)
                 
 

@@ -69,6 +69,9 @@ class Loco:
 
     def set_function (self, function_num, value):
         """ Update function for single F value"""
+        # Only update and announce if this is actually a change
+        if self.function_status[function_num] == value:
+            return
         self.function_status[function_num] = value
         announcer.announce("function", {
             "loco_id" : self.loco_id,

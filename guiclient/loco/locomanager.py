@@ -133,6 +133,19 @@ class LocoManager(QObject):
                             loco.direction = direction
                         # Could add message or e_stop if required in future
                         event_bus.publish(AppEvent({"action":"loco_update", "loco_id":loco_id}))
+            case "function":
+                loco_id = event.data.get("loco_id")
+                # Update all locos which match the loco_id
+                # Can have other locos, even some are not active
+                # changing functions will not change them to active,
+                # will just reflect the current function statu
+                for loco in self.locos.get_all_locos():
+                    if loco_id == loco.loco_id:
+                        index = event.data.get("index", None)
+                        value = event.data.get("value", None)
+                        if index != None and value != None:
+                            loco.set_function(index, value)
+                        event_bus.publish(AppEvent({"action":"loco_function", "loco_id":loco_id}))
 
 
 
