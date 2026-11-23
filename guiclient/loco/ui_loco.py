@@ -56,7 +56,7 @@ class UILocoMixin:
 
         # Keep Alive is now handled by the server
         # Don't release as that would also release from web app
-        # Todo in future could release but track separately who has requested loco
+        # Future: could release but track separately who has requested loco
         # Although only a minor inconvenience - 
         # Esp if the server becomes the main controller
         # Check for a valid loco chosen (ie if gone back to 0 then return)

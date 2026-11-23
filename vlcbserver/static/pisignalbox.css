@@ -869,3 +869,48 @@ body {
     padding-top: 15px;
     border-top: 1px solid #eee;
 }
+
+
+.func-btn {
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: manipulation;
+    transition: transform 0.06s ease, background-color 0.12s ease, border-color 0.12s ease;
+}
+
+.func-btn .func-type-icon {
+    font-size: 0.9rem;
+    opacity: 0.65;
+}
+
+/* Latch: solid switch feel with a subtle left accent bar */
+.func-btn[data-func-type="latch"] {
+    border-left-width: 4px;
+}
+
+/* Trigger: softer pill-ish corners and dashed border when idle */
+.func-btn[data-func-type="trigger"] {
+    border-radius: 1.25rem;
+    border-style: dashed;
+}
+
+/* Trigger active (while held): solid border, muted teal fill, subtle press-down */
+.func-btn.btn-trigger-active,
+.func-btn.btn-trigger-active:hover,
+.func-btn.btn-trigger-active:active {
+    background-color: #0b7285;
+    border-color: #095c6b;
+    border-style: solid;
+    color: #fff;
+    transform: translateY(1px);
+}
+
+.func-btn[data-func-state="on"] .func-type-icon {
+    opacity: 1;
+}
+
+/* Disabled / unused slots recede subtly */
+.func-btn[data-func-type="disabled"] {
+    border-style: dotted;
+    opacity: 0.45;
+}

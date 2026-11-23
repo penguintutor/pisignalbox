@@ -54,13 +54,22 @@ def details():
         loco_details = loco_manager.get_loco_details_dict(loco_ref)
     else:
         # Fall back if loco not found
+        # Includes generic function buttons
         loco_details = {
             "name": "N/A", 
             "image_url": "/loco/image/notfound", 
             "title": "Loco Title",
-            "summary": "About loco"
+            "summary": "About loco",
+            "functions": {
+                0: ["F0", "latch", "off"],
+                1: ["F1", "latch", "off"],
+                2: ["F2", "latch", "off"],
+                3: ["F3", "latch", "off"],
+                4: ["F4", "latch", "off"]
             }
+        }
 
+    #print (f"API loco Returning loco details {loco_details}")
     return jsonify(loco_details)
 
 
@@ -111,12 +120,36 @@ def stop_all():
     return jsonify({"status": "success"})
 
 
-# Todo implement this
 @api_loco_bp.route('/function', methods=['GET', 'POST'])
 def function():
-    # Return success just means successfully sent to the controller
-    # Does not guarentee the loco received it
-    return jsonify({"status": "success"})
+    # Try JSON body first (for POST fetch requests)
+    data = request.get_json(silent=True) or {}
+    # Check JSON first, then fall back to request.values (covers GET)
+    loco_ref = data.get("loco_ref") or request.values.get("loco_ref")
+
+    # func index = index (from 0) - eg. F0 = 0,
+    # func value is required 
+    raw_index = data.get("function_index")
+    if raw_index is None:
+        raw_index = request.values.get("function_index")
+    try:
+        func_index = int(raw_index) if raw_index is not None else None
+    except (ValueError, TypeError):
+        func_index = None
+    # value default to 0 = off
+    func_value = data.get("function_value") or request.values.get("function_value", 0)
+
+    # Basic initial check
+    if func_index == None or func_index < 0 or func_index > 28:
+        return jsonify({"status": "error", "message": "Function Index is out of range"})
+    # Convert value to a binary 1 or 0
+    try:
+        func_binary = to_binary(func_value)
+    except ValueError:
+        return jsonify({"status": "error", "message": "Invalid function value"})
+
+    # Update the loco with the function value
+    return set_function (loco_ref, func_index, func_binary)
 
 
 @api_loco_bp.route('/status', methods=['GET', 'POST'])
@@ -311,12 +344,18 @@ def client_function():    # Takes loco_id as though basic API, but also update a
     loco_id = data.get("loco_id") or request.values.get("loco_id")
     # func index = index (from 0) - eg. F0 = 0,
     # func value is required 
-    func_index = data.get("function_index") or request.values.get("function_index", None)
+    raw_index = data.get("function_index")
+    if raw_index is None:
+        raw_index = request.values.get("function_index")
+    try:
+        func_index = int(raw_index) if raw_index is not None else None
+    except (ValueError, TypeError):
+        func_index = None
     # value default to 0 = off
     func_value = data.get("function_value") or request.values.get("function_value", 0)
 
     # Basic initial check
-    if func_index < 0 or func_index > 28:
+    if func_index == None or func_index < 0 or func_index > 28:
         return jsonify({"status": "error", "message": "Function Index is out of range"})
     # Convert value to a binary 1 or 0
     try:
@@ -471,7 +510,8 @@ def get_loco_status(loco_ref):
         "direction": loco.get_direction(),
         "speed": loco.get_speed(),
         "message": loco.get_message(),
-        "e_stop": loco.e_stop
+        "e_stop": loco.e_stop,
+        "functions": loco.get_functions_values()
     })
 
 
@@ -594,7 +634,8 @@ def basic_loco_to_session (loco_id):
         "loco": loco
         }
 
-def basic_set_function(loco_id, func_index, value):
+
+def set_function(loco_ref, func_index, value):
     """ Sets a function signal. Sets the value to the controller
     and the controller then performs any resends 
     (eg. periodic resend if loco loses signal)
@@ -604,6 +645,52 @@ def basic_set_function(loco_id, func_index, value):
     That is handled by the client based on how long the
     button is pressed. """
     # Checks loco_ref is valid and gets the active session
+    session_dict = loco_ref_to_session(loco_ref)
+    # If there is no valid session then return with error message
+    # If session is < 1 then it's invalid - so return json data and error code
+    if "session_id" not in session_dict or session_dict["session_id"] < 1:
+        return jsonify(session_dict.get("message_dict")), session_dict.get("http_code")
+    session_id = session_dict["session_id"] 
+
+    all_functions = loco_manager.get_functions (loco_ref)
+    # Check we got a valid functions and that it includes current index
+    if all_functions == None or len(all_functions) < func_index:
+        return jsonify({"status": "error", "message": "Functions not found"})
+    # Update the all_functions with the updated value
+    # Note this is a copy - update actual value in loco through
+    # main thread
+    all_functions[func_index] = value
+
+    # using loco_set_function - already handles the byte generation
+    vlcb_cmd = vlcb.loco_set_function (session_id, func_index, all_functions)
+    send_data(
+        {
+            'vlcb': vlcb_cmd,
+            'dev_type': "loco",
+            'action': "dfun",
+            'session_id': session_id,
+            'loco_ref': loco_ref,
+            'func_index': func_index,
+            'value': value
+        }
+    )
+    # Return success just means successfully sent to the controller
+    # Does not guarentee the loco received it
+    return jsonify({"status": "function send success", "message": "Function change sent"})
+
+
+
+
+def basic_set_function(loco_id, func_index, value):
+    """ Sets a function signal. Sets the value to the controller
+    and the controller then performs any resends 
+    (eg. periodic resend if loco loses signal)
+    
+    If it's a trigger rather than latch then this needs 
+    to be called twice. Once to set and again to unset. 
+    That is handled by the client based on how long the
+    button is pressed. """
+    # Checks loco_id is valid and gets the active session
     session_dict = basic_loco_to_session(loco_id)
     # If there is no valid session then return with error message
     # If session is < 1 then it's invalid - so return json data and error code
@@ -638,70 +725,3 @@ def basic_set_function(loco_id, func_index, value):
     # Does not guarentee the loco received it
     return jsonify({"status": "function send success", "message": "Function change sent"})
 
-# # Returns bytes required for DFUN command
-# # DFUN sends a block of status at a time, based on which group
-# # hence the function_num is needed to determine which block to return
-# # The function_status is a list with all the settings using 
-# # an entry for each status
-# # First byte is group (1 = F1 to F4, 2 = F5 to F8, 3 = F9 to F12)
-# # 4 = F13 to 20, 5 = F21 to F27
-# # Second byte is 1 bit per function - set 1 for on, 0 for off, lsb to right
-# # eg. 1 = 0001, 2 = 0010
-# # function = function number, on_off = 1 or 0
-# # If on_off = None then return current status
-# # function is always required as it only returns the related block
-# def get_function_dfun_bytes (function, all_functions):
-#     #print (f"Loco set_function_dfun - {function}, {on_off}, {all_functions}")
-#     if function  > len (all_functions):
-#         return None
-
-#     if function <= 4:
-#         byte1 = 1
-#         byte2 = (0b10000 * all_functions[0] +  # fn0 is higher nibble (bit 5)
-#                     0b0001 * all_functions[1] +
-#                     0b0010 * all_functions[2] +
-#                     0b0100 * all_functions[3] +
-#                     0b1000 * all_functions[4]
-#                     )
-#     elif function <= 8:
-#         byte1 = 2
-#         byte2 = (0b0001 * all_functions[5] +
-#                     0b0010 * all_functions[6] +
-#                     0b0100 * all_functions[7] +
-#                     0b1000 * all_functions[8]
-#                     )
-#     elif function <= 12:
-#         byte1 = 3
-#         byte2 = (0b0001 * all_functions[9] +
-#                     0b0010 * all_functions[10] +
-#                     0b0100 * all_functions[11] +
-#                     0b1000 * all_functions[12]
-#                     )
-#     elif function <= 20:
-#         byte1 = 4
-#         byte2 = (0b0001 * all_functions[13] +
-#                     0b0010 * all_functions[14] +
-#                     0b0100 * all_functions[15] +
-#                     0b1000 * all_functions[16] +
-#                     0b10000 * all_functions[17] +
-#                     0b100000 * all_functions[18] +
-#                     0b1000000 * all_functions[19] +
-#                     0b10000000 * all_functions[20]
-#                     )
-#     elif function <= 28:
-#         byte1 = 5
-#         byte2 = (0b0001 * all_functions[21] +
-#                     0b0010 * all_functions[22] +
-#                     0b0100 * all_functions[23] +
-#                     0b1000 * all_functions[24] +
-#                     0b10000 * all_functions[25] +
-#                     0b100000 * all_functions[26] +
-#                     0b1000000 * all_functions[27] +
-#                     0b10000000 * all_functions[28]
-#                     )
-#     # Do not support above 28 using DFUN - would need to use DFNON / DFNOF instead
-#     else:
-#         print ("Functions above 28 are not supported")
-#         return None
-#     #print (f"Returning {byte1}, {byte2}")
-#     return [byte1, byte2]

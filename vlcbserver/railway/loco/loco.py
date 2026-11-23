@@ -236,6 +236,38 @@ class Loco:
             f_titles.append(f"{this_function[0]} - {this_function[1]}")
         return f_titles
 
+    def get_functions_details (self):
+            """ Returns functions by title, type and status 
+            Returns as a dict { index : [title, type, status] }
+            """
+            f_details = {}
+            
+            # The first entry is F0, F1 etc. - so strip the F and use the number as the key
+            for this_function in self.loco_data.get("functions", []):
+                # Function titles includes Fx and text
+                # get the F number as a value
+                f_num = self.parse_f_number (this_function[0])
+                # If not valid then skip
+                if not f_num: 
+                    continue
+                # get current status - or set to off
+                f_status = self.function_status[f_num]
+                if f_status == 1:
+                    f_status_str = "on"
+                else:
+                    f_status_str = "off"
+                f_details[f_num] = [this_function[1], this_function[2], f_status_str]
+            if not f_details:
+                # If no functions defined then provide some default
+                return {
+                    0: ["F0", "latch", "off"],
+                    1: ["F1", "latch", "off"],
+                    2: ["F2", "latch", "off"],
+                    3: ["F3", "latch", "off"],
+                    4: ["F4", "latch", "off"]
+                }
+            return f_details
+
     
     def get_function_bytes(self):
         data_out = [0, 0, 0]
@@ -272,6 +304,11 @@ class Loco:
             "image_url": self.get_image_filename(),
             "summary": self.loco_data.get("summary")
         }
+
+        # Functions are added separately in case not defined in config
+        loco_dict["functions"] = self.get_functions_details()
+
+
         return loco_dict
     
     # Do we have an active session (respond True even if force stop)
@@ -377,7 +414,29 @@ class Loco:
         for i in range (0, 3):
             for j in range (0, 4):
                 self.function_status[(i*4)+j+1] = 1 if (data_in[i] & mask[j]) > 0 else 0
-    
+
+    def get_functions_values (self):
+        """ Returns values for known functions as a dict
+        note it returns the same number of functions as the length of the
+        functions data. Or if not then the first 5. If there are gaps in
+        the function data then they will be skipped """
+        func_dict = {}
+        func_list = self.loco_data.get("functions", [])
+        num_funcs = len(func_list)
+        if num_funcs == 0: 
+            num_funcs = 5
+        for i in range (0, num_funcs):
+            if self.function_status[i] == 1:
+                func_value = "on"
+            else: 
+                func_value = "off"
+
+            func_dict[i] = func_value
+
+        return func_dict
+
+        
+
 
     # Sets function and returns bytes required for DFUN command
     # First byte is group (1 = F1 to F4, 2 = F5 to F8, 3 = F9 to F12)
@@ -479,3 +538,14 @@ class Loco:
     
     def __str__(self):
         return (f"Loco {self.get_display_name()}")
+
+### Static method - helper functions
+    @staticmethod
+    def parse_f_number(s: str) -> int | None:
+        """ Takes F string eg. F0, F11 etc. and returns the value as an int"""
+        s = s.strip()
+        if s.startswith(("F", "f")) and s[1:].isdigit():
+            num = int(s[1:])
+            if 0 <= num <= 28:
+                return num
+        return None

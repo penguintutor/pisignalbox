@@ -391,7 +391,14 @@ class LocoManager ():
                 "name": "N/A", 
                 "image_url": "/loco/image/notfound", 
                 "title": "Invalid loco selected",
-                "description": "N/A"
+                "description": "N/A",
+                "functions": {
+                    0: ["F0", "latch", "off"],
+                    1: ["F0", "latch", "off"],
+                    2: ["F0", "latch", "off"],
+                    3: ["F0", "latch", "off"],
+                    4: ["F0", "latch", "off"]
+                }
             }
 
     def on_track (self, loco_id, loco_ref=None) -> Literal["yes", "no", "inuse", "basic"]:
