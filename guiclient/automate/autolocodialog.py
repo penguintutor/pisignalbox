@@ -285,8 +285,7 @@ class AutoLocoDialog(QDialog):
             acq_button_text = "Acquire"
         self.loco_table_buttons.append(QPushButton(acq_button_text))
         
-        # Connect the signal (The tricky part!)
-        # We use a lambda to pass the specific 'loco' object to the handler.
+        # Use a lambda to pass the specific 'loco' object to the handler.
         # Note: 'l=loco' captures the current value of loco. 
         # If you skip this, all buttons will try to acquire the last loco added.
         self.loco_table_buttons[row].clicked.connect(lambda checked=False, l=loco: self.acquire_pressed(l))
@@ -299,7 +298,7 @@ class AutoLocoDialog(QDialog):
         """
         Slot to handle the button click
         """
-        print(f"Acquiring locomotive: {loco.get_display_name()}")
+        #print(f"Acquiring locomotive: {loco.get_display_name()}")
         # Acquire loco
         self.gui.api.start_request(self.gui.api.vlcb.allocate_loco(loco.loco_id))
         loco.set_status('rloc', "controller")

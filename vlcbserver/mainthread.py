@@ -41,7 +41,7 @@ def run_connected_loop(usb, config):
             # Send the command to the usb
             if "vlcb" in command_dict:
                 command = command_dict.get("vlcb")
-                #print(f"[Hardware] Sending command to layout: {command}")
+                #print(f"Mainthread [Hardware] Sending command to layout: {command}")
                 # Send it to the serial port
                 usb.send_data(command)
                 # Also add it to the data - so run_connected_loopother clients can also see it

@@ -30,6 +30,7 @@ class LocoManager ():
         # when dealing with simultaneous updates
 
         ### Web app managed locos
+        # The key for _locos is the loco_ref
         self._locos = {}
         # Index lookup of loco ids that are "on track"
         # Note that there may be duplicate loco_ids across the locos available
@@ -479,7 +480,18 @@ class LocoManager ():
         return None
 
 
-
+    # Get the current functions from a loco_id
+    def get_functions (self, loco_ref):
+        # checks it's on track
+        if loco_ref in self._locos and loco_ref in self._on_track.values():
+            loco = self._locos[loco_ref]
+            """ thread safe return of list of ints
+             note that if a different value is updated in the meantime by a different client
+             then the latest copy will win, but it would be impossible to perform lock threading
+             until the CBUS packet has been sent without adding significant delay
+             worst case is that one controller overwrites another controller. """
+            return loco.function_status.copy()  
+        return None
 
 
 # Module level singleton

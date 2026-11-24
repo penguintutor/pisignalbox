@@ -101,7 +101,6 @@ def stop():
     return set_speed_dir(loco_ref, 0, "forward")
 
 
-# Todo implement this
 @api_loco_bp.route('/stop_all', methods=['GET', 'POST'])
 def stop_all():
     # Return success just means successfully sent to the controller
@@ -663,6 +662,7 @@ def set_function(loco_ref, func_index, value):
 
     # using loco_set_function - already handles the byte generation
     vlcb_cmd = vlcb.loco_set_function (session_id, func_index, all_functions)
+    #print (f"API loco - sending {vlcb_cmd}")
     send_data(
         {
             'vlcb': vlcb_cmd,

@@ -149,9 +149,9 @@ def to_binary(val):
     # Convert the value to a lowercase string and strip any whitespace
     val_str = str(val).strip().lower()
     
-    if val_str in ('true', '1'):
+    if val_str in ('true', '1', "on"):
         return 1
-    elif val_str in ('false', '0'):
+    elif val_str in ('false', '0', "off"):
         return 0
     else:
         raise ValueError(f"Cannot convert '{val}' to 1 or 0")
