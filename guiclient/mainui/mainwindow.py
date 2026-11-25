@@ -164,7 +164,12 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
         self.setWindowTitle(app_title)
         self.loco_window = None
         self.rules_window = None
-        
+
+        ## Initialise various items - these need to be created in case a "update" is triggered before
+        # they are populated
+        # Part of the LocoTable
+        self.loco_table_list = []
+        self.loco_table_buttons = []
 
         self._load_assets ()
         self._initialise_automation ()
@@ -261,6 +266,9 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
         # FUTURE:
         # Need to determine which rules to load - this is default
         event_bus.load_rules(os.path.join(self.dirs['rules'], "default.json"))
+
+        # Also need to monitor for loco events to see if we need to update any status
+        event_bus.loco_event_signal.connect(self.loco_event)
         
         # Pass the layout details to LayoutDisplay to allow it to load other resources
         # Also pass self so it can access mainwindow
@@ -484,7 +492,14 @@ class MainWindowUI(QMainWindow, UITrackViewMixin, UILocoMixin, UIAutomateMixin, 
                 except Exception as e:
                     print (f"Acquire fail for a non existing loco {loco_id} - {e}")
                     return
-            
+
+
+    def loco_event (self, loco_event):
+        """ Monitor for certain loco events which 
+        need the UI to be updated. """
+        match loco_event.event_type:
+            case "acquired": 
+                self.update_loco_status()
     
     # Show console always calls show
     # If window already open then bring to front

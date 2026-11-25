@@ -74,20 +74,9 @@ class LocoManager(QObject):
         return active_locos
 
     def event_trigger (self, event):
-        #print (f"ControlLoco received event {event.event_type} data {event.data}")
-        # if event.event_type == "PLOC":
-        #     loco_id = event.data.get('Loco_id', "")
-        #     for loco in self.locos.get_all_locos():
-        #         if loco_id == loco.loco_id:
-        #             loco.acquired(
-        #                 event.data.get('Session'),
-        #                 event.data.get('Speed'),
-        #                 event.data.get('Direction'),
-        #                 (event.data.get('Fn1'), event.data.get('Fn2'), event.data.get('Fn3'))
-        #             )
         # New format
         match event.event_type:
-            case"acquired":
+            case "acquired":
                 #print (f"Gui loco manager acquired {event.data}")
                 loco_id = event.data.get("loco_id")
                 for loco in self.locos.get_all_locos():
@@ -100,6 +89,7 @@ class LocoManager(QObject):
                             (fn_bytes[0], fn_bytes[1], fn_bytes[2])
                         )
                 # Update GUI to display ready
+
                 event_bus.publish(AppEvent({"action":"uitext", 'label': "locoStatusLabel", 'value': "Ready"}))
                 event_bus.publish(AppEvent({"action":"lcd"}))
             case "acquiring":

@@ -2,11 +2,15 @@
 # Included into MainWindow
 
 # Loco module for handling loco operations for mainwindow
-# This includes the UI wrapper class for loco control and the locolist
+# This includes the UI wrapper class for loco control and the locoTable (LocomotivesList)
+# Note references to locolist refer to the controller's locolist - whereas locoTable is the Locos
+# Tab in the UI
+
+
 import os
 import sys
 import time
-from PySide6.QtCore import QTimer, QSize
+from PySide6.QtCore import QTimer, QSize, Qt
 from PySide6.QtWidgets import QMenu, QDialog, QFileDialog, QMessageBox, QTableWidgetItem, QPushButton
 from PySide6.QtGui import QPixmap, QImage, QPalette, QColor, QFont, QResizeEvent
 # Delayed loading due to circular import
@@ -250,6 +254,7 @@ class UILocoMixin:
             self.ui.locoStatusLabel.setText ("Released")
             
     # Updates the list of locos (both initial and when locos added / removed)
+    # This is the combobox on the controller - not the locoTable
     # Preserves list if already selected
     def update_loco_list (self):
         # save current entry name - set this active if
@@ -278,6 +283,13 @@ class UILocoMixin:
                 self.loco_change()
         # Enable the signal
         self.ui.locoComboBox.blockSignals(False)
+
+    def update_loco_status(self):
+        """ Update when a loco is acquired etc.
+        Called from mainwindow.loco_event """
+        
+        # update the loco_table with acquire status
+        self.update_loco_table_status()
                 
 
     def steal_loco_dialog (self):
@@ -388,17 +400,41 @@ class UILocoMixin:
         # We use a lambda to pass the specific 'loco' object to the handler.
         # Note: 'l=loco' captures the current value of loco. 
         # If you skip this, all buttons will try to acquire the last loco added.
-        self.loco_table_buttons[row].clicked.connect(lambda checked=False, l=loco: self.acquire_pressed(l))
+        self.loco_table_buttons[row].clicked.connect(
+        lambda checked=False, r=row, l=loco: self.acquire_pressed(l, r)
+)
 
         # Insert the widget into the table
         # setCellWidget is required for buttons (setItem is only for text/icons)
         self.ui.locoTable.setCellWidget(row, 1, self.loco_table_buttons[row])
 
-    def acquire_pressed(self, loco):
+    def update_loco_table_status(self):
+        # Update all the existing entries
+        all_locos = loco_manager.get_all_locos()
+        for loco in all_locos:
+            # Check if the loco name matches one of the entries in the table
+            matching_items = self.ui.locoTable.findItems(loco.get_display_name(), Qt.MatchFlag.MatchExactly)
+            # Should only get one entry but it returns a list of matching items - just use first
+            if matching_items:
+                item = matching_items[0]  # Get the first match
+                row = item.row()
+                # column is 0 - so ignore - just want row column = item.column()
+                self.update_loco_status_buttons (row, loco.status)
+            # Could also update the table with any non matching entries
+
+
+
+    # Row is used if wanting to update the button status 
+    # If not then optional
+    def acquire_pressed(self, loco, row=None):
         """
         Slot to handle the button click
         """
-        print(f"Acquiring locomotive: {loco.get_display_name()}")
+        # Set colour to amber whilst pending change
+        if row != None:
+            self.set_loco_button_style(self.loco_table_buttons[row], "#FFBF00", "black")
+
+        #print(f"Acquiring locomotive: {loco.get_display_name()}")
         # Acquire loco
         # Using new api format
         data_dict = {
@@ -410,6 +446,22 @@ class UILocoMixin:
         loco.set_status('rloc', "controller")
 
 
+    # Used to set the acquire button amber whilst waiting for a status update
+    def set_loco_button_style(self, button: QPushButton, bg_color: str, text_color: str = "black"):
+        button.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {bg_color};
+                color: {text_color};
+                padding: 5px 5px;
+                border: 1px solid #555555;
+                border-radius: 2px;
+            }}
+            QPushButton:pressed {{
+                background-color: {bg_color};
+            }}
+        """)
+
+    # This is now unused - used for testing only
     def get_button_style(self, color_hex):
         """Returns the stylesheet string with the requested background color."""
         return f"""
@@ -425,24 +477,30 @@ class UILocoMixin:
         """
 
 
-    def update_loco_status(self, loco_id, status):
+    def update_loco_status_buttons(self, row_num, status):
         """
         Updates the button color based on the status.
         Status can be: 'acquired', 'stolen', 'released', 'idle'
         """
-        if loco_id not in self.loco_buttons:
-            print(f"Error: Loco {loco_id} not found in table.")
+
+        if row_num > len(self.loco_table_buttons):
+            print(f"Error: Button {row_num} not found in table.")
             return
 
-        btn = self.loco_buttons[loco_id]
+        btn = self.loco_table_buttons[row_num]
 
-        if status == "acquired":
+        # Status can have different values so check in list
+        if status.lower() in ["acquired", "on"]:
             btn.setText("Acquired")
             btn.setStyleSheet(self.get_button_style("#4CAF50")) # Green
             
-        elif status in ["stolen", "released"]:
+        elif status.lower() in ["stolen", "released"]:
             btn.setText(status.capitalize()) # Changes text to "Stolen" or "Released"
             btn.setStyleSheet(self.get_button_style("#D32F2F")) # Red
+
+        elif status.lower() in ["acquiring", "gloc"]:
+            btn.setText(status.capitalize()) # Changes text to "Stolen" or "Released"
+            btn.setStyleSheet(self.get_button_style("#FFA000")) # Amber
             
         else: # Reset to idle
             btn.setText("Acquire")

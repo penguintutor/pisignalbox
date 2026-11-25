@@ -19,7 +19,7 @@ class ApiHandler(QObject):
         self.url = url
         self.api_key = api_key
 
-        # Todo - add Error status vs "Not Connected"
+        # Future - add Error status vs "Not Connected"
         # Not Connected used for network problems where expected recover
         # Error where issue not expected to be resolved quickly (eg. authentication failure)
         self.status = "Starting"
@@ -64,6 +64,7 @@ class ApiHandler(QObject):
     def vlcb_event (self, event):
         self.start_request(self.vlcb.accessory_command(event.get_node_id(), event.get_event(), event.get_value()))
 
+    # Sending a loco event
     def loco_event (self, event):
         """ The API action allows direct instructions to the API
         This can be particularly useful from automation step
